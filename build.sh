@@ -9,6 +9,7 @@ fi
 
 # cmake创建工程
 cd build
+# cmake -G Xcode -DCMAKE_TOOLCHAIN_FILE=../ios.toolchain.cmake -DPLATFORM=MAC_UNIVERSAL  ..
 cmake -G Xcode ..
 
 # 启动工程
