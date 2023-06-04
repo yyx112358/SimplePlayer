@@ -13,7 +13,7 @@
 		7A2699A82A2B7E01009C722B /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 7A2699A72A2B7E01009C722B /* Assets.xcassets */; };
 		7A2699AB2A2B7E01009C722B /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 7A2699A92A2B7E01009C722B /* Main.storyboard */; };
 		7A2699AD2A2B7E01009C722B /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 7A2699AC2A2B7E01009C722B /* main.m */; };
-		7A2699B72A2B7E72009C722B /* PreviewManager_Mac.mm in Sources */ = {isa = PBXBuildFile; fileRef = 7A2699B52A2B7E72009C722B /* PreviewManager_Mac.mm */; };
+		7A2699BC2A2B81E9009C722B /* PreviewManager_Mac.mm in Sources */ = {isa = PBXBuildFile; fileRef = 7A2699BA2A2B81E9009C722B /* PreviewManager_Mac.mm */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -27,9 +27,9 @@
 		7A2699AA2A2B7E01009C722B /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
 		7A2699AC2A2B7E01009C722B /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
 		7A2699AE2A2B7E01009C722B /* SimplePlayer.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = SimplePlayer.entitlements; sourceTree = "<group>"; };
-		7A2699B42A2B7E71009C722B /* PreviewManager_Mac.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = PreviewManager_Mac.h; path = Preview/PreviewManager_Mac.h; sourceTree = "<group>"; };
-		7A2699B52A2B7E72009C722B /* PreviewManager_Mac.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = PreviewManager_Mac.mm; path = Preview/PreviewManager_Mac.mm; sourceTree = "<group>"; };
-		7A2699B62A2B7E72009C722B /* IPreviewManager.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = IPreviewManager.hpp; path = Preview/IPreviewManager.hpp; sourceTree = "<group>"; };
+		7A2699B92A2B81E9009C722B /* IPreviewManager.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = IPreviewManager.hpp; sourceTree = "<group>"; };
+		7A2699BA2A2B81E9009C722B /* PreviewManager_Mac.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = PreviewManager_Mac.mm; sourceTree = "<group>"; };
+		7A2699BB2A2B81E9009C722B /* PreviewManager_Mac.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PreviewManager_Mac.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -62,9 +62,7 @@
 		7A26999D2A2B7E00009C722B /* SimplePlayer */ = {
 			isa = PBXGroup;
 			children = (
-				7A2699B62A2B7E72009C722B /* IPreviewManager.hpp */,
-				7A2699B42A2B7E71009C722B /* PreviewManager_Mac.h */,
-				7A2699B52A2B7E72009C722B /* PreviewManager_Mac.mm */,
+				7A2699B82A2B81E9009C722B /* Preview */,
 				7A26999E2A2B7E00009C722B /* AppDelegate.h */,
 				7A26999F2A2B7E00009C722B /* AppDelegate.m */,
 				7A2699A12A2B7E00009C722B /* ViewController.h */,
@@ -76,6 +74,16 @@
 				7A2699A42A2B7E00009C722B /* SimplePlayer.xcdatamodeld */,
 			);
 			path = SimplePlayer;
+			sourceTree = "<group>";
+		};
+		7A2699B82A2B81E9009C722B /* Preview */ = {
+			isa = PBXGroup;
+			children = (
+				7A2699B92A2B81E9009C722B /* IPreviewManager.hpp */,
+				7A2699BA2A2B81E9009C722B /* PreviewManager_Mac.mm */,
+				7A2699BB2A2B81E9009C722B /* PreviewManager_Mac.h */,
+			);
+			path = Preview;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -151,7 +159,7 @@
 				7A2699A32A2B7E00009C722B /* ViewController.mm in Sources */,
 				7A2699AD2A2B7E01009C722B /* main.m in Sources */,
 				7A2699A02A2B7E00009C722B /* AppDelegate.m in Sources */,
-				7A2699B72A2B7E72009C722B /* PreviewManager_Mac.mm in Sources */,
+				7A2699BC2A2B81E9009C722B /* PreviewManager_Mac.mm in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -300,7 +308,11 @@
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.yyx.SimplePlayer;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = YES;
 				SWIFT_EMIT_LOC_STRINGS = YES;
+				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Debug;
 		};
@@ -326,7 +338,11 @@
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.yyx.SimplePlayer;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = YES;
 				SWIFT_EMIT_LOC_STRINGS = YES;
+				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Release;
 		};

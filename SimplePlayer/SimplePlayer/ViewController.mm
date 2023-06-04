@@ -31,5 +31,12 @@
     // Update the view, if already loaded.
 }
 
+- (void)viewDidLayout {
+    for(NSView *subView in self.view.subviews) {
+        [subView setFrame:self.view.bounds];
+//        [subView setNeedsDisplay:YES];
+    }
+}
+
 
 @end

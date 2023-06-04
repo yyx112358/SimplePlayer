@@ -58,3 +58,70 @@ target_link_libraries(${PROJECT_NAME} "-framework Cocoa")
 ```
 
 纠结再三，还是直接使用Universal程序吧。纠结这种问题实在是既麻烦又没收益，我们的重点还是音视频学习。
+
+# 2023年6月4日
+
+切了一个mac分支，重新建了一个纯Mac的环境，开始学习OpenGL。计划主要学习2D绘图，3D不必深入。主要参考资料：
+1. [最好的OpenGL教程之一(B站视频)](https://www.bilibili.com/video/BV1MJ411u7Bc?p=3&spm_id_from=pageDriver&vd_source=486f641ca2720afac8d75c2261136b11)
+2. [LearnOpenGL-CN](https://learnopengl-cn.github.io/)
+3. [docs.GL](https://docs.gl/)
+2. VEPreviewUnit
+
+## Legacy OpenGL绘制三角形
+NSOpenGLView + Legacy OpenGL绘制三角形：
+``` 
+- (void)drawRect:(NSRect)dirtyRect {
+    [super drawRect:dirtyRect];
+    // 获取当前OpenGL上下文
+    NSOpenGLContext *openGLContext = [self openGLContext];
+    [openGLContext makeCurrentContext];
+    
+    // 清空窗口颜色
+    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT);
+    
+    // 设置绘制模式
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+
+    // 绘制三角形
+    glBegin(GL_TRIANGLES);
+    glColor3f(1.0f, 1.0f, 1.0f);
+    glVertex2f(0, 1);
+    glVertex2f(1, 0);
+    glVertex2f(-1, 0);
+    glEnd();
+    
+    // 在OpenGL绘制完成后，调用flush方法将绘制的结果显示到窗口上
+    [openGLContext flushBuffer];
+}
+```
+需要注意的是，**三角形顶点需要是顺时针**，否则无法显示（逆时针的三角形是反面对镜头）。<br>
+
+## 使用Shader绘制三角形
+![OpenGL基本渲染链路](https://learnopengl-cn.github.io/img/01/04/pipeline.png)
+- **Vertex Shader** 顶点着色器：坐标变换和基本顶点属性处理，**每个顶点执行一次**
+- Primitive Assembly 图元装配：顶点组装为多边形
+- Geometry Shader 几何着色器：由已有顶点生成新的顶点
+- Rasterization 光栅化：图元映射为像素，生成片段Fragment
+- **Fragment Shader** 片段着色器：计算像素颜色，**每像素执行一次**
+- Alpha Test and Blending α测试和混合：深度测试，丢弃被遮挡物体；并根据alpha透明度进行混合
+
+Vertex, Fragment是必须的。
+
+![标准化设备坐标(Normalized Device Coordinates, NDC)](https://learnopengl-cn.github.io/img/01/04/ndc.png)
+使用顶点缓冲区替换Legacy OpenGL三角形绘制：
+```
+
+```
+需要注意的是，OpenGL ES的Shader关键字有变化[StackOverflow:OpenGL shader builder errors on compiling](https://stackoverflow.com/questions/24737705/opengl-shader-builder-errors-on-compiling)：<br>
+```
+顶点着色器
+in --> attribute
+out --> varying
+片段着色器
+in --> varying
+out --> (delete)
+```
+
+以前学的时候没想过，现在想来，之所以要使用缓冲区这样的东西，是为了一次性将所有的数据输入给GPU。这样，可以减少GPU数据传输、提高缓存命中率，操作“多个相同属性数组组成的对象”效率也比“多个对象组成的数组”要高。
