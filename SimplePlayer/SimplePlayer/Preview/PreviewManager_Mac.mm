@@ -10,9 +10,8 @@
 
 #define GL_SILENCE_DEPRECATION
 #import <Cocoa/Cocoa.h>
-#import <OpenGL/gl.h>
-#import <OpenGL/glu.h>
-#import <iostream>
+#import <OpenGL/gl3.h>
+//#import <OpenGL/glu.h>
 
 
 @interface Preview_Mac : NSOpenGLView
@@ -26,13 +25,9 @@
     if (self) {
         NSOpenGLPixelFormatAttribute attrs[] =
         {
-
-            NSOpenGLPFADoubleBuffer,  //双缓冲 NSOpenGLPFADepthSize, 24,  //深度缓冲位深
-            NSOpenGLPFAStencilSize, 8,   //模板缓冲位深
-            NSOpenGLPFAMultisample,   //多重采样
-            NSOpenGLPFASampleBuffers, (NSOpenGLPixelFormatAttribute)1, //多重采样buffer
-            NSOpenGLPFASamples, (NSOpenGLPixelFormatAttribute)4,  // 多重采样数
-            NSOpenGLPFAOpenGLProfile, NSOpenGLProfileVersion3_2Core,  // OpenGL3.2
+            NSOpenGLPFADoubleBuffer,
+            NSOpenGLPFADepthSize, 24,
+            NSOpenGLPFAOpenGLProfile, NSOpenGLProfileVersion3_2Core,  // 【声明使用OpenGL3.2】，不配置则默认OpenGL 2
             0
         };
         
@@ -66,100 +61,104 @@
 //    glMatrixMode(GL_MODELVIEW);
 //    glLoadIdentity();
     
-    const char *vertexShaderSource = "#version 330 core\n"
-        "layout (location = 0) in vec3 aPos;\n"
-        "void main()\n"
-        "{\n"
-        "   gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);\n"
-        "}\0";
-    const char *fragmentShaderSource = "#version 330 core\n"
-        "out vec4 FragColor;\n"
-        "void main()\n"
-        "{\n"
-        "   FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);\n"
-        "}\n\0";
-    
-    // build and compile our shader program
-    // ------------------------------------
-    // vertex shader
-    unsigned int vertexShader = glCreateShader(GL_VERTEX_SHADER);
-    glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
-    glCompileShader(vertexShader);
-    // check for shader compile errors
+
+
+    // Vertex shader
+    const GLchar *vertexShaderSource = R"(
+    #version 330 core
+    layout (location = 0) in vec3 aPos;
+
+    void main()
+    {
+        gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);
+    })";
+    GLuint vertexShaderId;
+    vertexShaderId = glCreateShader(GL_VERTEX_SHADER); // 创建并绑定Shader
+    glShaderSource(vertexShaderId, 1, &vertexShaderSource, NULL); // 附着Shader源码
+    glCompileShader(vertexShaderId); // 编译Shader
+    // 可选，检查编译状态
     int success;
-    char infoLog[512];
-    glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
-    if (!success)
-    {
-        glGetShaderInfoLog(vertexShader, 512, NULL, infoLog);
-        std::cout << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n" << infoLog << std::endl;
+    glGetShaderiv(vertexShaderId, GL_COMPILE_STATUS, &success);
+    if (!success) {
+        char buf[512];
+        glGetShaderInfoLog(vertexShaderId, sizeof(buf), NULL, buf);
+        NSLog(@"%s", buf);
     }
-    // fragment shader
-    unsigned int fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(fragmentShader, 1, &fragmentShaderSource, NULL);
-    glCompileShader(fragmentShader);
-    // check for shader compile errors
-    glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &success);
-    if (!success)
+    
+    // Fragment Shader
+    const GLchar *fragmentShaderSource = R"(
+    #version 330 core
+    out vec4 FragColor;
+
+    void main()
     {
-        glGetShaderInfoLog(fragmentShader, 512, NULL, infoLog);
-        std::cout << "ERROR::SHADER::FRAGMENT::COMPILATION_FAILED\n" << infoLog << std::endl;
+        FragColor = vec4(1.0, 0.5, 0.2, 1.0);
+    })";
+    
+    GLuint fragmentShaderId;
+    fragmentShaderId = glCreateShader(GL_FRAGMENT_SHADER);
+    glShaderSource(fragmentShaderId, 1, &fragmentShaderSource, NULL);
+    glCompileShader(fragmentShaderId);
+    glGetShaderiv(fragmentShaderId, GL_COMPILE_STATUS, &success);
+    if (!success) {
+        char buf[512];
+        glGetShaderInfoLog(fragmentShaderId, sizeof(buf), NULL, buf);
+        NSLog(@"%s", buf);
     }
-    // link shaders
-    unsigned int shaderProgram = glCreateProgram();
-    glAttachShader(shaderProgram, vertexShader);
-    glAttachShader(shaderProgram, fragmentShader);
+    
+    // 链接Shader为Program
+    GLuint shaderProgram;
+    shaderProgram = glCreateProgram();
+    glAttachShader(shaderProgram, vertexShaderId);
+    glAttachShader(shaderProgram, fragmentShaderId);
     glLinkProgram(shaderProgram);
-    // check for linking errors
     glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
     if (!success) {
-        glGetProgramInfoLog(shaderProgram, 512, NULL, infoLog);
-        std::cout << "ERROR::SHADER::PROGRAM::LINKING_FAILED\n" << infoLog << std::endl;
+        char buf[512];
+        glGetProgramInfoLog(shaderProgram, sizeof(buf), NULL, buf);
+        NSLog(@"%s", buf);
     }
-    glDeleteShader(vertexShader);
-    glDeleteShader(fragmentShader);
-
-    // set up vertex data (and buffer(s)) and configure vertex attributes
-    // ------------------------------------------------------------------
-    float vertices[] = {
-        -0.5f, -0.5f, 0.0f, // left
-         0.5f, -0.5f, 0.0f, // right
-         0.0f,  0.5f, 0.0f  // top
+    glDeleteShader(vertexShaderId);
+    glDeleteShader(fragmentShaderId);
+    
+    // 创建Vertex
+    unsigned int vertexArrayId;
+    glGenVertexArrays(1, &vertexArrayId); // 生成顶点Array对象。【必须在
+    glBindVertexArray(vertexArrayId); // 绑定顶点Array
+    
+    // Vertex Buffer Object(VBO)
+    GLuint vertexBufId;
+    GLfloat vertexBuf[] = {
+        -0.5,-0.5,
+         0.0, 0.5,
+         0.5,-0.5,
     };
-
-    unsigned int VBO, VAO;
-    glGenVertexArraysAPPLE(1, &VAO);
-    glGenBuffers(1, &VBO);
-    // bind the Vertex Array Object first, then bind and set vertex buffer(s), and then configure vertex attributes(s).
-    glBindVertexArrayAPPLE(VAO);
-
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+    glGenBuffers(1, &vertexBufId); // 生成 1 个顶点缓冲区对象，vertexBufId是绑定的唯一OpenGL标识
+    glBindBuffer(GL_ARRAY_BUFFER, vertexBufId); // 绑定为GL_ARRAY_BUFFER
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertexBuf), vertexBuf, GL_STATIC_DRAW); // 第四个usage参数参考https://docs.gl/es3/glBufferData，GL_STATIC_DRAW意为：一次修改频繁使用 + 上层修改而GL做绘制
+    // 告诉GPU，Buffer内部结构。参考：https://docs.gl/es3/glVertexAttribPointer
+    // index: Buffer标识；size：对应顶点属性分量个数，范围1~4，二维位置为2，三维位置为3；normalized，是否归一化
+    // stride：步长，每个顶点占用字节数；pointer，非空时表示该属性在buffer中位置
+    // 例如，一个顶点有以下float类型属性：0~2，三维位置；3~4，纹理坐标。则对位置属性，参数：vertexBufId, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), 0。对纹理属性：vertexBufId, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), 3
+    // 配置Vertex属性
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), 0);
     glEnableVertexAttribArray(0);
 
-    // note that this is allowed, the call to glVertexAttribPointer registered VBO as the vertex attribute's bound vertex buffer object so afterwards we can safely unbind
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindBuffer(GL_ARRAY_BUFFER, vertexBufId); // 绑定为GL_ARRAY_BUFFER
 
     // You can unbind the VAO afterwards so other VAO calls won't accidentally modify this VAO, but this rarely happens. Modifying other
     // VAOs requires a call to glBindVertexArray anyways so we generally don't unbind VAOs (nor VBOs) when it's not directly necessary.
-    glBindVertexArrayAPPLE(0);
-
-//    glBegin(GL_TRIANGLES);
+    glBindVertexArray(0);
     
-    // 清空窗口颜色
-    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+    // 清屏
+    glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
+
     
     glUseProgram(shaderProgram);
-    glBindVertexArrayAPPLE(VAO);
-//    glColor3f(1.0f, 1.0f, 1.0f);
-//    glVertex2f(0, 1);
-//    glVertex2f(1, 0);
-//    glVertex2f(-1, 0);
-    glDrawArrays(GL_TRIANGLES, 0, 3); // 绘制三角形，从下标0开始，绘制3个
-//    glEnd();
+    glBindVertexArray(vertexArrayId); // seeing as we only have a single VAO there's no need to bind it every time, but we'll do so to keep things a bit more organized
+    glDrawArrays(GL_TRIANGLES, 0, 3);
+
     
     // 在OpenGL绘制完成后，调用flush方法将绘制的结果显示到窗口上
     [openGLContext flushBuffer];
