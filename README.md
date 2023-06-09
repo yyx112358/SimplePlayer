@@ -5,16 +5,16 @@
 # 2023年5月30日
 
 目标：通过实现一个自己的播放器，系统性学习音视频相关知识。近期路线图：
-1. 实现一个预览器，可将FBO通过OpenGL预览上屏。
-2. 实现一个解码器，使用FFMpeg解码音视频。
-3. 将解码的帧上屏
-4. 音画同步
-5. 支持暂停、播放、停止、重播
-6. 支持多段视频
-7. 支持图文混排
-9. 实现合成导出
-9. 使用cmake建立工程。拆分独立音视频SDK，UI各端实现。暂定实现Mac、Win，实现无缝开发衔接。
-10. 回顾总结，以待重构 
+- [ ] 实现一个预览器，可将FBO通过OpenGL预览上屏。
+- [ ] 实现一个解码器，使用FFMpeg解码音视频。
+- [ ] 将解码的帧上屏
+- [ ] 音画同步
+- [ ] 支持暂停、播放、停止、重播
+- [ ] 支持多段视频
+- [ ] 支持图文混排
+- [ ] 实现合成导出
+- [ ] 使用cmake建立工程。拆分独立音视频SDK，UI各端实现。暂定实现Mac、iOS、Win，实现无缝开发衔接。
+- [ ] 回顾总结，以待重构 
 
 这一轮主要以快速实现框架为主，不必太在乎代码质量。后续可以在TT中间页切换时候重写
 
@@ -59,7 +59,7 @@ target_link_libraries(${PROJECT_NAME} "-framework Cocoa")
 
 纠结再三，还是直接使用Universal程序吧。纠结这种问题实在是既麻烦又没收益，我们的重点还是音视频学习。
 
-# 2023年6月4日
+# 2023年6月3日
 
 切了一个mac分支，重新建了一个纯Mac的环境，开始学习OpenGL。计划主要学习2D绘图，3D不必深入。主要参考资料：
 1. [最好的OpenGL教程之一(B站视频)](https://www.bilibili.com/video/BV1MJ411u7Bc?p=3&spm_id_from=pageDriver&vd_source=486f641ca2720afac8d75c2261136b11)
@@ -119,14 +119,18 @@ NSOpenGLView + Legacy OpenGL绘制三角形：
 ```
 需要注意的是，**三角形顶点需要是顺时针**，否则无法显示（逆时针的三角形是反面对镜头）。<br>
 
+# 2023年6月4日
 ## 使用Shader绘制三角形
 ![OpenGL基本渲染链路](https://learnopengl-cn.github.io/img/01/04/pipeline.png)
-- **Vertex Shader** 顶点着色器：坐标变换和基本顶点属性处理，**每个顶点执行一次**
-- Primitive Assembly 图元装配：顶点组装为多边形
-- Geometry Shader 几何着色器：由已有顶点生成新的顶点
-- Rasterization 光栅化：图元映射为像素，生成片段Fragment
-- **Fragment Shader** 片段着色器：计算像素颜色，**每像素执行一次**
-- Alpha Test and Blending α测试和混合：深度测试，丢弃被遮挡物体；并根据alpha透明度进行混合
+| 名称 | 功能 |
+| --- | ---|
+| **Vertex Shader** 顶点着色器 | 坐标变换和基本顶点属性处理，**每个顶点执行一次** |
+| Primitive Assembly 图元装配 | 顶点组装为多边形 |
+| Geometry Shader 几何着色器|由已有顶点生成新的顶点|
+| Rasterization 光栅化|图元映射为像素，生成片段Fragment|
+| **Fragment Shader** 片段着色器|计算像素颜色，**每像素执行一次**|
+| Alpha Test and Blending α测试和混合|深度测试，丢弃被遮挡物体；并根据alpha透明度进行混合|
+
 
 Vertex, Fragment是必须的。
 
@@ -134,7 +138,6 @@ Vertex, Fragment是必须的。
 ![标准化设备坐标(Normalized Device Coordinates, NDC)](https://learnopengl-cn.github.io/img/01/04/ndc.png)<br>
 更详细的坐标系介绍：[openGL中的坐标系](https://www.jianshu.com/p/f6820de32557)
 
-以前学的时候没想过，现在想来，之所以要使用缓冲区这样的东西，是为了一次性将所有的数据输入给GPU。这样，可以减少GPU数据传输、提高缓存命中率，操作“多个相同属性数组组成的对象”效率也比“多个对象组成的数组”要高。
 使用顶点缓冲区替换Legacy OpenGL三角形绘制：
 ```
 - (void)drawRect:(NSRect)dirtyRect {
@@ -256,11 +259,11 @@ Vertex, Fragment是必须的。
 }
 ```
 一开始怎么都画不出三角形，折腾了很久，查了很多资料，再配合getError、glGetShaderiv等方法，最后发现Mac端有这些要注意的：
-1. 需要#import <OpenGL/gl3.h>而不是#import <OpenGL/gl.h>
-2. 初始化NSOpenGLPixelFormat时，需要显式指定OpenGL 3.2 即 NSOpenGLProfileVersion3_2Core
-3. Shader需要指定#version 330 core
+1. 需要`#import <OpenGL/gl3.h>`而不是`#import <OpenGL/gl.h>`
+2. 初始化`NSOpenGLPixelFormat`时，需要显式指定OpenGL 3.2 即 `NSOpenGLProfileVersion3_2Core`
+3. Shader需要指定`#version 330 core`
 4. 最重要的，构造VBO时候，需要先创建并绑定VertexArray，再创建Vertex Buffer，这与[最好的OpenGL教程之一(B站视频)](https://www.bilibili.com/video/BV1MJ411u7Bc?p=3&spm_id_from=pageDriver&vd_source=486f641ca2720afac8d75c2261136b11)所述不完全一致
-5. 另外，勤用debug函数：glGetShaderiv、glGetProgramiv、glGetError()
+5. 另外，勤用debug函数：`glGetShaderiv`、`glGetProgramiv`、`glGetError()`
 
 对这些配置的个人精简理解：
 - Shader：GPU上运行的程序，也需要编译、链接成Program才能用
@@ -271,6 +274,7 @@ Vertex, Fragment是必须的。
 ![](https://learnopengl-cn.github.io/img/01/04/vertex_attribute_pointer.png)
 - Vertex Array Object：存储多个顶点属性的数组，便于切换不同顶点数据和属性配置（不是太理解）
 ![](https://learnopengl-cn.github.io/img/01/04/vertex_array_objects.png)
+- 以前学的时候没想过，现在想来，之所以要使用缓冲区这样的东西，是为了一次性将所有的数据输入给GPU。这样，可以减少GPU数据传输、提高缓存命中率，操作“多个相同属性数组组成的对象”效率也比“多个对象组成的数组”要高。
 
 OpenGL ES的Shader关键字有变化[StackOverflow:OpenGL shader builder errors on compiling](https://stackoverflow.com/questions/24737705/opengl-shader-builder-errors-on-compiling)：<br>
 ```
@@ -290,3 +294,9 @@ out --> (delete)
 - [【译】OpenGL 教程：二维图形绘制](https://zhuanlan.zhihu.com/p/103925920)
 - [音视频-OpenGL ES渲染视频图像](https://www.jianshu.com/p/37d8132a5d4c)
 - [OpenGL ES总结（四）OpenGL 渲染视频画面](https://blog.51cto.com/u_15069450/2934927)
+
+# 2023年6月9日
+
+这些天事情都好多，只来得及看看视频。今天继续学OpenGL。
+
+

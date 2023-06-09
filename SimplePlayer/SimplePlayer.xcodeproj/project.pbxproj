@@ -15,6 +15,9 @@
 		7A2699AD2A2B7E01009C722B /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 7A2699AC2A2B7E01009C722B /* main.m */; };
 		7A2699BC2A2B81E9009C722B /* PreviewManager_Mac.mm in Sources */ = {isa = PBXBuildFile; fileRef = 7A2699BA2A2B81E9009C722B /* PreviewManager_Mac.mm */; };
 		7A269A2A2A2C9CFD009C722B /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7A269A292A2C9CFD009C722B /* OpenGL.framework */; };
+		7A6D8B492A33582600C40E5C /* GLContext.mm in Sources */ = {isa = PBXBuildFile; fileRef = 7A6D8B472A33582600C40E5C /* GLContext.mm */; };
+		7A6D8B4C2A3359DC00C40E5C /* GLRendererBase.mm in Sources */ = {isa = PBXBuildFile; fileRef = 7A6D8B4A2A3359DC00C40E5C /* GLRendererBase.mm */; };
+		7A8669442A2F8C78006E8CC6 /* Basic.glsl in Resources */ = {isa = PBXBuildFile; fileRef = 7A8669432A2F8C78006E8CC6 /* Basic.glsl */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -32,6 +35,12 @@
 		7A2699BA2A2B81E9009C722B /* PreviewManager_Mac.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = PreviewManager_Mac.mm; sourceTree = "<group>"; };
 		7A2699BB2A2B81E9009C722B /* PreviewManager_Mac.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PreviewManager_Mac.h; sourceTree = "<group>"; };
 		7A269A292A2C9CFD009C722B /* OpenGL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGL.framework; path = System/Library/Frameworks/OpenGL.framework; sourceTree = SDKROOT; };
+		7A6D8B472A33582600C40E5C /* GLContext.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = GLContext.mm; sourceTree = "<group>"; };
+		7A6D8B482A33582600C40E5C /* GLContext.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = GLContext.hpp; sourceTree = "<group>"; };
+		7A6D8B4A2A3359DC00C40E5C /* GLRendererBase.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = GLRendererBase.mm; sourceTree = "<group>"; };
+		7A6D8B4B2A3359DC00C40E5C /* GLRendererBase.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = GLRendererBase.hpp; sourceTree = "<group>"; };
+		7A7D566B2A3045E300F1D701 /* BaseRenderer.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = BaseRenderer.hpp; sourceTree = "<group>"; };
+		7A8669432A2F8C78006E8CC6 /* Basic.glsl */ = {isa = PBXFileReference; lastKnownFileType = text; path = Basic.glsl; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -83,6 +92,8 @@
 		7A2699B82A2B81E9009C722B /* Preview */ = {
 			isa = PBXGroup;
 			children = (
+				7A7D566A2A3045C800F1D701 /* Renderer */,
+				7A8669422A2F8C33006E8CC6 /* Shaders */,
 				7A2699B92A2B81E9009C722B /* IPreviewManager.hpp */,
 				7A2699BA2A2B81E9009C722B /* PreviewManager_Mac.mm */,
 				7A2699BB2A2B81E9009C722B /* PreviewManager_Mac.h */,
@@ -96,6 +107,26 @@
 				7A269A292A2C9CFD009C722B /* OpenGL.framework */,
 			);
 			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		7A7D566A2A3045C800F1D701 /* Renderer */ = {
+			isa = PBXGroup;
+			children = (
+				7A7D566B2A3045E300F1D701 /* BaseRenderer.hpp */,
+				7A6D8B472A33582600C40E5C /* GLContext.mm */,
+				7A6D8B482A33582600C40E5C /* GLContext.hpp */,
+				7A6D8B4A2A3359DC00C40E5C /* GLRendererBase.mm */,
+				7A6D8B4B2A3359DC00C40E5C /* GLRendererBase.hpp */,
+			);
+			path = Renderer;
+			sourceTree = "<group>";
+		};
+		7A8669422A2F8C33006E8CC6 /* Shaders */ = {
+			isa = PBXGroup;
+			children = (
+				7A8669432A2F8C78006E8CC6 /* Basic.glsl */,
+			);
+			path = Shaders;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -156,6 +187,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				7A2699A82A2B7E01009C722B /* Assets.xcassets in Resources */,
+				7A8669442A2F8C78006E8CC6 /* Basic.glsl in Resources */,
 				7A2699AB2A2B7E01009C722B /* Main.storyboard in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -169,6 +201,8 @@
 			files = (
 				7A2699A62A2B7E00009C722B /* SimplePlayer.xcdatamodeld in Sources */,
 				7A2699A32A2B7E00009C722B /* ViewController.mm in Sources */,
+				7A6D8B4C2A3359DC00C40E5C /* GLRendererBase.mm in Sources */,
+				7A6D8B492A33582600C40E5C /* GLContext.mm in Sources */,
 				7A2699AD2A2B7E01009C722B /* main.m in Sources */,
 				7A2699A02A2B7E00009C722B /* AppDelegate.m in Sources */,
 				7A2699BC2A2B81E9009C722B /* PreviewManager_Mac.mm in Sources */,

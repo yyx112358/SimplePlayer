@@ -7,14 +7,21 @@
 
 #import <Foundation/Foundation.h>
 #include "PreviewManager_Mac.h"
+#include <string>
+#include <optional>
+#include <array>
+#include <any>
 
 #define GL_SILENCE_DEPRECATION
 #import <Cocoa/Cocoa.h>
 #import <OpenGL/gl3.h>
-//#import <OpenGL/glu.h>
 
+#include "GLRendererBase.hpp"
 
-@interface Preview_Mac : NSOpenGLView
+@interface Preview_Mac : NSOpenGLView {
+    std::shared_ptr<sp::GLContext> pGLContext;
+    std::unique_ptr<sp::BaseGLRenderer> pRenderer;
+}
 
 @end
 
@@ -23,19 +30,40 @@
 - (instancetype)initWithFrame:(NSRect)frameRect {
     self = [super initWithFrame:frameRect];
     if (self) {
-        NSOpenGLPixelFormatAttribute attrs[] =
+        // 创建并初始化GLContext
+        pGLContext = std::make_shared<sp::GLContext>();
+        if (pGLContext->init() == false)
+            return nil;
+        [self setOpenGLContext:pGLContext->context()];
+        
+        // 创建并初始化Renderer
+        pRenderer = std::make_unique<sp::BaseGLRenderer>(pGLContext);
+        // 创建并编译 Vertex shader
+        /**
+         * #version 330 core 显式指定版本
+         * layout (location = 0) in vec3 aPos;
+         * gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0); 位置透传。第四个分量（w）为
+         */
+        const GLchar *vertexShaderSource = R"(
+        #version 330 core
+        layout (location = 0) in vec3 aPos;
+
+        void main()
         {
-            NSOpenGLPFADoubleBuffer,
-            NSOpenGLPFADepthSize, 24,
-            NSOpenGLPFAOpenGLProfile, NSOpenGLProfileVersion3_2Core,  // 【声明使用OpenGL3.2】，不配置则默认OpenGL 2
-            0
-        };
+            gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);
+        })";
+
+        // 创建并编译Fragment Shader，方法基本一致
+        const GLchar *fragmentShaderSource = R"(
+        #version 330 core
+        out vec4 FragColor;
+
+        void main()
+        {
+            FragColor = vec4(1.0, 0.5, 0.2, 1.0);
+        })";
+        pRenderer->UpdateShader(vertexShaderSource, fragmentShaderSource);
         
-        NSOpenGLPixelFormat *pixelFormat = [[NSOpenGLPixelFormat alloc] initWithAttributes:attrs];
-        super.pixelFormat = pixelFormat;
-        NSOpenGLContext *openGLContext = [[NSOpenGLContext alloc] initWithFormat:pixelFormat shareContext:nil];
-        
-        [self setOpenGLContext:openGLContext];
     }
     return self;
 }
@@ -46,132 +74,13 @@
 
 - (void)drawRect:(NSRect)dirtyRect {
     NSLog(@"%@", NSStringFromRect(dirtyRect));
+    auto tm = clock();
     [super drawRect:dirtyRect];
     
-    // 获取当前OpenGL上下文
-    NSOpenGLContext *openGLContext = [self openGLContext];
-    [openGLContext makeCurrentContext];
-    
+    pRenderer->Render();
+    pGLContext->flush();
 
-    
-    // 设置绘制模式
-//    glMatrixMode(GL_PROJECTION);
-//    glLoadIdentity();
-//    glOrtho(0, dirtyRect.size.width, 0, dirtyRect.size.height, -1, 1);
-//    glMatrixMode(GL_MODELVIEW);
-//    glLoadIdentity();
-    
-
-
-    // 创建并编译 Vertex shader
-    /**
-     * #version 330 core 显式指定版本
-     * layout (location = 0) in vec3 aPos;
-     * gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0); 位置透传。第四个分量（w）为
-     */
-    const GLchar *vertexShaderSource = R"(
-    #version 330 core
-    layout (location = 0) in vec3 aPos;
-
-    void main()
-    {
-        gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);
-    })";
-    GLuint vertexShaderId;
-    vertexShaderId = glCreateShader(GL_VERTEX_SHADER); // 创建并绑定Shader
-    glShaderSource(vertexShaderId, 1, &vertexShaderSource, NULL); // 绑定Shader源码
-    glCompileShader(vertexShaderId); // 编译Shader
-    // 可选，检查编译状态。非常有用
-    int success;
-    glGetShaderiv(vertexShaderId, GL_COMPILE_STATUS, &success);
-    if (!success) {
-        char buf[512];
-        glGetShaderInfoLog(vertexShaderId, sizeof(buf), NULL, buf);
-        NSLog(@"%s", buf);
-    }
-    
-    // 创建并编译Fragment Shader，方法基本一致
-    const GLchar *fragmentShaderSource = R"(
-    #version 330 core
-    out vec4 FragColor;
-
-    void main()
-    {
-        FragColor = vec4(1.0, 0.5, 0.2, 1.0);
-    })";
-    
-    GLuint fragmentShaderId;
-    fragmentShaderId = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(fragmentShaderId, 1, &fragmentShaderSource, NULL);
-    glCompileShader(fragmentShaderId);
-    
-    glGetShaderiv(fragmentShaderId, GL_COMPILE_STATUS, &success);
-    if (!success) {
-        char buf[512];
-        glGetShaderInfoLog(fragmentShaderId, sizeof(buf), NULL, buf);
-        NSLog(@"%s", buf);
-    }
-    
-    // 链接Shader为Program。和CPU程序很类似，编译.o文件、链接为可执行文件。【耗时非常长】
-    GLuint shaderProgram;
-    shaderProgram = glCreateProgram();
-    glAttachShader(shaderProgram, vertexShaderId); // 绑定shader
-    glAttachShader(shaderProgram, fragmentShaderId);
-    glLinkProgram(shaderProgram); // 链接Shader为完整着色器程序
-    glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success); // 检查编译是否成功
-    if (!success) {
-        char buf[512];
-        glGetProgramInfoLog(shaderProgram, sizeof(buf), NULL, buf);
-        NSLog(@"%s", buf);
-    }
-    
-    // 删除不用的Shader，释放资源
-    glDeleteShader(vertexShaderId);
-    glDeleteShader(fragmentShaderId);
-    
-    // 创建Vertex Array Object(VAO)。后续所有顶点操作都会储存到VAO中。OpenGL core模式下VAO必须要有。
-    unsigned int vertexArrayId;
-    glGenVertexArrays(1, &vertexArrayId); // 生成顶点Array对象。【必须在创建Buffer前】
-    glBindVertexArray(vertexArrayId); // 绑定顶点Array
-    
-    // Vertex Buffer Object(VBO)
-    GLuint vertexBufId;
-    GLfloat vertexBuf[] = {
-        -0.5,-0.5,
-         0.0, 0.5,
-         0.5,-0.5,
-    };
-    glGenBuffers(1, &vertexBufId); // 生成 1 个顶点缓冲区对象，vertexBufId是绑定的唯一OpenGL标识
-    glBindBuffer(GL_ARRAY_BUFFER, vertexBufId); // 绑定为GL_ARRAY_BUFFER
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertexBuf), vertexBuf, GL_STATIC_DRAW); // 第四个usage参数参考https://docs.gl/es3/glBufferData，GL_STATIC_DRAW意为：一次修改频繁使用 + 上层修改而GL做绘制
-    // 告诉GPU，Buffer内部结构。参考：https://docs.gl/es3/glVertexAttribPointer
-    // index: Buffer标识；size：对应顶点属性分量个数，范围1~4，二维位置为2，三维位置为3；normalized，是否归一化
-    // stride：步长，每个顶点占用字节数；pointer，该属性在buffer中位置
-    // 例如，一个顶点有以下float类型属性：0~2，三维位置；3~4，纹理坐标。则对位置属性，参数：vertexBufId, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), 0。对纹理属性：vertexBufId, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), 3
-    // 配置Vertex属性
-    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), 0);
-    glEnableVertexAttribArray(0);
-
-    glBindBuffer(GL_ARRAY_BUFFER, vertexBufId); // 绑定为GL_ARRAY_BUFFER
-
-    // 这一行的作用是解除vertexBufId的激活状态，避免其它操作不小心改动到这里
-    glBindVertexArray(0);
-    
-    // 上屏绘制
-    glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT);
-    
-    glUseProgram(shaderProgram); // 启用Shader程序
-    glBindVertexArray(vertexArrayId); // 绑定Vertex Array
-    glDrawArrays(GL_TRIANGLES, 0, 3); // 绘制三角形
-    
-    GLenum error = glGetError();
-    if (error) {
-        NSLog(@"GL error:%d", error);
-    }
-    
-    // 在OpenGL绘制完成后，调用flush方法将绘制的结果显示到窗口上
-    [openGLContext flushBuffer];
+    NSLog(@"耗时：%.2f", (clock() - tm) / 1000.0f);
 }
 
 @end
