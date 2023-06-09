@@ -299,4 +299,39 @@ out --> (delete)
 
 这些天事情都好多，只来得及看看视频。今天继续学OpenGL。
 
+今天的主要进展就是将相关的OpenGL抽象为C++类。比较有意思的是，使用自定义deleter的unique_ptr封装了OpenGL的id：
 
+``` 
+// ===== 定义 =====
+typedef std::unique_ptr<GLuint, void(*)(GLuint *)> GL_IdHolder; // 持有GL ID的unique_ptr，支持自动释放
+static void SHADER_DELETER(GLuint *p) {
+    NSLog(@"Delete shader %d", *p);
+    glDeleteShader(*p);
+}
+static void PROGRAM_DELETER(GLuint *p) {
+    NSLog(@"Delete program %d", *p);
+    glDeleteProgram(*p);
+};
+
+// ===== 使用 =====
+virtual GL_IdHolder _CompileShader(GLenum shaderType, const std::string &source) {
+    GLuint shaderId;
+    shaderId = glCreateShader(shaderType); // 创建并绑定Shader
+    const char *sourceAddr = source.c_str();
+    glShaderSource(shaderId, 1, &sourceAddr, NULL); // 绑定Shader源码
+    glCompileShader(shaderId); // 编译Shader
+    // 可选，检查编译状态。非常有用
+    int success;
+    glGetShaderiv(shaderId, GL_COMPILE_STATUS, &success);
+    if (!success) {
+        char buf[512];
+        glGetShaderInfoLog(shaderId, sizeof(buf), NULL, buf);
+        NSLog(@"%s", buf);
+        return GL_IdHolder(nullptr, SHADER_DELETER);
+    } else {
+        return GL_IdHolder(new GLuint(shaderId), SHADER_DELETER);
+    }
+}
+```
+不过，多线程、多Context时候，会不会导致还没切换到对应Context的时候就释放了呢？以后再研究吧。<br>
+另外，考虑到EBO、坐标变化、uniform还没学习，C++类还没完全抽出来。

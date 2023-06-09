@@ -13,6 +13,7 @@
 #include <optional>
 #include <array>
 #include <any>
+#include <mutex>
 
 
 #define GL_SILENCE_DEPRECATION
@@ -27,7 +28,14 @@ namespace sp {
  */
 class GLContext {
 public:
+    virtual ~GLContext() {
+        std::lock_guard lock(_mutex);
+        _context = nil;
+    }
+    
     virtual bool init() {
+        std::lock_guard lock(_mutex);
+
         NSOpenGLPixelFormatAttribute attrs[] =
         {
             NSOpenGLPFADoubleBuffer,
@@ -50,6 +58,7 @@ public:
     virtual bool switchContext() {
         if (_context == nil && init() == false)
             return false;
+        std::lock_guard lock(_mutex);
         
         [_context makeCurrentContext];
         return true;
@@ -60,6 +69,7 @@ public:
     virtual bool flush() {
         if (_context == nil && init() == false)
             return false;
+        std::lock_guard lock(_mutex);
         
         [_context flushBuffer];
         return true;
@@ -67,6 +77,7 @@ public:
     
 protected:
     NSOpenGLContext *_context;
+    std::mutex _mutex;
 };
 
 
@@ -88,8 +99,10 @@ public:
 public:
     BaseGLRenderer(std::shared_ptr<GLContext> context) :_context(context) {}
     
-    GL_IdHolder& programId() {
-        return _programId;
+    virtual ~BaseGLRenderer() {
+        _context->switchContext();
+        
+        _programId.reset();
     }
     
     bool UpdateShader(const std::string &vertexShader, const std::string &fragmentShader) {

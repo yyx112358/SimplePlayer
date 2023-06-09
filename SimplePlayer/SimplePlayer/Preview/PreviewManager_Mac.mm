@@ -80,7 +80,7 @@
     pRenderer->Render();
     pGLContext->flush();
 
-    NSLog(@"耗时：%.2f", (clock() - tm) / 1000.0f);
+    NSLog(@"耗时：%.2fms", (clock() - tm) / 1000.0f);
 }
 
 @end
