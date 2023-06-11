@@ -20,6 +20,8 @@
 #import <Cocoa/Cocoa.h>
 #import <OpenGL/gl3.h>
 
+#import "ImageReader.hpp"
+
 namespace sp {
 
 /**
@@ -108,13 +110,19 @@ public:
     }
     
     bool UpdateShader(const std::string &vertexShader, const std::string &fragmentShader) {
-        if (vertexShader != _vertexShaderSource && fragmentShader != _fragmentShaderSource) {
-            _vertexShaderSource = vertexShader;
-            _fragmentShaderSource = fragmentShader;
-            _needUpdate = true;
-        }
+        _vertexShaderSource = vertexShader;
+        _fragmentShaderSource = fragmentShader;
+        _needUpdate = true;
         return true;
     }
+    
+    bool UpdateTexture(const ImageBuffer &buffer) {
+        _textureBuffer = buffer;
+        _needUpdate = true;
+        return true;
+    }
+    
+//    bool UpdateUniform(const std::string &name, )
     
     void SetClearColor(GLfloat r, GLfloat g, GLfloat b, GLfloat a) {
         _clearColor[0] = r;
@@ -142,6 +150,10 @@ public:
 //        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // 取消注释后将启用线框模式
         
         glUseProgram(*_programId); // 启用Shader程序
+        
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, _textureId);
+        
         glBindVertexArray(*_vertexArrayId); // 绑定Vertex Array
 //        glDrawArrays(GL_TRIANGLES, 0, 6); // 绘制三角形
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0); // 使用Element绘制三角形
@@ -156,31 +168,33 @@ protected:
     virtual bool _InternalUpdate() {
         if (_needUpdate == false)
             return true;
-        // 编译Shader
-        GL_IdHolder vertexShaderId = _CompileShader(GL_VERTEX_SHADER, _vertexShaderSource);
-        if (vertexShaderId == nullptr)
-            return false;
-        GL_IdHolder fragmentShaderId = _CompileShader(GL_FRAGMENT_SHADER, _fragmentShaderSource);
-        if (fragmentShaderId == nullptr)
-            return false;
-        
-        // 链接Shader为Program。和CPU程序很类似，编译.o文件、链接为可执行文件。【耗时非常长】
-        GLuint shaderProgram;
-        shaderProgram = glCreateProgram();
-        glAttachShader(shaderProgram, *vertexShaderId); // 绑定shader
-        glAttachShader(shaderProgram, *fragmentShaderId);
-        glLinkProgram(shaderProgram); // 链接Shader为完整着色器程序
-        
-        // 检查Program是否链接成功
-        int success;
-        glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success); // 检查编译是否成功
-        if (!success) {
-            char buf[512];
-            glGetProgramInfoLog(shaderProgram, sizeof(buf), NULL, buf);
-            NSLog(@"%s", buf);
-            return false;
-        } else {
-            _programId = GL_IdHolder(new GLuint(shaderProgram), PROGRAM_DELETER);
+        if (_vertexShaderSource.empty() == false || _fragmentShaderSource.empty() == false) {
+            // 编译Shader
+            GL_IdHolder vertexShaderId = _CompileShader(GL_VERTEX_SHADER, _vertexShaderSource);
+            if (vertexShaderId == nullptr)
+                return false;
+            GL_IdHolder fragmentShaderId = _CompileShader(GL_FRAGMENT_SHADER, _fragmentShaderSource);
+            if (fragmentShaderId == nullptr)
+                return false;
+            
+            // 链接Shader为Program。和CPU程序很类似，编译.o文件、链接为可执行文件。【耗时非常长】
+            GLuint shaderProgram;
+            shaderProgram = glCreateProgram();
+            glAttachShader(shaderProgram, *vertexShaderId); // 绑定shader
+            glAttachShader(shaderProgram, *fragmentShaderId);
+            glLinkProgram(shaderProgram); // 链接Shader为完整着色器程序
+            
+            // 检查Program是否链接成功
+            int success;
+            glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success); // 检查编译是否成功
+            if (!success) {
+                char buf[512];
+                glGetProgramInfoLog(shaderProgram, sizeof(buf), NULL, buf);
+                NSLog(@"%s", buf);
+                return false;
+            } else {
+                _programId = GL_IdHolder(new GLuint(shaderProgram), PROGRAM_DELETER);
+            }
         }
         
         // 创建Vertex Array Object(VAO)。后续所有顶点操作都会储存到VAO中。OpenGL core模式下VAO必须要有。
@@ -191,16 +205,23 @@ protected:
         // Vertex Buffer Object(VBO)
         GLuint vertexBufId;
         GLfloat vertexBuf[] = {
-            -0.75, 0.75, // 左上
-             0.75, 0.75, // 右上
-            -0.75,-0.75, // 左下
-             0.75,-0.75, // 右下
+            // --位置-- // --- 颜色 --- // --纹理--
+            -0.75, 0.75, 1.0, 0.0, 0.0, 0.0, 1.0, // 左上
+             0.75, 0.75, 0.0, 1.0, 0.0, 1.0, 1.0, // 右上
+            -0.75,-0.75, 0.0, 0.0, 1.0, 0.0, 0.0, // 左下
+             0.75,-0.75, 1.0, 0.0, 0.0, 1.0, 0.0, // 右下
         };
         glGenBuffers(1, &vertexBufId); // 生成 1 个顶点缓冲区对象，vertexBufId是绑定的唯一OpenGL标识
         glBindBuffer(GL_ARRAY_BUFFER, vertexBufId); // 绑定为GL_ARRAY_BUFFER
         glBufferData(GL_ARRAY_BUFFER, sizeof(vertexBuf), vertexBuf, GL_STATIC_DRAW); // 传输数据
-        glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), NULL);// 配置Vertex属性
+        
+        glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 7 * sizeof(float), (GLvoid *)(0));// 位置
         glEnableVertexAttribArray(0); // 启用VertexAttribArray
+        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 7 * sizeof(float), (GLvoid *)(2 * sizeof(float)));// 颜色
+        glEnableVertexAttribArray(1);
+        glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 7 * sizeof(float), (GLvoid *)(5 * sizeof(float)));// 纹理
+        glEnableVertexAttribArray(2);
+        
         
         // Element Buffer Object(EBO)
         GLuint elementBufId;
@@ -213,6 +234,34 @@ protected:
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(elementBuf), elementBuf, GL_STATIC_DRAW);
         
         _vertexArrayId.reset(new GLuint(vertexArrayId));
+        
+        
+        // 创建纹理
+        if (_textureBuffer.data != nullptr) {
+            GLuint textureId;
+            glGenTextures(1, &textureId);
+            glBindTexture(GL_TEXTURE_2D, textureId);
+            
+            // warp参数
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);    // set texture wrapping to GL_REPEAT (default wrapping method)
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+            // 插值filter参数
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+            
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, (GLsizei)_textureBuffer.width, (GLsizei)_textureBuffer.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, _textureBuffer.data.get());
+            // glGenerateMipmap(GL_TEXTURE_2D); // 如果需要生成mipmap的话
+            _textureBuffer.data.reset();// 释放内存
+            
+            if (CheckError())
+                return false;
+            _textureId = textureId;
+            
+            glUseProgram(*_programId);
+            GLint uniLocation = glGetUniformLocation(*_programId, "texture1");
+            glUniform1i(uniLocation, 0);
+        }
+        
         
         // 这一行的作用是解除vertexBufId的激活状态，避免其它操作不小心改动到这里。不过这种情况很少见。
         glBindVertexArray(0);
@@ -271,8 +320,11 @@ protected:
     
     std::string _vertexShaderSource;
     std::string _fragmentShaderSource;
+    ImageBuffer _textureBuffer;
+    
     GL_IdHolder _programId = GL_IdHolder(nullptr, PROGRAM_DELETER);
     GL_IdHolder _vertexArrayId = GL_IdHolder(nullptr, VERTEX_ARRAY_DELETER);
+    GLuint _textureId;
         
     std::array<GLfloat, 4> _clearColor;
 };
