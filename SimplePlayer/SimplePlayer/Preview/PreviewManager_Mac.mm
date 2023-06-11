@@ -164,7 +164,9 @@ std::optional<sp::ImageBuffer> LoadBufferFromImage(NSImage *image) {
 
         void main()
         {
-            FragColor = texture(texture1, vtxTexCoord);
+            // 使用texture1进行颜色采样。
+            // 纹理坐标系和OpenGL坐标系相反，因此y坐标取1-vtxTexCoord.y
+            FragColor = texture(texture1, vec2(vtxTexCoord.x, 1-vtxTexCoord.y));
         })";
         pRenderer->UpdateShader(vertexShaderSource, fragmentShaderSource);
         pRenderer->SetClearColor(0.2f, 0.3f, 0.3f, 1.0f);

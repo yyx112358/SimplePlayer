@@ -371,7 +371,7 @@ glBindVertexArray(0);
 
 考虑到视频播放器并不需要太多的三角形，添加EBO还会增加复杂性，这里仅供学习，后续可能并不会使用。
 
-## 练习题
+## 《你好，三角形》章节练习题
 [第一节练习题](https://learnopengl-cn.github.io/01%20Getting%20started/04%20Hello%20Triangle/)
 > 添加更多顶点到数据中，使用glDrawArrays，尝试绘制两个彼此相连的三角形：[参考解答](https://learnopengl.com/code_viewer_gh.php?code=src/1.getting_started/2.3.hello_triangle_exercise1/hello_triangle_exercise1.cpp)
 > 创建相同的两个三角形，但对它们的数据使用不同的VAO和VBO：[参考解答](https://learnopengl.com/code_viewer_gh.php?code=src/1.getting_started/2.4.hello_triangle_exercise2/hello_triangle_exercise2.cpp)
@@ -384,4 +384,166 @@ glBindVertexArray(0);
 漫长的第一节结束，继续！
 
 ## GLSL语言
+[LearnOpenGL：着色器](https://learnopengl-cn.github.io/01%20Getting%20started/05%20Shaders/)
+
+运行于GPU的程序。基本结构：
+```
+#version version_number
+in type in_variable_name;
+in type in_variable_name;
+
+out type out_variable_name;
+
+uniform type uniform_name;
+
+int main()
+{
+  // 处理输入并进行一些图形操作
+  ...
+  // 输出处理过的结果到输出变量
+  out_variable_name = weird_stuff_we_processed;
+}
+```
+
+知识点：
+- GLSL必须指定版本，随后是输入、输出、uniform变量。函数入口为main()
+- 顶点着色器输入数量有上限，至少16个。通过`glGetIntegerv(GL_MAX_VERTEX_ATTRIBS, &nrAttributes)`查看
+- 数据类型：
+  - `vecn` | `bvecn` | `ivecn` | `uvecn` | `dvecn`，表示长度为n的特定类型向量。一般用`vecn`，即float类型。
+  - 重组：使用xyzw的组合创建新的变量。例如：
+    ```
+    vec2 someVec;
+    vec4 differentVec = someVec.xyxx;
+    vec3 anotherVec = differentVec.zyw;
+    vec4 otherVec = someVec.xxxx + anotherVec.yxzy;
+    vec4 assignVec = (someVec.xy, 1.0, 1.0);
+    ```
+- 输入输出 
+  - 关键字：`in` | `out`
+  - Vertex Shader：**需要特别指定输入变量布局** `layout (location = 0)`
+  - Fragment Shader：**需要特别指定`vec4`颜色输出变量**，否则输出黑/白
+  - 链接方式：Shader1 的**输出**与Shader2 的**输入****名称和类型一样**
+- Uniform
+  - 同一个Shader Program内，各个Shader间通用的**全局变量**
+  - 声明：任意Shader内 `uniform uniType uniName;`
+  - 更新：
+    ```
+    // 获取uniform位置
+    int vertexColorLocation = glGetUniformLocation(shaderProgram, "ourColor"); 
+    // 切换program
+    glUseProgram(shaderProgram); 
+    // 更新uniform
+    glUniform4f(vertexColorLocation, 0.0f, greenValue, 0.0f, 1.0f); 
+    ```
+
+## 《着色器》章节练习题
+> 1. 修改顶点着色器让三角形上下颠倒：[参考解答](https://learnopengl.com/code_viewer.php?code=getting-started/shaders-exercise1)
+> 2. 使用uniform定义一个水平偏移量，在顶点着色器中使用这个偏移量把三角形移动到屏幕右侧：[参考解答](https://learnopengl.com/code_viewer.php?code=getting-started/shaders-exercise2)
+> 3. 使用out关键字把顶点位置输出到片段着色器，并将片段的颜色设置为与顶点位置相等（来看看连顶点位置值都在三角形中被插值的结果）。做完这些后，尝试回答下面的问题：为什么在三角形的左下角是黑的?：[参考解答](https://learnopengl.com/code_viewer.php?code=getting-started/shaders-exercise3)
+
+解答：
+1. 顶点着色器的y坐标取反即可：`gl_Position = vec4(aPos.x, -aPos.y, 0.0, 1.0);`
+2. 使用uniform改变x坐标即可，注意归一化：<br>
+    渲染循环：
+    ```
+    int location = glGetUniformLocation(*_programId, "xOffset");
+    glUniform1f(location, 0.5f);
+    ```
+    片段着色器
+    ```
+    #version 330 core
+    layout (location = 0) in vec2 aPos;
+    uniform float xOffset;
+
+    void main()
+    {
+        gl_Position = vec4(aPos.x + xOffset, aPos.y, 0.0, 1.0);
+    }
+    ```
+3. 顶点着色器输出位置参数，片段着色器使用位置参数作为坐标即可。
+    顶点着色器：
+    ```
+    #version 330 core
+    layout (location = 0) in vec2 aPos;        
+    out vec3 vtxColor;
+    void main()
+    {
+        gl_Position = vec4(aPos.xy, 0.0, 1.0);
+        vtxColor = gl_Position.xyz;
+    }
+    ```
+    片段着色器：
+    ```
+    #version 330 core
+    in vec3  vtxColor;
+    out vec4 FragColor;
+
+    void main()
+    {
+        FragColor = vec4(vtxColor, 1.0);
+    }
+    ```
+   左下角黑色是因为左下角顶点x、y坐标是负数，因此r<0、g<0、b=0，显示为黑色
+
+
+## 纹理
+终于到了纹理了。纹理可是核心要点。
+
+知识点：
+- 坐标系：从左到右，X轴 [0,1]，从下到上，Y轴[0,1]<br>
+  ![](https://learnopengl-cn.github.io/img/01/06/tex_coords.png)
+- 纹理环绕方式：
+  ![](https://learnopengl-cn.github.io/img/01/06/texture_wrapping.png)
+  - 默认是GL_REPEAT。修改代码：
+    ```
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
+    ```
+  - 如果是`GL_CLAMP_TO_BORDER`，可以指定边缘颜色：
+    ```
+    float borderColor[] = { 1.0f, 1.0f, 0.0f, 1.0f };
+    glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
+    ```
+- 纹理过滤：缩放方式，常用最近邻采样`GL_NEAREST`和线性插值`GL_LINEAR`。配置方式：
+- 多级渐远纹理mipmap：LOD，实际上就是在不同距离上采用不同精度的纹理。对音视频播放没什么用。
+- 纹理单元
+  - 用于标注当前使用纹理的位置。我的理解是GPU内可以同时存在成百上千个纹理，但是GPU同一时间内能处理的纹理数量是有限的，因此需要**将当前要用的纹理绑定到纹理单元上**。
+  - OpenGL至少有16个纹理单元，GL_TEXTURE0 ~ GL_TEXTURE15。其中GL_Texture0是默认激活的
+  - 使用glUniform1i()传递参数。
+  - 使用方式：<br>
+    GLSL中，纹理单元表示为一种特殊的，类型为sampler2D的uniform变量：
+    ```
+    #version 330 core
+    in vec2  vtxTexCoord;
+        
+    out vec4 FragColor;
+        
+    uniform sampler2D texture1; // 纹理单元
+
+    void main()
+    {
+        // 使用texture1进行颜色采样。
+        // 因为纹理坐标系和OpenGL坐标系相反，因此y坐标取1-vtxTexCoord.y
+        FragColor = texture(texture1, vec2(vtxTexCoord.x, 1-vtxTexCoord.y));
+    }
+    ```
+    初始化时：
+    ```
+    //生成并绑定纹理
+    GLuint textureId;
+    glGenTextures(1, &textureId);
+    glBindTexture(GL_TEXTURE_2D, textureId);
+    // ... 配置纹理参数 ...
+    ```
+    渲染循环
+    ```
+    glUseProgram(programId);
+
+    glActiveTexture(GL_TEXTURE0 + 1); // 激活纹理单元1
+    glBindTexture(GL_TEXTURE_2D, _textureId); // 绑定纹理，根据上下文，绑定到了纹理单元1
+    glUniform1i(glGetUniformLocation(programId, "texture1"), 1); // 将纹理单元传递给uniform
+
+    // ... 渲染多边形 ...
+    ```
+
 

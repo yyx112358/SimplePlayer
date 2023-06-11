@@ -9,6 +9,7 @@
 #define GLRendererBase_hpp
 
 #import <Foundation/Foundation.h>
+#include <cstddef>
 #include <string>
 #include <optional>
 #include <array>
@@ -151,8 +152,9 @@ public:
         
         glUseProgram(*_programId); // 启用Shader程序
         
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, _textureId);
+        glActiveTexture(GL_TEXTURE0 + 1); // 激活纹理单元1
+        glBindTexture(GL_TEXTURE_2D, _textureId); // 绑定纹理。根据上下文，这个纹理绑定到了纹理单元1
+        glUniform1i(glGetUniformLocation(*_programId, "texture1"), 1); // 将纹理单元传递给uniform
         
         glBindVertexArray(*_vertexArrayId); // 绑定Vertex Array
 //        glDrawArrays(GL_TRIANGLES, 0, 6); // 绘制三角形
@@ -204,22 +206,25 @@ protected:
         
         // Vertex Buffer Object(VBO)
         GLuint vertexBufId;
-        GLfloat vertexBuf[] = {
-            // --位置-- // --- 颜色 --- // --纹理--
-            -0.75, 0.75, 1.0, 0.0, 0.0, 0.0, 1.0, // 左上
-             0.75, 0.75, 0.0, 1.0, 0.0, 1.0, 1.0, // 右上
-            -0.75,-0.75, 0.0, 0.0, 1.0, 0.0, 0.0, // 左下
-             0.75,-0.75, 1.0, 0.0, 0.0, 1.0, 0.0, // 右下
+        struct Vertex {
+            std::array<GLfloat, 2> location;
+            std::array<GLfloat, 3> color;
+            std::array<GLfloat, 2> texture;
+        } vertexBuf[4] = {
+            {{-0.75, 0.75}, {1.0, 0.0, 0.0}, {0.0, 1.0},}, // 左上
+            {{ 0.75, 0.75}, {0.0, 1.0, 0.0}, {1.0, 1.0},}, // 右上
+            {{-0.75,-0.75}, {0.0, 0.0, 1.0}, {0.0, 0.0},}, // 左下
+            {{ 0.75,-0.75}, {1.0, 0.0, 0.0}, {1.0, 0.0},}, // 右下
         };
         glGenBuffers(1, &vertexBufId); // 生成 1 个顶点缓冲区对象，vertexBufId是绑定的唯一OpenGL标识
         glBindBuffer(GL_ARRAY_BUFFER, vertexBufId); // 绑定为GL_ARRAY_BUFFER
         glBufferData(GL_ARRAY_BUFFER, sizeof(vertexBuf), vertexBuf, GL_STATIC_DRAW); // 传输数据
         
-        glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 7 * sizeof(float), (GLvoid *)(0));// 位置
+        glVertexAttribPointer(0, vertexBuf[0].location.size(), GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid *)(offsetof(Vertex, location)));// 位置
         glEnableVertexAttribArray(0); // 启用VertexAttribArray
-        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 7 * sizeof(float), (GLvoid *)(2 * sizeof(float)));// 颜色
+        glVertexAttribPointer(1, vertexBuf[0].color.size(), GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid *)(offsetof(Vertex, color)));// 颜色
         glEnableVertexAttribArray(1);
-        glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 7 * sizeof(float), (GLvoid *)(5 * sizeof(float)));// 纹理
+        glVertexAttribPointer(2, vertexBuf[0].texture.size(), GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid *)(offsetof(Vertex, texture)));// 纹理
         glEnableVertexAttribArray(2);
         
         
@@ -257,9 +262,6 @@ protected:
                 return false;
             _textureId = textureId;
             
-            glUseProgram(*_programId);
-            GLint uniLocation = glGetUniformLocation(*_programId, "texture1");
-            glUniform1i(uniLocation, 0);
         }
         
         
