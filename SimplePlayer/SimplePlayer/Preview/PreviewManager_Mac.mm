@@ -63,6 +63,7 @@
             FragColor = vec4(1.0, 0.5, 0.2, 1.0);
         })";
         pRenderer->UpdateShader(vertexShaderSource, fragmentShaderSource);
+        pRenderer->SetClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         
     }
     return self;

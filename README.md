@@ -263,7 +263,7 @@ Vertex, Fragment是必须的。
 2. 初始化`NSOpenGLPixelFormat`时，需要显式指定OpenGL 3.2 即 `NSOpenGLProfileVersion3_2Core`
 3. Shader需要指定`#version 330 core`
 4. 最重要的，构造VBO时候，需要先创建并绑定VertexArray，再创建Vertex Buffer，这与[最好的OpenGL教程之一(B站视频)](https://www.bilibili.com/video/BV1MJ411u7Bc?p=3&spm_id_from=pageDriver&vd_source=486f641ca2720afac8d75c2261136b11)所述不完全一致
-5. 另外，勤用debug函数：`glGetShaderiv`、`glGetProgramiv`、`glGetError()`
+5. 另外，勤用debug函数：`glGetShaderiv`、`glGetProgramiv`、`glGetError()`。[一些教程](https://learnopengl.com/#!In-Practice/Debugging)
 
 对这些配置的个人精简理解：
 - Shader：GPU上运行的程序，也需要编译、链接成Program才能用
@@ -273,7 +273,7 @@ Vertex, Fragment是必须的。
 - Vertex Buffer Object：顶点属性对象数组，需要glVertexAttribPointer告诉GPU解析方式
 ![](https://learnopengl-cn.github.io/img/01/04/vertex_attribute_pointer.png)
 - Vertex Array Object：存储多个顶点属性的数组，便于切换不同顶点数据和属性配置（不是太理解）
-![](https://learnopengl-cn.github.io/img/01/04/vertex_array_objects.png)
+![](https://learnopengl-cn.github.io/img/01/04/vertex_array_objects_ebo.png)
 - 以前学的时候没想过，现在想来，之所以要使用缓冲区这样的东西，是为了一次性将所有的数据输入给GPU。这样，可以减少GPU数据传输、提高缓存命中率，操作“多个相同属性数组组成的对象”效率也比“多个对象组成的数组”要高。
 
 OpenGL ES的Shader关键字有变化[StackOverflow:OpenGL shader builder errors on compiling](https://stackoverflow.com/questions/24737705/opengl-shader-builder-errors-on-compiling)：<br>
@@ -335,3 +335,53 @@ virtual GL_IdHolder _CompileShader(GLenum shaderType, const std::string &source)
 ```
 不过，多线程、多Context时候，会不会导致还没切换到对应Context的时候就释放了呢？以后再研究吧。<br>
 另外，考虑到EBO、坐标变化、uniform还没学习，C++类还没完全抽出来。
+
+# 2023年6月11日
+
+## Element Buffer Object
+Element Buffer Object 相当于是一个索引列表，每一个值相当于是特定顶点的坐标。之所以加入EBO，是因为在复杂模型中，**每一个顶点可能会被多个三角形使用**（比如对一个两个三角形拼成的矩形，就有两个顶点是共用的）。复杂程序中，每一个顶点可能有多个属性，如果不能复用的话，会占用大量不必要的的内存和带宽。<br>
+EBO也是顶点属性的一种，配置方式与Vertex Buffer差不多。要点是：
+1. 使用前绑定VAO
+2. Buffer类型为`GL_ELEMENT_ARRAY_BUFFER`
+3. 使用`glDrawElements`替代`glDrawArrays`绘制
+
+这里直接摘抄learnOpenGL代码。
+```
+// ..:: 初始化代码 :: ..
+// 1. 绑定顶点数组对象
+glBindVertexArray(VAO);
+// 2. 把我们的顶点数组复制到一个顶点缓冲中，供OpenGL使用
+glBindBuffer(GL_ARRAY_BUFFER, VBO);
+glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+// 3. 复制我们的索引数组到一个索引缓冲中，供OpenGL使用
+glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+// 4. 设定顶点属性指针
+glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+glEnableVertexAttribArray(0);
+
+[...]
+
+// ..:: 绘制代码（渲染循环中） :: ..
+glUseProgram(shaderProgram);
+glBindVertexArray(VAO);
+glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+glBindVertexArray(0);
+```
+
+考虑到视频播放器并不需要太多的三角形，添加EBO还会增加复杂性，这里仅供学习，后续可能并不会使用。
+
+## 练习题
+[第一节练习题](https://learnopengl-cn.github.io/01%20Getting%20started/04%20Hello%20Triangle/)
+> 添加更多顶点到数据中，使用glDrawArrays，尝试绘制两个彼此相连的三角形：[参考解答](https://learnopengl.com/code_viewer_gh.php?code=src/1.getting_started/2.3.hello_triangle_exercise1/hello_triangle_exercise1.cpp)
+> 创建相同的两个三角形，但对它们的数据使用不同的VAO和VBO：[参考解答](https://learnopengl.com/code_viewer_gh.php?code=src/1.getting_started/2.4.hello_triangle_exercise2/hello_triangle_exercise2.cpp)
+> 创建两个着色器程序，第二个程序使用一个不同的片段着色器，输出黄色；再次绘制这两个三角形，让其中一个输出为黄色：[参考解答](https://learnopengl.com/code_viewer_gh.php?code=src/1.getting_started/2.5.hello_triangle_exercise3/hello_triangle_exercise3.cpp)
+
+这个题目还是还是很简单的。把旧代码复制一遍就可以了。关键点有两个：
+1. 所有顶点数据使用Vertex Array Object存储
+2. 每一帧渲染前，调用`glBindVertexArray()`和`glUseProgram()`绑定一下
+
+漫长的第一节结束，继续！
+
+## GLSL语言
+

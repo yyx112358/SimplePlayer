@@ -80,6 +80,7 @@ protected:
     std::mutex _mutex;
 };
 
+#define CheckError() _CheckGLError(__FILE__, __LINE__)
 
 class BaseGLRenderer {
 public:
@@ -93,7 +94,7 @@ public:
         glDeleteProgram(*p);
     };
     static void VERTEX_ARRAY_DELETER(GLuint *p) {
-        NSLog(@"Delete shader %d", *p);
+        NSLog(@"Delete vertex array %d", *p);
         glDeleteVertexArrays(1, p);
     }
 public:
@@ -103,6 +104,7 @@ public:
         _context->switchContext();
         
         _programId.reset();
+        _vertexArrayId.reset();
     }
     
     bool UpdateShader(const std::string &vertexShader, const std::string &fragmentShader) {
@@ -114,6 +116,17 @@ public:
         return true;
     }
     
+    void SetClearColor(GLfloat r, GLfloat g, GLfloat b, GLfloat a) {
+        _clearColor[0] = r;
+        _clearColor[1] = g;
+        _clearColor[2] = b;
+        _clearColor[3] = a;
+    }
+    
+    void SetEnableBlend(bool enable) {
+        
+    }
+    
     virtual bool Render() {
         // 获取当前OpenGL上下文
         if (_context == nullptr || _context->switchContext() == false)
@@ -121,58 +134,19 @@ public:
         // 更新内部参数
         if (_InternalUpdate() == false)
             return false;
-        
-        // 设置绘制模式
-    //    glMatrixMode(GL_PROJECTION);
-    //    glLoadIdentity();
-    //    glOrtho(0, dirtyRect.size.width, 0, dirtyRect.size.height, -1, 1);
-    //    glMatrixMode(GL_MODELVIEW);
-    //    glLoadIdentity();
-        
-        // 创建Vertex Array Object(VAO)。后续所有顶点操作都会储存到VAO中。OpenGL core模式下VAO必须要有。
-        GLuint vertexArrayId;
-        glGenVertexArrays(1, &vertexArrayId); // 生成顶点Array对象。【必须在创建Buffer前】
-        glBindVertexArray(vertexArrayId); // 绑定顶点Array
-        
-        // Vertex Buffer Object(VBO)
-        GLuint vertexBufId;
-        GLfloat vertexBuf[] = {
-            -1.0, 1.0,
-             1.0, 1.0,
-            -1.0,-1.0,
-            
-            -0.0,-1.0,
-             1.0,-1.0,
-             1.0, 1.0,
-        };
-        glGenBuffers(1, &vertexBufId); // 生成 1 个顶点缓冲区对象，vertexBufId是绑定的唯一OpenGL标识
-        glBindBuffer(GL_ARRAY_BUFFER, vertexBufId); // 绑定为GL_ARRAY_BUFFER
-        glBufferData(GL_ARRAY_BUFFER, sizeof(vertexBuf), vertexBuf, GL_STATIC_DRAW); // 第四个usage参数参考https://docs.gl/es3/glBufferData，GL_STATIC_DRAW意为：一次修改频繁使用 + 上层修改而GL做绘制
-        // 告诉GPU，Buffer内部结构。参考：https://docs.gl/es3/glVertexAttribPointer
-        // index: Buffer标识；size：对应顶点属性分量个数，范围1~4，二维位置为2，三维位置为3；normalized，是否归一化
-        // stride：步长，每个顶点占用字节数；pointer，该属性在buffer中位置
-        // 例如，一个顶点有以下float类型属性：0~2，三维位置；3~4，纹理坐标。则对位置属性，参数：vertexBufId, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), 0。对纹理属性：vertexBufId, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), 3
-        // 配置Vertex属性
-        glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), 0);
-        glEnableVertexAttribArray(0);
 
-        glBindBuffer(GL_ARRAY_BUFFER, vertexBufId); // 绑定为GL_ARRAY_BUFFER
-
-        // 这一行的作用是解除vertexBufId的激活状态，避免其它操作不小心改动到这里
-        glBindVertexArray(0);
-        
-        if (_CheckGLError())
-            return false;
-        
         // 上屏绘制
-        glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+        glClearColor(_clearColor[0], _clearColor[1], _clearColor[2], _clearColor[3]);
         glClear(GL_COLOR_BUFFER_BIT);
         
-        glUseProgram(*_programId); // 启用Shader程序
-        glBindVertexArray(vertexArrayId); // 绑定Vertex Array
-        glDrawArrays(GL_TRIANGLES, 0, 6); // 绘制三角形
+//        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // 取消注释后将启用线框模式
         
-        if (_CheckGLError())
+        glUseProgram(*_programId); // 启用Shader程序
+        glBindVertexArray(*_vertexArrayId); // 绑定Vertex Array
+//        glDrawArrays(GL_TRIANGLES, 0, 6); // 绘制三角形
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0); // 使用Element绘制三角形
+        
+        if (CheckError())
             return false;
         
         return true;
@@ -209,6 +183,44 @@ protected:
             _programId = GL_IdHolder(new GLuint(shaderProgram), PROGRAM_DELETER);
         }
         
+        // 创建Vertex Array Object(VAO)。后续所有顶点操作都会储存到VAO中。OpenGL core模式下VAO必须要有。
+        GLuint vertexArrayId;
+        glGenVertexArrays(1, &vertexArrayId); // 生成顶点Array对象。【必须在创建Buffer前】
+        glBindVertexArray(vertexArrayId); // 绑定顶点Array
+        
+        // Vertex Buffer Object(VBO)
+        GLuint vertexBufId;
+        GLfloat vertexBuf[] = {
+            -0.75, 0.75, // 左上
+             0.75, 0.75, // 右上
+            -0.75,-0.75, // 左下
+             0.75,-0.75, // 右下
+        };
+        glGenBuffers(1, &vertexBufId); // 生成 1 个顶点缓冲区对象，vertexBufId是绑定的唯一OpenGL标识
+        glBindBuffer(GL_ARRAY_BUFFER, vertexBufId); // 绑定为GL_ARRAY_BUFFER
+        glBufferData(GL_ARRAY_BUFFER, sizeof(vertexBuf), vertexBuf, GL_STATIC_DRAW); // 传输数据
+        glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), NULL);// 配置Vertex属性
+        glEnableVertexAttribArray(0); // 启用VertexAttribArray
+        
+        // Element Buffer Object(EBO)
+        GLuint elementBufId;
+        GLuint elementBuf[] = {
+            0, 1, 2, // 第一个三角形
+            1, 3, 2, // 第二个三角形
+        };
+        glGenBuffers(1, &elementBufId);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, elementBufId); // 绑定为GL_ELEMENT_ARRAY_BUFFER
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(elementBuf), elementBuf, GL_STATIC_DRAW);
+        
+        _vertexArrayId.reset(new GLuint(vertexArrayId));
+        
+        // 这一行的作用是解除vertexBufId的激活状态，避免其它操作不小心改动到这里。不过这种情况很少见。
+        glBindVertexArray(0);
+        if (CheckError())
+            return false;
+
+
+        _needUpdate = false;
         return true;
     }
     
@@ -232,12 +244,25 @@ protected:
         }
     }
     
-    bool _CheckGLError() {
-        GLenum error = glGetError();
-        if (error) {
-            NSLog(@"GL error:%d", error);
+    static bool _CheckGLError(const char *file, int line) {
+        GLenum errorCode;
+        while ((errorCode = glGetError()) != GL_NO_ERROR)
+        {
+            const char *error;
+            switch (errorCode)
+            {
+                case GL_INVALID_ENUM:                  error = "INVALID_ENUM"; break;
+                case GL_INVALID_VALUE:                 error = "INVALID_VALUE"; break;
+                case GL_INVALID_OPERATION:             error = "INVALID_OPERATION"; break;
+    //            case GL_STACK_OVERFLOW:                error = "STACK_OVERFLOW"; break;
+    //            case GL_STACK_UNDERFLOW:               error = "STACK_UNDERFLOW"; break;
+                case GL_OUT_OF_MEMORY:                 error = "OUT_OF_MEMORY"; break;
+                case GL_INVALID_FRAMEBUFFER_OPERATION: error = "INVALID_FRAMEBUFFER_OPERATION"; break;
+                default: assert(0);break;
+            }
+            NSLog(@"%s | %s[%d]", error, file, line);
         }
-        return error != 0;
+        return errorCode != 0;
     }
     
 protected:
@@ -246,8 +271,10 @@ protected:
     
     std::string _vertexShaderSource;
     std::string _fragmentShaderSource;
-        
     GL_IdHolder _programId = GL_IdHolder(nullptr, PROGRAM_DELETER);
+    GL_IdHolder _vertexArrayId = GL_IdHolder(nullptr, VERTEX_ARRAY_DELETER);
+        
+    std::array<GLfloat, 4> _clearColor;
 };
 }
 
