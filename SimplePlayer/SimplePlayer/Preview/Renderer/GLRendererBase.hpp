@@ -15,11 +15,18 @@
 #include <array>
 #include <any>
 #include <mutex>
+#include <map>
+#include <unordered_map>
+#include <typeindex>
 
 
 #define GL_SILENCE_DEPRECATION
 #import <Cocoa/Cocoa.h>
 #import <OpenGL/gl3.h>
+
+#import "../../../../thirdParty/glm/glm/glm.hpp"
+#include "../../../../thirdParty/glm/glm/gtc/matrix_transform.hpp"
+#include "../../../../thirdParty/glm/glm/gtc/type_ptr.hpp"
 
 #import "ImageReader.hpp"
 
@@ -123,7 +130,10 @@ public:
         return true;
     }
     
-//    bool UpdateUniform(const std::string &name, )
+    bool UpdateUniform(const std::string &name, std::any uniform) {
+        _uniformMap[name] = uniform;
+        return true;
+    }
     
     void SetClearColor(GLfloat r, GLfloat g, GLfloat b, GLfloat a) {
         _clearColor[0] = r;
@@ -154,7 +164,17 @@ public:
         
         glActiveTexture(GL_TEXTURE0 + 1); // 激活纹理单元1
         glBindTexture(GL_TEXTURE_2D, _textureId); // 绑定纹理。根据上下文，这个纹理绑定到了纹理单元1
-        glUniform1i(glGetUniformLocation(*_programId, "texture1"), 1); // 将纹理单元传递给uniform
+        UpdateUniform("texture1", 1); // 更新纹理uniform
+        
+        glm::mat4 trans(1.0f);
+        static int angle = 0;
+        trans = glm::translate(trans, glm::vec3(0.5f, 0.5f, 0.0f));
+        trans = glm::rotate(trans, glm::radians(float(angle++)), glm::vec3(0.0f, 0.0f, 1.0f));
+        trans = glm::scale(trans, glm::vec3(0.75f, 0.75f, 0.75f));
+        UpdateUniform("transform", trans);
+        
+        
+        _UpdateUniform();
         
         glBindVertexArray(*_vertexArrayId); // 绑定Vertex Array
 //        glDrawArrays(GL_TRIANGLES, 0, 6); // 绘制三角形
@@ -295,6 +315,35 @@ protected:
         }
     }
     
+    virtual void _UpdateUniform() {
+        // 更新Uniform
+        glUseProgram(*_programId);
+        for (const auto &uniPair : _uniformMap) {
+            // 根据type调用对应的glUniformx()
+            const static std::unordered_map<std::type_index, std::function<void(GLint location, const std::any &)>>tbl = {
+                {typeid(int), [](GLint location, const std::any &val){ glUniform1i(location, std::any_cast<int>(val));}},
+                {typeid(float), [](GLint location, const std::any &val){ glUniform1f(location, std::any_cast<float>(val));}},
+                {typeid(glm::mat4), [](GLint location, const std::any &val){ glUniformMatrix4fv(location, 1, GL_FALSE, glm::value_ptr(std::any_cast<glm::mat4>(val))); }},
+            };
+            
+            
+            // 查找对应的方法
+            const std::any &value = uniPair.second;
+            GLint location = glGetUniformLocation(*_programId, uniPair.first.c_str());
+            if (tbl.count(value.type()) == 0) {
+                NSLog(@"%s not found in %s", value.type().name(), __FUNCTION__);
+                abort();
+            }
+            if (value.has_value() == false || location < 0 || tbl.count(value.type()) == 0)
+                continue;
+            
+            // 调用
+            auto &f = tbl.at(value.type());
+            f(location, value);
+        }
+        _uniformMap.clear();
+    }
+    
     static bool _CheckGLError(const char *file, int line) {
         GLenum errorCode;
         while ((errorCode = glGetError()) != GL_NO_ERROR)
@@ -323,6 +372,7 @@ protected:
     std::string _vertexShaderSource;
     std::string _fragmentShaderSource;
     ImageBuffer _textureBuffer;
+    std::map<std::string, std::any> _uniformMap;
     
     GL_IdHolder _programId = GL_IdHolder(nullptr, PROGRAM_DELETER);
     GL_IdHolder _vertexArrayId = GL_IdHolder(nullptr, VERTEX_ARRAY_DELETER);

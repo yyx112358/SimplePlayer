@@ -383,8 +383,7 @@ glBindVertexArray(0);
 
 漫长的第一节结束，继续！
 
-## GLSL语言
-[LearnOpenGL：着色器](https://learnopengl-cn.github.io/01%20Getting%20started/05%20Shaders/)
+## GLSL语言 [LearnOpenGL：着色器](https://learnopengl-cn.github.io/01%20Getting%20started/05%20Shaders/)
 
 运行于GPU的程序。基本结构：
 ```
@@ -546,4 +545,99 @@ int main()
     // ... 渲染多边形 ...
     ```
 
+# 2023年6月12日
+关键部分通过了，剩下的快速通过。
 
+## [LearnOpenGL：变换](https://learnopengl-cn.github.io/01%20Getting%20started/07%20Transformations/)
+
+主要是通过矩阵运算实现仿射变换。记录一下基本的矩阵变换，以供记忆。
+
+位移矩阵：
+$$
+\begin{bmatrix}  \color{red}1 & \color{red}0 & \color{red}0 & \color{red}{T_x} \\ \color{green}0 & \color{green}1 & \color{green}0 & \color{green}{T_y} \\ \color{blue}0 & \color{blue}0 & \color{blue}1 & \color{blue}{T_z} \\ \color{purple}0 & \color{purple}0 & \color{purple}0 & \color{purple}1 \end{bmatrix} \cdot \begin{pmatrix} x \\ y \\ z \\ 1 \end{pmatrix} = \begin{pmatrix} x + \color{red}{T_x} \\ y + \color{green}{T_y} \\ z + \color{blue}{T_z} \\ 1 \end{pmatrix}
+$$
+缩放矩阵：
+$$
+\begin{bmatrix} \color{red}{S_1} & \color{red}0 & \color{red}0 & \color{red}0 \\ \color{green}0 & \color{green}{S_2} & \color{green}0 & \color{green}0 \\ \color{blue}0 & \color{blue}0 & \color{blue}{S_3} & \color{blue}0 \\ \color{purple}0 & \color{purple}0 & \color{purple}0 & \color{purple}1 \end{bmatrix} \cdot \begin{pmatrix} x \\ y \\ z \\ 1 \end{pmatrix} = \begin{pmatrix} \color{red}{S_1} \cdot x \\ \color{green}{S_2} \cdot y \\ \color{blue}{S_3} \cdot z \\ 1 \end{pmatrix}
+$$
+旋转矩阵（绕z轴）：
+$$
+\begin{bmatrix} \color{red}{\cos \theta} & - \color{red}{\sin \theta} & \color{red}0 & \color{red}0 \\ \color{green}{\sin \theta} & \color{green}{\cos \theta} & \color{green}0 & \color{green}0 \\ \color{blue}0 & \color{blue}0 & \color{blue}1 & \color{blue}0 \\ \color{purple}0 & \color{purple}0 & \color{purple}0 & \color{purple}1 \end{bmatrix} \cdot \begin{pmatrix} x \\ y \\ z \\ 1 \end{pmatrix} = \begin{pmatrix} \color{red}{\cos \theta} \cdot x - \color{red}{\sin \theta} \cdot y  \\ \color{green}{\sin \theta} \cdot x + \color{green}{\cos \theta} \cdot y \\ z \\ 1 \end{pmatrix}
+$$
+任意轴旋转：
+$$
+\begin{bmatrix} \cos \theta + \color{red}{R_x}^2(1 - \cos \theta) & \color{red}{R_x}\color{green}{R_y}(1 - \cos \theta) - \color{blue}{R_z} \sin \theta & \color{red}{R_x}\color{blue}{R_z}(1 - \cos \theta) + \color{green}{R_y} \sin \theta & 0 \\ \color{green}{R_y}\color{red}{R_x} (1 - \cos \theta) + \color{blue}{R_z} \sin \theta & \cos \theta + \color{green}{R_y}^2(1 - \cos \theta) & \color{green}{R_y}\color{blue}{R_z}(1 - \cos \theta) - \color{red}{R_x} \sin \theta & 0 \\ \color{blue}{R_z}\color{red}{R_x}(1 - \cos \theta) - \color{green}{R_y} \sin \theta & \color{blue}{R_z}\color{green}{R_y}(1 - \cos \theta) + \color{red}{R_x} \sin \theta & \cos \theta + \color{blue}{R_z}^2(1 - \cos \theta) & 0 \\ 0 & 0 & 0 & 1 \end{bmatrix}
+$$
+
+以上矩阵运算均可使用GLM库进行计算。这是一个专门用于OpenGL矩阵变换的header-only库。[Git仓库](https://github.com/g-truc/glm)<br>
+获取矩阵之后，就可以使用`glUniformMatrix4fv()`将矩阵作为uniform传递给Vertex Shader了。<br>
+矩阵计算代码。需要注意的是，因为glm的vec、mat是模版，为了避免编译器推断类型错误，**最好保证每一个数字都带有后缀'f'**。
+```
+glUseProgram(*_programId); // 启用Shader程序
+        
+glm::mat4 trans(1.0f); // 单位矩阵
+trans = glm::translate(trans, glm::vec3(0.5f, 0.5f, 0.0f));
+trans = glm::rotate(trans, glm::radians(60.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+trans = glm::scale(trans, glm::vec3(0.75f, 0.75f, 0.75f));
+
+unsigned int transformLoc = glGetUniformLocation(ourShader.ID, "transform");
+glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(trans));
+```
+Vertex Shader。GLSL直接用乘法就可以进行矩阵计算。
+```
+#version 330 core
+layout (location = 0) in vec2 aPos;
+        
+uniform mat4 transform;
+
+void main()
+{
+    gl_Position = transform * vec4(aPos.x, aPos.y, 0.0, 1.0);
+}
+```
+
+## 使用std::any实现任意类型uniform更新
+
+通过std::any、std::type_index以及lambda表达式，可以实现任意类型的glUniformX()调用而不需要写重载。重载效率会高一些，不过写起来太麻烦了。以后正式编写时候应该会使用重载，但是在学习阶段，使用一下无妨。等以后公司完全切到C++17，就可以直接借用了。
+
+```
+virtual void _UpdateUniform() {
+    // 更新Uniform
+    glUseProgram(*_programId);
+    for (const auto &uniPair : _uniformMap) {
+        // 根据type调用对应的glUniformx()
+        const static std::unordered_map<std::type_index, std::function<void(GLint location, const std::any &)>>tbl = {
+            {typeid(int), [](GLint location, const std::any &val){ glUniform1i(location, std::any_cast<int>(val));}},
+            {typeid(float), [](GLint location, const std::any &val){ glUniform1f(location, std::any_cast<float>(val));}},
+            {typeid(glm::mat4), [](GLint location, const std::any &val){ glUniformMatrix4fv(location, 1, GL_FALSE, glm::value_ptr(std::any_cast<glm::mat4>(val))); }},
+        };
+        
+        // 查找对应的方法
+        const std::any &value = uniPair.second;
+        GLint location = glGetUniformLocation(*_programId, uniPair.first.c_str());
+        if (tbl.count(value.type()) == 0) {
+            NSLog(@"%s not found in %s", value.type().name(), __FUNCTION__);
+            abort();
+        }
+        if (value.has_value() == false || location < 0 || tbl.count(value.type()) == 0)
+            continue;
+        
+        // 调用
+        auto &f = tbl.at(value.type());
+        f(location, value);
+    }
+    _uniformMap.clear();
+}
+```
+之所以使用map而不用switch，是因为type_info都是运行时数据，编译期无法获取，也就不能使用switch case语句。
+
+## [LearnOpenGL：坐标系统](https://learnopengl-cn.github.io/01%20Getting%20started/08%20Coordinate%20Systems/)
+
+![](https://learnopengl-cn.github.io/img/01/08/coordinate_systems.png)
+
+
+# 优质参考资料
+
+[LearnOpenGL-CN](https://learnopengl-cn.github.io/)<br>
+[OpenGL参考文档docs.GL](https://docs.gl/)
+[OPENGL ES 2.0 知识串讲](http://geekfaner.com/shineengine/blog2_OpenGLESv2_1.html)
