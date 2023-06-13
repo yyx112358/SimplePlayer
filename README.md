@@ -122,14 +122,14 @@ NSOpenGLView + Legacy OpenGL绘制三角形：
 # 2023年6月4日
 ## 使用Shader绘制三角形
 ![OpenGL基本渲染链路](https://learnopengl-cn.github.io/img/01/04/pipeline.png)
-| 名称 | 功能 |
-| --- | ---|
-| **Vertex Shader** 顶点着色器 | 坐标变换和基本顶点属性处理，**每个顶点执行一次** |
-| Primitive Assembly 图元装配 | 顶点组装为多边形 |
-| Geometry Shader 几何着色器|由已有顶点生成新的顶点|
-| Rasterization 光栅化|图元映射为像素，生成片段Fragment|
-| **Fragment Shader** 片段着色器|计算像素颜色，**每像素执行一次**|
-| Alpha Test and Blending α测试和混合|深度测试，丢弃被遮挡物体；并根据alpha透明度进行混合|
+| 名称                                | 功能                                                |
+| ----------------------------------- | --------------------------------------------------- |
+| **Vertex Shader** 顶点着色器        | 坐标变换和基本顶点属性处理，**每个顶点执行一次**    |
+| Primitive Assembly 图元装配         | 顶点组装为多边形                                    |
+| Geometry Shader 几何着色器          | 由已有顶点生成新的顶点                              |
+| Rasterization 光栅化                | 图元映射为像素，生成片段Fragment                    |
+| **Fragment Shader** 片段着色器      | 计算像素颜色，**每像素执行一次**                    |
+| Alpha Test and Blending α测试和混合 | 深度测试，丢弃被遮挡物体；并根据alpha透明度进行混合 |
 
 
 Vertex, Fragment是必须的。
@@ -634,6 +634,76 @@ virtual void _UpdateUniform() {
 ## [LearnOpenGL：坐标系统](https://learnopengl-cn.github.io/01%20Getting%20started/08%20Coordinate%20Systems/)
 
 ![](https://learnopengl-cn.github.io/img/01/08/coordinate_systems.png)
+
+> 1. 局部坐标是对象相对于局部原点的坐标，也是物体起始的坐标。<br>
+> 2. 下一步是将局部坐标变换为世界空间坐标，世界空间坐标是处于一个更大的空间范围的。这些坐标相对于世界的全局原点，它们会和其它物体一起相对于世界的原点进行摆放。<br>
+> 3. 接下来我们将世界坐标变换为观察空间坐标，使得每个坐标都是从摄像机或者说观察者的角度进行观察的。<br>
+> 4. 坐标到达观察空间之后，我们需要将其投影到裁剪坐标。裁剪坐标会被处理至-1.0到1.0的范围内，并判断哪些顶点将会出现在屏幕上。<br>
+> 5. 最后，我们将裁剪坐标变换为屏幕坐标，我们将使用一个叫做视口变换(Viewport Transform)的过程。视口变换将位于-1.0到1.0范围的坐标变换到由glViewport函数所定义的坐标范围内。最后变换出来的坐标将会送到光栅器，将其转化为片段。<br>
+
+# 2023年6月13日
+
+## 3D绘制章节
+LearnOpenGL后续的几章都是关于3D绘制的，和需求不相关。因此只简单快速过一遍：
+- [摄像机](https://learnopengl-cn.github.io/01%20Getting%20started/09%20Camera/) 通过配置LookAt矩阵，实现不同角度观察的摄像机。
+- [颜色](https://learnopengl-cn.github.io/02%20Lighting/01%20Colors/) 光源 - 反射模型，创建一个光照场景
+- [基础光照](https://learnopengl-cn.github.io/02%20Lighting/02%20Basic%20Lighting/)
+  - 冯氏光照模型：环境 + 漫反射 + 镜面反射
+    - ![](https://learnopengl-cn.github.io/img/02/02/basic_lighting_phong.png)
+  - 环境光照：在所有物体表面都有且相等的基础光照值
+  - 漫反射：强度等于 $\vec{入射光} · \vec{表面法向量}$ <br> 
+    - ![](https://learnopengl-cn.github.io/img/02/02/diffuse_light.png)
+    - 为了解决缩放时法向量偏移问题，引入**法线矩阵**，定义为「模型矩阵左上角3x3部分的逆矩阵的转置矩阵」<br>![](https://learnopengl-cn.github.io/img/02/02/basic_lighting_normal_transformation.png)
+- [材质](https://learnopengl-cn.github.io/02%20Lighting/03%20Materials/)
+  - 决定物体对光照各个分量反射强度的一组值
+  - OpenGL**定义结构体**
+    ```
+    // GLSL
+    struct Material {
+    vec3 ambient;
+    vec3 diffuse;
+    vec3 specular;
+    float shininess;
+    }; 
+    // CPU程序
+    lightingShader.setVec3("material.ambient",  1.0f, 0.5f, 0.31f);
+    lightingShader.setVec3("material.diffuse",  1.0f, 0.5f, 0.31f);
+    lightingShader.setVec3("material.specular", 0.5f, 0.5f, 0.5f);
+    lightingShader.setFloat("material.shininess", 32.0f);
+    ```
+- [光照贴图](https://learnopengl-cn.github.io/02%20Lighting/04%20Lighting%20maps/)
+  - 将物体各个位置的材质、反射率以贴图的形式保存并渲染 <br>![](https://learnopengl-cn.github.io/img/02/04/materials_specular_map.png)
+- [投光物](https://learnopengl-cn.github.io/02%20Lighting/05%20Light%20casters/)
+  - 平行光
+  - 点光源
+  - 聚光
+- [多光源](https://learnopengl-cn.github.io/02%20Lighting/06%20Multiple%20lights/)：同一场景多个光源，并通过调整参数获得不同的氛围
+- [Assimp](https://learnopengl-cn.github.io/03%20Model%20Loading/01%20Assimp/)：模型导入库
+- [网格](https://learnopengl-cn.github.io/03%20Model%20Loading/02%20Mesh/)：C++实现的Vertex类
+- [模型](https://learnopengl-cn.github.io/03%20Model%20Loading/03%20Model/)：加载线上模型
+- [深度测试(Depth Test)](https://learnopengl-cn.github.io/04%20Advanced%20OpenGL/01%20Depth%20testing/)
+  - 使用深度缓冲（Z-Buffer）检查各个片段之间的遮挡关系
+  - 在Fragment Shader 和 模版测试 后执行
+  - 默认关闭。启用代码：`glEnable(GL_DEPTH_TEST);`。
+  - 允许自定义深度比较函数。一般使用非线性函数，提高近处的精度，降低远处精度：
+    $$\begin{equation} F_{depth} = \frac{1/z - 1/near}{1/far - 1/near} \end{equation}$$
+    ![](https://learnopengl-cn.github.io/img/04/01/depth_non_linear_graph.png)
+- [模版测试(Stencil Test)](https://learnopengl-cn.github.io/04%20Advanced%20OpenGL/02%20Stencil%20testing/)
+  - 即Mask掩码。只有对应位置掩码为指定值才绘制
+  - 在Fragment Shader后执行
+  - 可以用于绘制边框
+- [混合(Blend)](https://learnopengl-cn.github.io/04%20Advanced%20OpenGL/03%20Blending/)
+  - alpha混合
+  - 启用代码：`glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);`
+- [面剔除(Face Culling)](https://learnopengl-cn.github.io/04%20Advanced%20OpenGL/04%20Face%20culling/)
+  - 从观察者的角度看，顶点顺序为**逆时针**的三角形会被剔除，以提高性能
+  - 启用：`glEnable(GL_CULL_FACE);`
+  - 修改被剔除面类型：`glCullFace(GL_FRONT);`
+
+
+## [帧缓冲(Frame Buffer)](https://learnopengl-cn.github.io/04%20Advanced%20OpenGL/05%20Framebuffers/)
+又称为**离屏渲染**。
+
 
 
 # 优质参考资料

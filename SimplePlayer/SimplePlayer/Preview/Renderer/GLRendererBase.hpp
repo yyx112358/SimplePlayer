@@ -143,7 +143,10 @@ public:
     }
     
     void SetEnableBlend(bool enable) {
-        
+        if (enable)
+            glEnable(GL_BLEND);
+        else
+            glDisable(GL_BLEND);
     }
     
     virtual bool Render() {
