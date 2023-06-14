@@ -10,11 +10,11 @@
 
 #import <Foundation/Foundation.h>
 #include <cstddef>
+#include <vector>
 #include <string>
 #include <optional>
 #include <array>
 #include <any>
-#include <mutex>
 #include <map>
 #include <unordered_map>
 #include <typeindex>
@@ -28,73 +28,16 @@
 #include "../../../../thirdParty/glm/glm/gtc/matrix_transform.hpp"
 #include "../../../../thirdParty/glm/glm/gtc/type_ptr.hpp"
 
+#import "GLContext.hpp"
 #import "ImageReader.hpp"
 
 namespace sp {
 
-/**
- * GL环境
- * TODO: 抽出公共跨平台部分
- */
-class GLContext {
+
+typedef std::unique_ptr<GLuint, void(*)(GLuint *)> GL_IdHolder; // 持有GL ID的unique_ptr，支持自动释放
+
+class GLRendererProgram {
 public:
-    virtual ~GLContext() {
-        std::lock_guard lock(_mutex);
-        _context = nil;
-    }
-    
-    virtual bool init() {
-        std::lock_guard lock(_mutex);
-
-        NSOpenGLPixelFormatAttribute attrs[] =
-        {
-            NSOpenGLPFADoubleBuffer,
-            NSOpenGLPFADepthSize, 24,
-            NSOpenGLPFAOpenGLProfile, NSOpenGLProfileVersion3_2Core,  // 【声明使用OpenGL3.2】，不配置则默认OpenGL 2
-            0
-        };
-        
-        NSOpenGLPixelFormat * pixelFormat = [[NSOpenGLPixelFormat alloc] initWithAttributes:attrs];
-        _context = [[NSOpenGLContext alloc] initWithFormat:pixelFormat shareContext:nil];
-        
-        return _context != nil;
-    }
-    
-    virtual NSOpenGLContext *context() {
-        return _context;
-    }
-    
-    /// 切换到本Context
-    virtual bool switchContext() {
-        if (_context == nil && init() == false)
-            return false;
-        std::lock_guard lock(_mutex);
-        
-        [_context makeCurrentContext];
-        return true;
-    }
-    
-    // 在OpenGL绘制完成后，调用flush方法将绘制的结果显示到窗口上
-    // 应在最后一个GL操作完成时调用
-    virtual bool flush() {
-        if (_context == nil && init() == false)
-            return false;
-        std::lock_guard lock(_mutex);
-        
-        [_context flushBuffer];
-        return true;
-    }
-    
-protected:
-    NSOpenGLContext *_context;
-    std::mutex _mutex;
-};
-
-#define CheckError() _CheckGLError(__FILE__, __LINE__)
-
-class BaseGLRenderer {
-public:
-    typedef std::unique_ptr<GLuint, void(*)(GLuint *)> GL_IdHolder; // 持有GL ID的unique_ptr，支持自动释放
     static void SHADER_DELETER(GLuint *p) {
         NSLog(@"Delete shader %d", *p);
         glDeleteShader(*p);
@@ -103,35 +46,197 @@ public:
         NSLog(@"Delete program %d", *p);
         glDeleteProgram(*p);
     };
-    static void VERTEX_ARRAY_DELETER(GLuint *p) {
-        NSLog(@"Delete vertex array %d", *p);
-        glDeleteVertexArrays(1, p);
-    }
 public:
-    BaseGLRenderer(std::shared_ptr<GLContext> context) :_context(context) {}
+    GLRendererProgram(std::shared_ptr<GLContext> context) :_context(context) {}
+    virtual ~GLRendererProgram() {
+        _context->switchContext();
+        _programId.reset();
+        CheckError();
+    }
     
-    virtual ~BaseGLRenderer() {
+    bool Activate() {
         _context->switchContext();
         
-        _programId.reset();
-        _vertexArrayId.reset();
+        if (auto program = _CompileProgramLazy())
+            _programId = std::move(program);
+        else
+            return false;
+        
+        glUseProgram(*_programId);
+        _UpdateUniform();
+        
+        return true;
     }
     
-    bool UpdateShader(const std::string &vertexShader, const std::string &fragmentShader) {
+    bool UpdateShader(const std::vector<std::string> &vertexShader, const std::vector<std::string> &fragmentShader) {
         _vertexShaderSource = vertexShader;
         _fragmentShaderSource = fragmentShader;
         _needUpdate = true;
         return true;
     }
     
-    bool UpdateTexture(const ImageBuffer &buffer) {
-        _textureBuffer = buffer;
-        _needUpdate = true;
+    bool UpdateUniform(const std::string &name, std::any uniform) {
+        _uniformMap[name] = uniform;
         return true;
     }
     
-    bool UpdateUniform(const std::string &name, std::any uniform) {
-        _uniformMap[name] = uniform;
+    bool FlushUniform() {
+        _UpdateUniform();
+        return true;
+    }
+    
+protected:
+    /// 编译Shader
+    virtual GL_IdHolder _CompileShader(GLenum shaderType, const std::string &source) const {
+        GL_IdHolder shader(nullptr, SHADER_DELETER);
+
+        GLuint shaderId;
+        shaderId = glCreateShader(shaderType); // 创建并绑定Shader
+        const char *sourceAddr = source.c_str();
+        glShaderSource(shaderId, 1, &sourceAddr, NULL); // 绑定Shader源码
+        glCompileShader(shaderId); // 编译Shader
+
+        // 可选，检查编译状态。非常有用
+        int success;
+        glGetShaderiv(shaderId, GL_COMPILE_STATUS, &success);
+        if (!success) {
+            char buf[512];
+            glGetShaderInfoLog(shaderId, sizeof(buf), NULL, buf);
+            NSLog(@"%s", buf);
+        } else {
+            shader.reset(new GLuint(shaderId));
+        }
+        return shader;
+    }
+    
+    // 使用shaders编译Program
+    virtual GL_IdHolder _CompileProgram(const std::vector<GL_IdHolder> &shaders) const {
+        // 链接Shader为Program。和CPU程序很类似，编译.o文件、链接为可执行文件。【耗时非常长】
+        GL_IdHolder programId(nullptr, PROGRAM_DELETER);
+        GLuint shaderProgram;
+        shaderProgram = glCreateProgram();
+        for (auto &shader : shaders) // 绑定shader
+            glAttachShader(shaderProgram, *shader);
+        glLinkProgram(shaderProgram); // 链接Shader为完整着色器程序
+        
+        // 检查Program是否链接成功
+        int success;
+        glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success); // 检查编译是否成功
+        if (!success) {
+            char buf[512];
+            glGetProgramInfoLog(shaderProgram, sizeof(buf), NULL, buf);
+            NSLog(@"%s", buf);
+        } else {
+            programId.reset(new GLuint(shaderProgram));
+        }
+        return programId;
+    }
+    
+    // 使用_vertexShaderSource和_fragmentShaderSource
+    virtual GL_IdHolder _CompileProgramLazy() {
+        GL_IdHolder program(nullptr, PROGRAM_DELETER);
+        if (_vertexShaderSource.empty() == false || _fragmentShaderSource.empty() == false) {
+            assert(_vertexShaderSource.size() > 0 && _fragmentShaderSource.size() > 0);
+
+            // 编译Shader
+            std::vector<GL_IdHolder> shaders;
+            for (auto &source : _vertexShaderSource) {
+                GL_IdHolder vertexShaderId = _CompileShader(GL_VERTEX_SHADER, source);
+                if (vertexShaderId != nullptr)
+                    shaders.push_back(std::move(vertexShaderId));
+                else
+                    return program;
+            }
+            for (auto &source : _fragmentShaderSource) {
+                GL_IdHolder fragmentShaderId = _CompileShader(GL_FRAGMENT_SHADER, source);
+                if (fragmentShaderId != nullptr)
+                    shaders.push_back(std::move(fragmentShaderId));
+                else
+                    return program;
+            }
+            program = _CompileProgram(shaders);
+            
+            // 删除Shader
+            _vertexShaderSource.clear();
+            _fragmentShaderSource.clear();
+            shaders.clear();
+        } else {
+            
+        }
+        return program;
+    }
+    
+    virtual void _UpdateUniform() {
+        // 更新Uniform
+        if (_programId == nullptr)
+            return;
+        glUseProgram(*_programId);
+        for (const auto &uniPair : _uniformMap) {
+            // 根据type调用对应的glUniformx()
+            const static std::unordered_map<std::type_index, std::function<void(GLint location, const std::any &)>>tbl = {
+                {typeid(int), [](GLint location, const std::any &val){ glUniform1i(location, std::any_cast<int>(val));}},
+                {typeid(float), [](GLint location, const std::any &val){ glUniform1f(location, std::any_cast<float>(val));}},
+                {typeid(glm::mat4), [](GLint location, const std::any &val){ glUniformMatrix4fv(location, 1, GL_FALSE, glm::value_ptr(std::any_cast<glm::mat4>(val))); }},
+            };
+            
+            
+            // 查找对应的方法
+            const std::any &value = uniPair.second;
+            GLint location = glGetUniformLocation(*_programId, uniPair.first.c_str());
+            if (tbl.count(value.type()) == 0) {
+                NSLog(@"%s not found in %s", value.type().name(), __FUNCTION__);
+                abort();
+            }
+            if (value.has_value() == false || location < 0 || tbl.count(value.type()) == 0)
+                continue;
+            
+            // 调用
+            auto &f = tbl.at(value.type());
+            f(location, value);
+        }
+        _uniformMap.clear();
+    }
+    
+protected:
+    const std::shared_ptr<GLContext> _context;
+    bool _needUpdate = true;
+    
+    std::vector<std::string> _vertexShaderSource;
+    std::vector<std::string> _fragmentShaderSource;
+    std::map<std::string, std::any> _uniformMap;
+    
+    GL_IdHolder _programId = GL_IdHolder(nullptr, PROGRAM_DELETER);
+};
+
+
+class GLRendererBase {
+public:
+    static void VERTEX_ARRAY_DELETER(GLuint *p) {
+        NSLog(@"Delete vertex array %d", *p);
+        glDeleteVertexArrays(1, p);
+    }
+    static void FRAME_BUFFER_DELETER(GLuint *p) {
+        NSLog(@"Delete frame buffer %d", *p);
+        glDeleteFramebuffers(1, p);
+    }
+public:
+    GLRendererBase(std::shared_ptr<GLContext> context) :_context(context), _program(new GLRendererProgram(context)) {}
+    
+    virtual ~GLRendererBase() {
+        _context->switchContext();
+        
+        _program.reset();
+        _vertexArrayId.reset();
+    }
+    
+    bool UpdateShader(const std::vector<std::string> &vertexShader, const std::vector<std::string> &fragmentShader) {
+        _program->UpdateShader(vertexShader, fragmentShader);
+        return true;
+    }
+    
+    bool UpdateTexture(const ImageBuffer &buffer) {
+        _textureBuffer = buffer;
+        _needUpdate = true;
         return true;
     }
     
@@ -162,22 +267,20 @@ public:
         glClear(GL_COLOR_BUFFER_BIT);
         
 //        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // 取消注释后将启用线框模式
-        
-        glUseProgram(*_programId); // 启用Shader程序
+        _program->Activate(); // 启用Shader程序
         
         glActiveTexture(GL_TEXTURE0 + 1); // 激活纹理单元1
         glBindTexture(GL_TEXTURE_2D, _textureId); // 绑定纹理。根据上下文，这个纹理绑定到了纹理单元1
-        UpdateUniform("texture1", 1); // 更新纹理uniform
+        _program->UpdateUniform("texture1", 1); // 更新纹理uniform
         
         glm::mat4 trans(1.0f);
         static int angle = 0;
-        trans = glm::translate(trans, glm::vec3(0.5f, 0.5f, 0.0f));
-        trans = glm::rotate(trans, glm::radians(float(angle++)), glm::vec3(0.0f, 0.0f, 1.0f));
-        trans = glm::scale(trans, glm::vec3(0.75f, 0.75f, 0.75f));
-        UpdateUniform("transform", trans);
+//        trans = glm::translate(trans, glm::vec3(0.5f, 0.5f, 0.0f));
+//        trans = glm::rotate(trans, glm::radians(float(angle++)), glm::vec3(0.0f, 0.0f, 1.0f));
+//        trans = glm::scale(trans, glm::vec3(0.75f, 0.75f, 0.75f));
+        _program->UpdateUniform("transform", trans);
         
-        
-        _UpdateUniform();
+        _program->FlushUniform();
         
         glBindVertexArray(*_vertexArrayId); // 绑定Vertex Array
 //        glDrawArrays(GL_TRIANGLES, 0, 6); // 绘制三角形
@@ -193,34 +296,8 @@ protected:
     virtual bool _InternalUpdate() {
         if (_needUpdate == false)
             return true;
-        if (_vertexShaderSource.empty() == false || _fragmentShaderSource.empty() == false) {
-            // 编译Shader
-            GL_IdHolder vertexShaderId = _CompileShader(GL_VERTEX_SHADER, _vertexShaderSource);
-            if (vertexShaderId == nullptr)
-                return false;
-            GL_IdHolder fragmentShaderId = _CompileShader(GL_FRAGMENT_SHADER, _fragmentShaderSource);
-            if (fragmentShaderId == nullptr)
-                return false;
-            
-            // 链接Shader为Program。和CPU程序很类似，编译.o文件、链接为可执行文件。【耗时非常长】
-            GLuint shaderProgram;
-            shaderProgram = glCreateProgram();
-            glAttachShader(shaderProgram, *vertexShaderId); // 绑定shader
-            glAttachShader(shaderProgram, *fragmentShaderId);
-            glLinkProgram(shaderProgram); // 链接Shader为完整着色器程序
-            
-            // 检查Program是否链接成功
-            int success;
-            glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success); // 检查编译是否成功
-            if (!success) {
-                char buf[512];
-                glGetProgramInfoLog(shaderProgram, sizeof(buf), NULL, buf);
-                NSLog(@"%s", buf);
-                return false;
-            } else {
-                _programId = GL_IdHolder(new GLuint(shaderProgram), PROGRAM_DELETER);
-            }
-        }
+        
+        _program->Activate();
         
         // 创建Vertex Array Object(VAO)。后续所有顶点操作都会储存到VAO中。OpenGL core模式下VAO必须要有。
         GLuint vertexArrayId;
@@ -298,91 +375,28 @@ protected:
         return true;
     }
     
-    /// 编译Shader
-    virtual GL_IdHolder _CompileShader(GLenum shaderType, const std::string &source) {
-        GLuint shaderId;
-        shaderId = glCreateShader(shaderType); // 创建并绑定Shader
-        const char *sourceAddr = source.c_str();
-        glShaderSource(shaderId, 1, &sourceAddr, NULL); // 绑定Shader源码
-        glCompileShader(shaderId); // 编译Shader
-        // 可选，检查编译状态。非常有用
-        int success;
-        glGetShaderiv(shaderId, GL_COMPILE_STATUS, &success);
-        if (!success) {
-            char buf[512];
-            glGetShaderInfoLog(shaderId, sizeof(buf), NULL, buf);
-            NSLog(@"%s", buf);
-            return GL_IdHolder(nullptr, SHADER_DELETER);
-        } else {
-            return GL_IdHolder(new GLuint(shaderId), SHADER_DELETER);
-        }
-    }
+
     
-    virtual void _UpdateUniform() {
-        // 更新Uniform
-        glUseProgram(*_programId);
-        for (const auto &uniPair : _uniformMap) {
-            // 根据type调用对应的glUniformx()
-            const static std::unordered_map<std::type_index, std::function<void(GLint location, const std::any &)>>tbl = {
-                {typeid(int), [](GLint location, const std::any &val){ glUniform1i(location, std::any_cast<int>(val));}},
-                {typeid(float), [](GLint location, const std::any &val){ glUniform1f(location, std::any_cast<float>(val));}},
-                {typeid(glm::mat4), [](GLint location, const std::any &val){ glUniformMatrix4fv(location, 1, GL_FALSE, glm::value_ptr(std::any_cast<glm::mat4>(val))); }},
-            };
-            
-            
-            // 查找对应的方法
-            const std::any &value = uniPair.second;
-            GLint location = glGetUniformLocation(*_programId, uniPair.first.c_str());
-            if (tbl.count(value.type()) == 0) {
-                NSLog(@"%s not found in %s", value.type().name(), __FUNCTION__);
-                abort();
-            }
-            if (value.has_value() == false || location < 0 || tbl.count(value.type()) == 0)
-                continue;
-            
-            // 调用
-            auto &f = tbl.at(value.type());
-            f(location, value);
-        }
-        _uniformMap.clear();
-    }
-    
-    static bool _CheckGLError(const char *file, int line) {
-        GLenum errorCode;
-        while ((errorCode = glGetError()) != GL_NO_ERROR)
-        {
-            const char *error;
-            switch (errorCode)
-            {
-                case GL_INVALID_ENUM:                  error = "INVALID_ENUM"; break;
-                case GL_INVALID_VALUE:                 error = "INVALID_VALUE"; break;
-                case GL_INVALID_OPERATION:             error = "INVALID_OPERATION"; break;
-    //            case GL_STACK_OVERFLOW:                error = "STACK_OVERFLOW"; break;
-    //            case GL_STACK_UNDERFLOW:               error = "STACK_UNDERFLOW"; break;
-                case GL_OUT_OF_MEMORY:                 error = "OUT_OF_MEMORY"; break;
-                case GL_INVALID_FRAMEBUFFER_OPERATION: error = "INVALID_FRAMEBUFFER_OPERATION"; break;
-                default: assert(0);break;
-            }
-            NSLog(@"%s | %s[%d]", error, file, line);
-        }
-        return errorCode != 0;
-    }
+
     
 protected:
     const std::shared_ptr<GLContext> _context;
+    std::unique_ptr<GLRendererProgram> _program;
     bool _needUpdate = true;
     
-    std::string _vertexShaderSource;
-    std::string _fragmentShaderSource;
     ImageBuffer _textureBuffer;
-    std::map<std::string, std::any> _uniformMap;
     
-    GL_IdHolder _programId = GL_IdHolder(nullptr, PROGRAM_DELETER);
     GL_IdHolder _vertexArrayId = GL_IdHolder(nullptr, VERTEX_ARRAY_DELETER);
     GLuint _textureId;
         
     std::array<GLfloat, 4> _clearColor;
 };
+
+class GLRendererPreview : public GLRendererBase {
+    
+};
+
+
 }
 
 #endif /* GLRendererBase_hpp */

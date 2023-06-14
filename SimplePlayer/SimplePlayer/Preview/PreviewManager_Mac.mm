@@ -112,7 +112,7 @@ std::optional<sp::ImageBuffer> LoadBufferFromImage(NSImage *image) {
 
 @interface Preview_Mac : NSOpenGLView {
     std::shared_ptr<sp::GLContext> pGLContext;
-    std::unique_ptr<sp::BaseGLRenderer> pRenderer;
+    std::unique_ptr<sp::GLRendererBase> pRenderer;
 }
 
 @end
@@ -129,7 +129,7 @@ std::optional<sp::ImageBuffer> LoadBufferFromImage(NSImage *image) {
         [self setOpenGLContext:pGLContext->context()];
         
         // 创建并初始化Renderer
-        pRenderer = std::make_unique<sp::BaseGLRenderer>(pGLContext);
+        pRenderer = std::make_unique<sp::GLRendererBase>(pGLContext);
         // 创建并编译 Vertex shader
         /**
          * #version 330 core 显式指定版本
@@ -170,7 +170,7 @@ std::optional<sp::ImageBuffer> LoadBufferFromImage(NSImage *image) {
             // 纹理坐标系和OpenGL坐标系相反，因此y坐标取1-vtxTexCoord.y
             FragColor = texture(texture1, vec2(vtxTexCoord.x, 1-vtxTexCoord.y));
         })";
-        pRenderer->UpdateShader(vertexShaderSource, fragmentShaderSource);
+        pRenderer->UpdateShader({vertexShaderSource}, {fragmentShaderSource});
         pRenderer->SetClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         
         
@@ -196,6 +196,7 @@ std::optional<sp::ImageBuffer> LoadBufferFromImage(NSImage *image) {
     pGLContext->switchContext();
     pRenderer->Render();
     pGLContext->flush();
+    glFinish(); // 添加glFinish()以阻塞等待GPU执行完成
 
     NSLog(@"耗时：%.2fms", (clock() - tm) / 1000.0f);
 }
