@@ -10,14 +10,16 @@
 
 #include <string>
 #include <memory>
+#import <OpenGL/gl3.h>
 
 namespace sp {
 
 
 struct ImageBuffer {
-    size_t width, height;
-    int type, pixelFormat; // TODO
-    std::shared_ptr<uint8_t> data;
+    size_t width = 0, height = 0;
+    int type; // TODO
+    GLuint pixelFormat = GL_RGBA;
+    std::shared_ptr<uint8_t> data = nullptr;
 };
 
 

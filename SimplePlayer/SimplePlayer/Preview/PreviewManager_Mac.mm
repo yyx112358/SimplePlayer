@@ -178,7 +178,7 @@ std::optional<sp::ImageBuffer> LoadBufferFromImage(NSImage *image) {
         //NSImage *image = [[NSImage alloc] initWithContentsOfFile:@"/Users/yangyixuan/Downloads/texture.jpg"];
         auto buffer = LoadBufferFromImage([NSImage imageNamed:@"texture.jpg"]);
         if (buffer.has_value())
-            pRenderer->UpdateTexture(buffer.value());
+            pRenderer->UpdateTexture({*buffer});
         
     }
     return self;

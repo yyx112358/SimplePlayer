@@ -36,7 +36,7 @@ namespace sp {
 
 typedef std::unique_ptr<GLuint, void(*)(GLuint *)> GL_IdHolder; // 持有GL ID的unique_ptr，支持自动释放
 
-class GLRendererProgram {
+class GLProgram {
 public:
     static void SHADER_DELETER(GLuint *p) {
         NSLog(@"Delete shader %d", *p);
@@ -47,8 +47,9 @@ public:
         glDeleteProgram(*p);
     };
 public:
-    GLRendererProgram(std::shared_ptr<GLContext> context) :_context(context) {}
-    virtual ~GLRendererProgram() {
+    GLProgram(std::shared_ptr<GLContext> context) :_context(context) {}
+    
+    virtual ~GLProgram() {
         _context->switchContext();
         _programId.reset();
         CheckError();
@@ -57,14 +58,19 @@ public:
     bool Activate() {
         _context->switchContext();
         
-        if (auto program = _CompileProgramLazy())
-            _programId = std::move(program);
-        else
-            return false;
+        _programId = _CompileOrGetProgram();
+        assert(_programId != nullptr);
+        if (_programId != nullptr) {
+            glUseProgram(*_programId);
+            FlushUniform();
+        }
         
-        glUseProgram(*_programId);
-        _UpdateUniform();
-        
+        return !CheckError();
+    }
+    
+    bool DeActivate() {
+        _context->switchContext();
+        glUseProgram(0);
         return true;
     }
     
@@ -103,8 +109,10 @@ protected:
             char buf[512];
             glGetShaderInfoLog(shaderId, sizeof(buf), NULL, buf);
             NSLog(@"%s", buf);
+            assert(0);
         } else {
             shader.reset(new GLuint(shaderId));
+            NSLog(@"Create shader %d", *shader);
         }
         return shader;
     }
@@ -126,18 +134,18 @@ protected:
             char buf[512];
             glGetProgramInfoLog(shaderProgram, sizeof(buf), NULL, buf);
             NSLog(@"%s", buf);
+            assert(0);
         } else {
             programId.reset(new GLuint(shaderProgram));
+            NSLog(@"Create program %d", *programId);
         }
         return programId;
     }
     
     // 使用_vertexShaderSource和_fragmentShaderSource
-    virtual GL_IdHolder _CompileProgramLazy() {
+    virtual GL_IdHolder _CompileOrGetProgram() {
         GL_IdHolder program(nullptr, PROGRAM_DELETER);
         if (_vertexShaderSource.empty() == false || _fragmentShaderSource.empty() == false) {
-            assert(_vertexShaderSource.size() > 0 && _fragmentShaderSource.size() > 0);
-
             // 编译Shader
             std::vector<GL_IdHolder> shaders;
             for (auto &source : _vertexShaderSource) {
@@ -161,8 +169,10 @@ protected:
             _fragmentShaderSource.clear();
             shaders.clear();
         } else {
-            
+            // Source无更新，直接返回_programId
+            program = std::move(_programId);
         }
+
         return program;
     }
     
@@ -208,6 +218,99 @@ protected:
     GL_IdHolder _programId = GL_IdHolder(nullptr, PROGRAM_DELETER);
 };
 
+class GLTexture {
+public:
+    static void TEXTURE_DELETER(GLuint *p) {
+        NSLog(@"Delete texture %d", *p);
+        glDeleteTextures(1, p);
+    }
+    
+public:
+    GLTexture(std::shared_ptr<GLContext>context) : _context(context) {}
+    GLTexture(GLTexture &&other) : _context(other._context), _textureId(std::move(other._textureId)), _buffer(other._buffer), _textureWrapS(other._textureWrapS), _textureWrapT(other._textureWrapT), _textureMinFilter(other._textureMinFilter), _textureMagFilter(other._textureMagFilter) {}
+    
+    virtual ~GLTexture() {
+        _context->switchContext();
+        
+        _textureId.reset();
+        _buffer.reset();
+    }
+    
+    void UploadBuffer(ImageBuffer buffer) {
+        _buffer = buffer;
+    }
+    
+    std::optional<ImageBuffer> DownloadBuffer() {
+        std::optional<ImageBuffer> buffer;
+        if (_textureId == nullptr)
+            return buffer;
+        
+        _context->switchContext();
+        buffer = *_buffer;
+        buffer->data = std::shared_ptr<uint8_t[]>(new uint8_t[_buffer->width * _buffer->height * 4]);
+        glReadPixels(0, 0, (GLsizei)_buffer->width, (GLsizei)_buffer->height, _buffer->pixelFormat, GL_UNSIGNED_BYTE, buffer->data.get());
+        if (CheckError())
+            return std::optional<ImageBuffer>();
+        else
+            return buffer;
+    }
+    
+    bool Activate() {
+        _context->switchContext();
+        
+        if (_UploadBuffer() == false)
+            return false;
+        
+        return true;
+    }
+    
+    std::optional<GLuint> id() const {
+        return _textureId != nullptr ? std::make_optional<GLuint>(*_textureId) : std::make_optional<GLuint>();
+    }
+    
+protected:
+    virtual bool _UploadBuffer() {
+        if (_buffer.has_value() == false)
+            return true;
+        
+        GLuint textureId;
+        glGenTextures(1, &textureId);
+        glBindTexture(GL_TEXTURE_2D, textureId);
+        
+        // warp参数
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, _textureWrapS);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, _textureWrapT);
+        // 插值filter参数
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, _textureMinFilter);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, _textureMagFilter);
+        
+        glTexImage2D(GL_TEXTURE_2D, 0, _buffer->pixelFormat, (GLsizei)_buffer->width, (GLsizei)_buffer->height, 0, _buffer->pixelFormat, GL_UNSIGNED_BYTE, _buffer->data.get()); // 上传纹理。如果_buffer->data为空，则生成空纹理
+        // glGenerateMipmap(GL_TEXTURE_2D); // 如果需要生成mipmap的话
+        _buffer->data.reset();// 释放内存
+        
+        if (CheckError())
+            return false;
+        _textureId.reset(new GLuint(textureId));
+        glBindTexture(GL_TEXTURE_2D, 0);
+        
+        NSLog(@"Create texture %d", *_textureId);
+        return true;
+    }
+    
+protected:
+    const std::shared_ptr<GLContext> _context;
+    GL_IdHolder _textureId = GL_IdHolder(nullptr, TEXTURE_DELETER);
+    
+    std::optional<ImageBuffer> _buffer;
+    GLenum _textureWrapS = GL_CLAMP_TO_EDGE, _textureWrapT = GL_CLAMP_TO_EDGE;
+    GLenum _textureMinFilter = GL_NEAREST, _textureMagFilter = GL_LINEAR;
+};
+
+class GLVertexArray {
+public:
+    
+};
+
 
 class GLRendererBase {
 public:
@@ -220,7 +323,7 @@ public:
         glDeleteFramebuffers(1, p);
     }
 public:
-    GLRendererBase(std::shared_ptr<GLContext> context) :_context(context), _program(new GLRendererProgram(context)) {}
+    GLRendererBase(std::shared_ptr<GLContext> context) :_context(context), _program(new GLProgram(context)), _screenProgram(new GLProgram(context)) {}
     
     virtual ~GLRendererBase() {
         _context->switchContext();
@@ -234,8 +337,16 @@ public:
         return true;
     }
     
-    bool UpdateTexture(const ImageBuffer &buffer) {
-        _textureBuffer = buffer;
+    bool UpdateTexture(const std::vector<ImageBuffer> &buffers) {
+        GLint MAX_TEXTURE_UNIT;
+        glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &MAX_TEXTURE_UNIT);
+        assert(buffers.size() <= MAX_TEXTURE_UNIT);
+        
+        for (auto &buffer : buffers) {
+            GLTexture texture(_context);
+            texture.UploadBuffer(buffer);
+            _textures.emplace_back(std::move(texture));
+        }
         _needUpdate = true;
         return true;
     }
@@ -263,18 +374,30 @@ public:
             return false;
 
         // 上屏绘制
+        glBindFramebuffer(GL_FRAMEBUFFER, *_frameBufferId);
         glClearColor(_clearColor[0], _clearColor[1], _clearColor[2], _clearColor[3]);
         glClear(GL_COLOR_BUFFER_BIT);
         
 //        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // 取消注释后将启用线框模式
         _program->Activate(); // 启用Shader程序
+        CheckError();
         
-        glActiveTexture(GL_TEXTURE0 + 1); // 激活纹理单元1
-        glBindTexture(GL_TEXTURE_2D, _textureId); // 绑定纹理。根据上下文，这个纹理绑定到了纹理单元1
-        _program->UpdateUniform("texture1", 1); // 更新纹理uniform
+        glBindVertexArray(*_vertexArrayId); // 绑定Vertex Array
+        for (int i = 0; i < _textures.size(); i++) {
+            assert(_textures[i].id().has_value());
+            
+            glActiveTexture(GL_TEXTURE0 + i); // 激活纹理单元1
+            glBindTexture(GL_TEXTURE_2D, *_textures[i].id()); // 绑定纹理。根据上下文，这个纹理绑定到了纹理单元1
+            
+            char textureName[] = "texture00";
+            snprintf(textureName, sizeof(textureName), "texture%d", i);
+            _program->UpdateUniform(textureName, i); // 更新纹理uniform
+        }
+        
+        CheckError();
         
         glm::mat4 trans(1.0f);
-        static int angle = 0;
+//        static int angle = 0;
 //        trans = glm::translate(trans, glm::vec3(0.5f, 0.5f, 0.0f));
 //        trans = glm::rotate(trans, glm::radians(float(angle++)), glm::vec3(0.0f, 0.0f, 1.0f));
 //        trans = glm::scale(trans, glm::vec3(0.75f, 0.75f, 0.75f));
@@ -282,8 +405,23 @@ public:
         
         _program->FlushUniform();
         
-        glBindVertexArray(*_vertexArrayId); // 绑定Vertex Array
+        CheckError();
 //        glDrawArrays(GL_TRIANGLES, 0, 6); // 绘制三角形
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0); // 使用Element绘制三角形
+        
+        CheckError();
+        
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        glClearColor(1, 1, 1, 1);
+        glClear(GL_COLOR_BUFFER_BIT);
+
+        _screenProgram->Activate();
+        glBindVertexArray(*_screenVertexArrayId);
+        glActiveTexture(GL_TEXTURE0 + 1); // 激活纹理单元1
+        glBindTexture(GL_TEXTURE_2D, *_frameBufferTextureId); // 绑定纹理。根据上下文，这个纹理绑定到了纹理单元1
+        _screenProgram->UpdateUniform("screenTexture", 1); // 更新纹理uniform
+        _screenProgram->FlushUniform();
+
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0); // 使用Element绘制三角形
         
         if (CheckError())
@@ -297,7 +435,104 @@ protected:
         if (_needUpdate == false)
             return true;
         
+        _screenProgram->UpdateShader({R"(
+#version 330 core
+layout (location = 0) in vec2 aPos;
+layout (location = 1) in vec2 aTexCoords;
+
+out vec2 TexCoords;
+
+void main()
+{
+    gl_Position = vec4(aPos.x, aPos.y, 0.0, 1.0);
+    TexCoords = aTexCoords;
+}
+)"}, {R"(
+#version 330 core
+out vec4 FragColor;
+
+in vec2 TexCoords;
+
+uniform sampler2D screenTexture;
+
+void main()
+{
+    FragColor = texture(screenTexture, TexCoords);
+}
+)"});
+        CheckError();
+        _screenProgram->Activate();
+        {
+            // 创建Vertex Array Object(VAO)。后续所有顶点操作都会储存到VAO中。OpenGL core模式下VAO必须要有。
+            GLuint vertexArrayId;
+            glGenVertexArrays(1, &vertexArrayId); // 生成顶点Array对象。【必须在创建Buffer前】
+            glBindVertexArray(vertexArrayId); // 绑定顶点Array
+
+            // Vertex Buffer Object(VBO)
+            GLuint vertexBufId;
+            struct Vertex {
+                std::array<GLfloat, 2> location;
+                std::array<GLfloat, 2> texture;
+            } vertexBuf[4] = {
+                {{-0.75, 0.75}, {0.0, 1.0},}, // 左上
+                {{ 0.75, 0.75}, {1.0, 1.0},}, // 右上
+                {{-0.75,-0.75}, {0.0, 0.0},}, // 左下
+                {{ 0.75,-0.75}, {1.0, 0.0},}, // 右下
+            };
+            glGenBuffers(1, &vertexBufId); // 生成 1 个顶点缓冲区对象，vertexBufId是绑定的唯一OpenGL标识
+            glBindBuffer(GL_ARRAY_BUFFER, vertexBufId); // 绑定为GL_ARRAY_BUFFER
+            glBufferData(GL_ARRAY_BUFFER, sizeof(vertexBuf), vertexBuf, GL_STATIC_DRAW); // 传输数据
+
+            glVertexAttribPointer(0, vertexBuf[0].location.size(), GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid *)(offsetof(Vertex, location)));// 位置
+            glEnableVertexAttribArray(0); // 启用VertexAttribArray
+            glVertexAttribPointer(1, vertexBuf[0].texture.size(), GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid *)(offsetof(Vertex, texture)));// 纹理
+            glEnableVertexAttribArray(1);
+
+            // Element Buffer Object(EBO)
+            GLuint elementBufId;
+            GLuint elementBuf[] = {
+                0, 1, 2, // 第一个三角形
+                1, 3, 2, // 第二个三角形
+            };
+            glGenBuffers(1, &elementBufId);
+            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, elementBufId); // 绑定为GL_ELEMENT_ARRAY_BUFFER
+            glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(elementBuf), elementBuf, GL_STATIC_DRAW);
+
+            _screenVertexArrayId.reset(new GLuint(vertexArrayId));
+            glBindVertexArray(0);
+            if (CheckError())
+                return false;
+        }
         _program->Activate();
+        
+        // 创建帧缓冲（Frame Buffer Object）
+        GLuint frameBufferId;
+        glGenFramebuffers(1, &frameBufferId);
+        if (CheckError())
+            return false;
+        _frameBufferId.reset(new GLuint(frameBufferId));
+        glBindFramebuffer(GL_FRAMEBUFFER, frameBufferId);
+        
+        // 创建一个FBO使用的空纹理
+        GLuint frameBufferTextureId;
+        glGenTextures(1, &frameBufferTextureId);
+        if (CheckError())
+            return false;
+        _frameBufferTextureId.reset(new GLuint(frameBufferTextureId));
+        glBindTexture(GL_TEXTURE_2D, frameBufferTextureId);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 1920, 1080, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, frameBufferTextureId, 0); // Texture附着到FBO
+//        glBindTexture(GL_FRAMEBUFFER, 0);
+        if (GLenum ret = glCheckFramebufferStatus(GL_FRAMEBUFFER); ret != GL_FRAMEBUFFER_COMPLETE) {
+            NSLog(@"Bind Frame Buffer %d failed, error:%d", frameBufferId, ret);
+            return false;
+        }
+        
+        CheckError();
+        glBindFramebuffer(GL_FRAMEBUFFER, 0); // 重新绑定到屏幕缓冲
         
         // 创建Vertex Array Object(VAO)。后续所有顶点操作都会储存到VAO中。OpenGL core模式下VAO必须要有。
         GLuint vertexArrayId;
@@ -342,33 +577,18 @@ protected:
         
         
         // 创建纹理
-        if (_textureBuffer.data != nullptr) {
-            GLuint textureId;
-            glGenTextures(1, &textureId);
-            glBindTexture(GL_TEXTURE_2D, textureId);
-            
-            // warp参数
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);    // set texture wrapping to GL_REPEAT (default wrapping method)
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-            // 插值filter参数
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-            
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, (GLsizei)_textureBuffer.width, (GLsizei)_textureBuffer.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, _textureBuffer.data.get());
-            // glGenerateMipmap(GL_TEXTURE_2D); // 如果需要生成mipmap的话
-            _textureBuffer.data.reset();// 释放内存
-            
-            if (CheckError())
+        for (auto &texture : _textures) {
+            if (texture.Activate() == false)
                 return false;
-            _textureId = textureId;
-            
         }
+        
         
         
         // 这一行的作用是解除vertexBufId的激活状态，避免其它操作不小心改动到这里。不过这种情况很少见。
         glBindVertexArray(0);
         if (CheckError())
             return false;
+
 
 
         _needUpdate = false;
@@ -381,18 +601,29 @@ protected:
     
 protected:
     const std::shared_ptr<GLContext> _context;
-    std::unique_ptr<GLRendererProgram> _program;
     bool _needUpdate = true;
     
-    ImageBuffer _textureBuffer;
+    std::vector<GLTexture> _textures;
     
+    std::unique_ptr<GLProgram> _program;
     GL_IdHolder _vertexArrayId = GL_IdHolder(nullptr, VERTEX_ARRAY_DELETER);
-    GLuint _textureId;
+    GL_IdHolder _frameBufferId = GL_IdHolder(nullptr, FRAME_BUFFER_DELETER);
+    
+    
+    std::unique_ptr<GLProgram> _screenProgram;
+    GL_IdHolder _screenVertexArrayId = GL_IdHolder(nullptr, VERTEX_ARRAY_DELETER);
+    GL_IdHolder _frameBufferTextureId = GL_IdHolder(nullptr, FRAME_BUFFER_DELETER);
         
     std::array<GLfloat, 4> _clearColor;
 };
 
 class GLRendererPreview : public GLRendererBase {
+public:
+    GLRendererPreview(std::shared_ptr<GLContext> context):GLRendererBase(context) {}
+    virtual ~GLRendererPreview() {}
+    
+protected:
+    
     
 };
 
