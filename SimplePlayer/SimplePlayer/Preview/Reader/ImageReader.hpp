@@ -16,7 +16,7 @@ namespace sp {
 
 
 struct ImageBuffer {
-    size_t width = 0, height = 0;
+    GLsizei width = 0, height = 0;
     int type; // TODO
     GLuint pixelFormat = GL_RGBA;
     std::shared_ptr<uint8_t> data = nullptr;

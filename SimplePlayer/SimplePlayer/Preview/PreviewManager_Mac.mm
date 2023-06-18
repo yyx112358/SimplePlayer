@@ -59,8 +59,8 @@ std::optional<sp::ImageBuffer> LoadBufferFromImage(NSImage *image) {
     
     // 转data
     sp::ImageBuffer imageBuffer;
-    imageBuffer.width = width;
-    imageBuffer.height = height;
+    imageBuffer.width = (GLsizei)width;
+    imageBuffer.height = (GLsizei)height;
     imageBuffer.data = std::shared_ptr<uint8_t[]>(new uint8_t[width * height * 4]);
     size_t planeCount = CVPixelBufferGetPlaneCount(pixelBuf);
     OSType format = CVPixelBufferGetPixelFormatType(pixelBuf);

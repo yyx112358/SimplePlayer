@@ -108,6 +108,7 @@ public:
 public:
     GLTexture(std::shared_ptr<GLContext>context) : _context(context) {}
     GLTexture(std::shared_ptr<GLContext>context, ImageBuffer buffer) : _context(context), _buffer(std::move(buffer)) {}
+    GLTexture(std::shared_ptr<GLContext>context, GLsizei width, GLsizei height) : _context(context), _buffer(ImageBuffer{.width = width, .height = height, .pixelFormat = GL_RGBA}) {}
     
     virtual ~GLTexture() {
         _context->switchContext();
