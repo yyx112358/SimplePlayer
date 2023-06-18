@@ -239,9 +239,12 @@ void GLProgram::_UpdateUniform() {
             NSLog(@"%s not found in %s", value.type().name(), __FUNCTION__);
             abort();
         }
-        if (value.has_value() == false || location < 0 || tbl.count(value.type()) == 0)
+        if (value.has_value() == false || location < 0 || tbl.count(value.type()) == 0){
+            assert(value.has_value());
+            assert(location >= 0);
+            assert(tbl.count(value.type()));
             continue;
-        
+        }
         // 调用
         auto &f = tbl.at(value.type());
         f(location, value);
@@ -260,6 +263,7 @@ void GLTexture::TEXTURE_DELETER(GLuint *p) {
    
 void GLTexture::UploadBuffer(ImageBuffer buffer) {
     _buffer = buffer;
+    _needUpdate = true;
 }
 
 std::optional<ImageBuffer> GLTexture::DownloadBuffer() {
@@ -282,7 +286,7 @@ bool GLTexture::Activate() {
     
     if (_UploadBuffer() == false)
         return false;
-    
+    glBindTexture(GL_TEXTURE_2D, *_textureId);
     return true;
 }
 
@@ -291,12 +295,14 @@ std::optional<GLuint> GLTexture::id() const {
 }
 
 bool GLTexture::_UploadBuffer() {
-    if (_buffer.has_value() == false)
+    if (_needUpdate == false)
         return true;
     
     GLuint textureId;
     glGenTextures(1, &textureId);
-    _textureId.reset(new GLuint(textureId));
+    auto holder = GL_IdHolder(new GLuint(textureId), TEXTURE_DELETER);
+    NSLog(@"Create texture %d", textureId);
+    
     glBindTexture(GL_TEXTURE_2D, textureId);
     
     // warp参数
@@ -314,6 +320,7 @@ bool GLTexture::_UploadBuffer() {
         return false;
     
 //    glBindTexture(GL_TEXTURE_2D, 0);
-    NSLog(@"Create texture %d", *_textureId);
+    _textureId = std::move(holder);
+    _needUpdate = false;
     return true;
 }

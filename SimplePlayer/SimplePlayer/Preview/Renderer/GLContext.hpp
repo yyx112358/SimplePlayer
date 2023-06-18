@@ -107,7 +107,7 @@ public:
     
 public:
     GLTexture(std::shared_ptr<GLContext>context) : _context(context) {}
-    GLTexture(GLTexture &&other) : _context(other._context), _textureId(std::move(other._textureId)), _buffer(other._buffer), _textureWrapS(other._textureWrapS), _textureWrapT(other._textureWrapT), _textureMinFilter(other._textureMinFilter), _textureMagFilter(other._textureMagFilter) {}
+    GLTexture(std::shared_ptr<GLContext>context, ImageBuffer buffer) : _context(context), _buffer(std::move(buffer)) {}
     
     virtual ~GLTexture() {
         _context->switchContext();
@@ -131,10 +131,74 @@ protected:
 protected:
     const std::shared_ptr<GLContext> _context;
     GL_IdHolder _textureId = GL_IdHolder(nullptr, TEXTURE_DELETER);
+    bool _needUpdate = true;
     
     std::optional<ImageBuffer> _buffer;
     GLenum _textureWrapS = GL_CLAMP_TO_EDGE, _textureWrapT = GL_CLAMP_TO_EDGE;
     GLenum _textureMinFilter = GL_NEAREST, _textureMagFilter = GL_LINEAR;
+};
+
+/// Render Buffer Object (RBO)
+/// 仅可写入的缓冲区，为离屏渲染到FBO优化
+class GLRenderBuffer {
+public:
+    static void RENDER_BUFFER_DELETER(GLuint *p) {
+        NSLog(@"Delete render buffer %d", *p);
+        glDeleteRenderbuffers(1, p);
+    }
+    
+public:
+    GLRenderBuffer(std::shared_ptr<GLContext>context) : _context(context) {}
+    GLRenderBuffer(std::shared_ptr<GLContext>context, GLsizei width, GLsizei height) : _context(context), _width(width), _height(height) {}
+    virtual ~GLRenderBuffer() {
+        _context->switchContext();
+    }
+    
+    void setSize(GLsizei width, GLsizei height) {
+        _width = width;
+        _height = height;
+    }
+    
+    std::optional<ImageBuffer> DownloadBuffer();
+    
+    bool Activate() {
+        _context->switchContext();
+        
+        if (_renderBufferId == nullptr) {
+            if (_width.has_value() == false || _height.has_value() == false)
+                return false;
+            
+            GLuint renderBufferId;
+            glGenRenderbuffers(1, &renderBufferId);
+            auto holder = GL_IdHolder(new GLuint(renderBufferId), RENDER_BUFFER_DELETER);
+            NSLog(@"Create render buffer %d", renderBufferId);
+            
+            glBindRenderbuffer(GL_RENDERBUFFER, renderBufferId);
+            glRenderbufferStorage(GL_RENDERBUFFER, GL_RGBA8, *_width, *_height);
+            
+            if (CheckError())
+                return false;
+            
+            _renderBufferId = std::move(holder);
+        }
+        glBindRenderbuffer(GL_RENDERBUFFER, *_renderBufferId);
+        
+        if (CheckError())
+            return false;
+        
+        // glBindRenderbuffer( GL_RENDERBUFFER, 0 );
+        return true;
+    }
+    
+    std::optional<GLuint> id() const {
+        return _renderBufferId != nullptr ? std::make_optional<GLuint>(*_renderBufferId) : std::make_optional<GLuint>();
+    }
+    
+protected:
+    const std::shared_ptr<GLContext> _context;
+    GL_IdHolder _renderBufferId = GL_IdHolder(nullptr, RENDER_BUFFER_DELETER);
+    
+    std::optional<GLsizei> _width, _height;
 };
 
 
