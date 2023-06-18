@@ -10,14 +10,10 @@
 
 #import <Foundation/Foundation.h>
 #include <cstddef>
-#include <vector>
 #include <string>
 #include <optional>
 #include <array>
 #include <any>
-#include <map>
-#include <unordered_map>
-#include <typeindex>
 
 
 #define GL_SILENCE_DEPRECATION
@@ -29,286 +25,135 @@
 #include "../../../../thirdParty/glm/glm/gtc/type_ptr.hpp"
 
 #import "GLContext.hpp"
-#import "ImageReader.hpp"
 
 namespace sp {
 
-
-typedef std::unique_ptr<GLuint, void(*)(GLuint *)> GL_IdHolder; // 持有GL ID的unique_ptr，支持自动释放
-
-class GLProgram {
+class GLVertexArray {
 public:
-    static void SHADER_DELETER(GLuint *p) {
-        NSLog(@"Delete shader %d", *p);
-        glDeleteShader(*p);
-    }
-    static void PROGRAM_DELETER(GLuint *p) {
-        NSLog(@"Delete program %d", *p);
-        glDeleteProgram(*p);
-    };
-public:
-    GLProgram(std::shared_ptr<GLContext> context) :_context(context) {}
-    
-    virtual ~GLProgram() {
-        _context->switchContext();
-        _programId.reset();
-        CheckError();
-    }
-    
-    bool Activate() {
-        _context->switchContext();
-        
-        _programId = _CompileOrGetProgram();
-        assert(_programId != nullptr);
-        if (_programId != nullptr) {
-            glUseProgram(*_programId);
-            FlushUniform();
-        }
-        
-        return !CheckError();
-    }
-    
-    bool DeActivate() {
-        _context->switchContext();
-        glUseProgram(0);
-        return true;
-    }
-    
-    bool UpdateShader(const std::vector<std::string> &vertexShader, const std::vector<std::string> &fragmentShader) {
-        _vertexShaderSource = vertexShader;
-        _fragmentShaderSource = fragmentShader;
-        _needUpdate = true;
-        return true;
-    }
-    
-    bool UpdateUniform(const std::string &name, std::any uniform) {
-        _uniformMap[name] = uniform;
-        return true;
-    }
-    
-    bool FlushUniform() {
-        _UpdateUniform();
-        return true;
-    }
-    
-protected:
-    /// 编译Shader
-    virtual GL_IdHolder _CompileShader(GLenum shaderType, const std::string &source) const {
-        GL_IdHolder shader(nullptr, SHADER_DELETER);
-
-        GLuint shaderId;
-        shaderId = glCreateShader(shaderType); // 创建并绑定Shader
-        const char *sourceAddr = source.c_str();
-        glShaderSource(shaderId, 1, &sourceAddr, NULL); // 绑定Shader源码
-        glCompileShader(shaderId); // 编译Shader
-
-        // 可选，检查编译状态。非常有用
-        int success;
-        glGetShaderiv(shaderId, GL_COMPILE_STATUS, &success);
-        if (!success) {
-            char buf[512];
-            glGetShaderInfoLog(shaderId, sizeof(buf), NULL, buf);
-            NSLog(@"%s", buf);
-            assert(0);
-        } else {
-            shader.reset(new GLuint(shaderId));
-            NSLog(@"Create shader %d", *shader);
-        }
-        return shader;
-    }
-    
-    // 使用shaders编译Program
-    virtual GL_IdHolder _CompileProgram(const std::vector<GL_IdHolder> &shaders) const {
-        // 链接Shader为Program。和CPU程序很类似，编译.o文件、链接为可执行文件。【耗时非常长】
-        GL_IdHolder programId(nullptr, PROGRAM_DELETER);
-        GLuint shaderProgram;
-        shaderProgram = glCreateProgram();
-        for (auto &shader : shaders) // 绑定shader
-            glAttachShader(shaderProgram, *shader);
-        glLinkProgram(shaderProgram); // 链接Shader为完整着色器程序
-        
-        // 检查Program是否链接成功
-        int success;
-        glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success); // 检查编译是否成功
-        if (!success) {
-            char buf[512];
-            glGetProgramInfoLog(shaderProgram, sizeof(buf), NULL, buf);
-            NSLog(@"%s", buf);
-            assert(0);
-        } else {
-            programId.reset(new GLuint(shaderProgram));
-            NSLog(@"Create program %d", *programId);
-        }
-        return programId;
-    }
-    
-    // 使用_vertexShaderSource和_fragmentShaderSource
-    virtual GL_IdHolder _CompileOrGetProgram() {
-        GL_IdHolder program(nullptr, PROGRAM_DELETER);
-        if (_vertexShaderSource.empty() == false || _fragmentShaderSource.empty() == false) {
-            // 编译Shader
-            std::vector<GL_IdHolder> shaders;
-            for (auto &source : _vertexShaderSource) {
-                GL_IdHolder vertexShaderId = _CompileShader(GL_VERTEX_SHADER, source);
-                if (vertexShaderId != nullptr)
-                    shaders.push_back(std::move(vertexShaderId));
-                else
-                    return program;
-            }
-            for (auto &source : _fragmentShaderSource) {
-                GL_IdHolder fragmentShaderId = _CompileShader(GL_FRAGMENT_SHADER, source);
-                if (fragmentShaderId != nullptr)
-                    shaders.push_back(std::move(fragmentShaderId));
-                else
-                    return program;
-            }
-            program = _CompileProgram(shaders);
-            
-            // 删除Shader
-            _vertexShaderSource.clear();
-            _fragmentShaderSource.clear();
-            shaders.clear();
-        } else {
-            // Source无更新，直接返回_programId
-            program = std::move(_programId);
-        }
-
-        return program;
-    }
-    
-    virtual void _UpdateUniform() {
-        // 更新Uniform
-        if (_programId == nullptr)
-            return;
-        glUseProgram(*_programId);
-        for (const auto &uniPair : _uniformMap) {
-            // 根据type调用对应的glUniformx()
-            const static std::unordered_map<std::type_index, std::function<void(GLint location, const std::any &)>>tbl = {
-                {typeid(int), [](GLint location, const std::any &val){ glUniform1i(location, std::any_cast<int>(val));}},
-                {typeid(float), [](GLint location, const std::any &val){ glUniform1f(location, std::any_cast<float>(val));}},
-                {typeid(glm::mat4), [](GLint location, const std::any &val){ glUniformMatrix4fv(location, 1, GL_FALSE, glm::value_ptr(std::any_cast<glm::mat4>(val))); }},
-            };
-            
-            
-            // 查找对应的方法
-            const std::any &value = uniPair.second;
-            GLint location = glGetUniformLocation(*_programId, uniPair.first.c_str());
-            if (tbl.count(value.type()) == 0) {
-                NSLog(@"%s not found in %s", value.type().name(), __FUNCTION__);
-                abort();
-            }
-            if (value.has_value() == false || location < 0 || tbl.count(value.type()) == 0)
-                continue;
-            
-            // 调用
-            auto &f = tbl.at(value.type());
-            f(location, value);
-        }
-        _uniformMap.clear();
-    }
-    
-protected:
-    const std::shared_ptr<GLContext> _context;
-    bool _needUpdate = true;
-    
-    std::vector<std::string> _vertexShaderSource;
-    std::vector<std::string> _fragmentShaderSource;
-    std::map<std::string, std::any> _uniformMap;
-    
-    GL_IdHolder _programId = GL_IdHolder(nullptr, PROGRAM_DELETER);
-};
-
-class GLTexture {
-public:
-    static void TEXTURE_DELETER(GLuint *p) {
-        NSLog(@"Delete texture %d", *p);
+    static void VERTEX_ARRAY_DELETER(GLuint *p) {
+        NSLog(@"Delete vertex array %d", *p);
         glDeleteTextures(1, p);
     }
     
+    typedef struct {
+        std::array<GLfloat, 2>location;
+        std::array<GLfloat, 2>texture;
+    } VertexBuffer;
+    
+    /// 默认矩形Vertex Buffer
+    static const std::vector<VertexBuffer> &DEFAULT_RECT_VERTEX_BUFFER() {
+        const static std::vector<VertexBuffer> buf = {
+            {{-1.0, 1.0}, {0.0, 1.0},}, // 左上
+            {{ 1.0, 1.0}, {1.0, 1.0},}, // 右上
+            {{-1.0,-1.0}, {0.0, 0.0},}, // 左下
+            {{ 1.0,-1.0}, {1.0, 0.0},}, // 右下
+        };
+        return buf;
+    }
+    
+    typedef std::array<GLuint, 3> ElementBuffer;
+    /// 默认矩形Element Buffer
+    static const std::vector<ElementBuffer> &DEFAULT_RECT_ELEMENT_BUFFER() {
+        const static std::vector<ElementBuffer> buf = {
+            {0, 1, 2}, // 第一个三角形
+            {1, 3, 2}, // 第二个三角形
+        };
+        return buf;
+    }
+    
 public:
-    GLTexture(std::shared_ptr<GLContext>context) : _context(context) {}
-    GLTexture(GLTexture &&other) : _context(other._context), _textureId(std::move(other._textureId)), _buffer(other._buffer), _textureWrapS(other._textureWrapS), _textureWrapT(other._textureWrapT), _textureMinFilter(other._textureMinFilter), _textureMagFilter(other._textureMagFilter) {}
+    GLVertexArray(std::shared_ptr<GLContext>context) : _context(context) {}
+//    GLTexture(GLTexture &&other) : _context(other._context), _textureId(std::move(other._textureId)), _buffer(other._buffer), _textureWrapS(other._textureWrapS), _textureWrapT(other._textureWrapT), _textureMinFilter(other._textureMinFilter), _textureMagFilter(other._textureMagFilter) {}
     
-    virtual ~GLTexture() {
+    virtual ~GLVertexArray() {
         _context->switchContext();
         
-        _textureId.reset();
-        _buffer.reset();
+        _vertexArrayId.reset();
+        _vertexBuffer.clear();
+        _elementBuffer.clear();
     }
     
-    void UploadBuffer(ImageBuffer buffer) {
-        _buffer = buffer;
+    void UpdateVertexBuffer(const std::vector<VertexBuffer> &vbo) {
+        _vertexBuffer = vbo;
     }
     
-    std::optional<ImageBuffer> DownloadBuffer() {
-        std::optional<ImageBuffer> buffer;
-        if (_textureId == nullptr)
-            return buffer;
+    void UpdateElementBuffer(const std::vector<ElementBuffer> &ebo) {
+        _elementBuffer = ebo;
+    }
+    
+    virtual bool Activate() {
+        // 创建Vertex Array Object(VAO)。后续所有顶点操作都会储存到VAO中。OpenGL core模式下VAO必须要有。
+        if (_vertexArrayId == nullptr) {
+            GLuint vertexArrayId;
+            glGenVertexArrays(1, &vertexArrayId); // 生成顶点Array对象。【必须在创建Buffer前】
+            _vertexArrayId.reset(new GLuint(vertexArrayId));
+            NSLog(@"Create vertex array %d", *_vertexArrayId);
+        }
+        glBindVertexArray(*_vertexArrayId); // 绑定顶点Array
         
-        _context->switchContext();
-        buffer = *_buffer;
-        buffer->data = std::shared_ptr<uint8_t[]>(new uint8_t[_buffer->width * _buffer->height * 4]);
-        glReadPixels(0, 0, (GLsizei)_buffer->width, (GLsizei)_buffer->height, _buffer->pixelFormat, GL_UNSIGNED_BYTE, buffer->data.get());
-        if (CheckError())
-            return std::optional<ImageBuffer>();
-        else
-            return buffer;
-    }
-    
-    bool Activate() {
-        _context->switchContext();
+        // Vertex Buffer Object(VBO)
+        if (_vertexBuffer.size() > 0) {
+            GLuint vertexBufId;
+            GLsizei vertexBufferSize = static_cast<GLsizei>(_vertexBuffer.size() * sizeof(_vertexBuffer[0]));
+            
+            glGenBuffers(1, &vertexBufId); // 生成 1 个顶点缓冲区对象，vertexBufId是绑定的唯一OpenGL标识
+            glBindBuffer(GL_ARRAY_BUFFER, vertexBufId); // 绑定为GL_ARRAY_BUFFER
+            glBufferData(GL_ARRAY_BUFFER, vertexBufferSize, _vertexBuffer.data(), GL_STATIC_DRAW); // 传输数据
+
+            glVertexAttribPointer(0, (GLsizei)_vertexBuffer[0].location.size(), GL_FLOAT, GL_FALSE, sizeof(_vertexBuffer[0]), (GLvoid *)(offsetof(VertexBuffer, location)));// 位置
+            glEnableVertexAttribArray(0); // 启用VertexAttribArray
+            glVertexAttribPointer(1, (GLsizei)_vertexBuffer[0].texture.size(), GL_FLOAT, GL_FALSE, sizeof(_vertexBuffer[0]), (GLvoid *)(offsetof(VertexBuffer, texture)));// 纹理
+            glEnableVertexAttribArray(1);
+            
+            if (CheckError())
+                return false;
+            _vertexBufferId.emplace(vertexBufId);
+            _vertexBufferSize.emplace(vertexBufferSize);
+            _vertexBuffer.clear();
+        }
         
-        if (_UploadBuffer() == false)
-            return false;
+        // Element Buffer Object(EBO)
+        if (_elementBuffer.size() > 0) {
+            GLuint elementBufId;
+            GLsizei elementBufferSize = static_cast<GLsizei>(_elementBuffer.size() * sizeof(_elementBuffer[0]));
+            
+            glGenBuffers(1, &elementBufId);
+            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, elementBufId); // 绑定为GL_ELEMENT_ARRAY_BUFFER
+            glBufferData(GL_ELEMENT_ARRAY_BUFFER, elementBufferSize, _elementBuffer.data(), GL_STATIC_DRAW);
+            
+            if (CheckError())
+                return false;
+            _elementBufferId.emplace(elementBufId);
+            _elementBufferSize.emplace(elementBufferSize);
+            _elementBuffer.clear();
+        }
         
         return true;
     }
     
-    std::optional<GLuint> id() const {
-        return _textureId != nullptr ? std::make_optional<GLuint>(*_textureId) : std::make_optional<GLuint>();
-    }
-    
-protected:
-    virtual bool _UploadBuffer() {
-        if (_buffer.has_value() == false)
-            return true;
-        
-        GLuint textureId;
-        glGenTextures(1, &textureId);
-        glBindTexture(GL_TEXTURE_2D, textureId);
-        
-        // warp参数
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, _textureWrapS);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, _textureWrapT);
-        // 插值filter参数
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, _textureMinFilter);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, _textureMagFilter);
-        
-        glTexImage2D(GL_TEXTURE_2D, 0, _buffer->pixelFormat, (GLsizei)_buffer->width, (GLsizei)_buffer->height, 0, _buffer->pixelFormat, GL_UNSIGNED_BYTE, _buffer->data.get()); // 上传纹理。如果_buffer->data为空，则生成空纹理
-        // glGenerateMipmap(GL_TEXTURE_2D); // 如果需要生成mipmap的话
-        _buffer->data.reset();// 释放内存
-        
-        if (CheckError())
+    virtual bool Render() {
+        if (_elementBufferSize.has_value()) // 使用Element绘制三角形
+            glDrawElements(GL_TRIANGLES, *_elementBufferSize, GL_UNSIGNED_INT, 0);
+        else if (_vertexBufferSize.has_value()) // 使用Arrays绘制三角形
+            glDrawArrays(GL_TRIANGLES, 0, *_vertexBufferSize);
+        else
             return false;
-        _textureId.reset(new GLuint(textureId));
-        glBindTexture(GL_TEXTURE_2D, 0);
-        
-        NSLog(@"Create texture %d", *_textureId);
         return true;
     }
     
 protected:
     const std::shared_ptr<GLContext> _context;
-    GL_IdHolder _textureId = GL_IdHolder(nullptr, TEXTURE_DELETER);
+    GL_IdHolder _vertexArrayId = GL_IdHolder(nullptr, VERTEX_ARRAY_DELETER);
     
-    std::optional<ImageBuffer> _buffer;
-    GLenum _textureWrapS = GL_CLAMP_TO_EDGE, _textureWrapT = GL_CLAMP_TO_EDGE;
-    GLenum _textureMinFilter = GL_NEAREST, _textureMagFilter = GL_LINEAR;
-};
-
-class GLVertexArray {
-public:
+    // Vertex Buffer Object(VBO)
+    std::vector<VertexBuffer> _vertexBuffer = DEFAULT_RECT_VERTEX_BUFFER();
+    std::optional<GLuint> _vertexBufferId;
+    std::optional<GLuint> _vertexBufferSize;
     
+    // Element Buffer Object(EBO)
+    std::vector<ElementBuffer> _elementBuffer = DEFAULT_RECT_ELEMENT_BUFFER();
+    std::optional<GLuint> _elementBufferId;
+    std::optional<GLuint> _elementBufferSize;
 };
 
 
@@ -329,7 +174,7 @@ public:
         _context->switchContext();
         
         _program.reset();
-        _vertexArrayId.reset();
+//        _vertexArrayId.reset();
     }
     
     bool UpdateShader(const std::vector<std::string> &vertexShader, const std::vector<std::string> &fragmentShader) {
@@ -382,7 +227,7 @@ public:
         _program->Activate(); // 启用Shader程序
         CheckError();
         
-        glBindVertexArray(*_vertexArrayId); // 绑定Vertex Array
+        _vertexArray.Activate();
         for (int i = 0; i < _textures.size(); i++) {
             assert(_textures[i].id().has_value());
             
@@ -406,8 +251,7 @@ public:
         _program->FlushUniform();
         
         CheckError();
-//        glDrawArrays(GL_TRIANGLES, 0, 6); // 绘制三角形
-        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0); // 使用Element绘制三角形
+        _vertexArray.Render();
         
         CheckError();
         
@@ -416,13 +260,13 @@ public:
         glClear(GL_COLOR_BUFFER_BIT);
 
         _screenProgram->Activate();
-        glBindVertexArray(*_screenVertexArrayId);
+        _screenVertexArray.Activate();
         glActiveTexture(GL_TEXTURE0 + 1); // 激活纹理单元1
         glBindTexture(GL_TEXTURE_2D, *_frameBufferTextureId); // 绑定纹理。根据上下文，这个纹理绑定到了纹理单元1
         _screenProgram->UpdateUniform("screenTexture", 1); // 更新纹理uniform
         _screenProgram->FlushUniform();
 
-        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0); // 使用Element绘制三角形
+        _screenVertexArray.Render();
         
         if (CheckError())
             return false;
@@ -460,49 +304,9 @@ void main()
     FragColor = texture(screenTexture, TexCoords);
 }
 )"});
-        CheckError();
         _screenProgram->Activate();
-        {
-            // 创建Vertex Array Object(VAO)。后续所有顶点操作都会储存到VAO中。OpenGL core模式下VAO必须要有。
-            GLuint vertexArrayId;
-            glGenVertexArrays(1, &vertexArrayId); // 生成顶点Array对象。【必须在创建Buffer前】
-            glBindVertexArray(vertexArrayId); // 绑定顶点Array
-
-            // Vertex Buffer Object(VBO)
-            GLuint vertexBufId;
-            struct Vertex {
-                std::array<GLfloat, 2> location;
-                std::array<GLfloat, 2> texture;
-            } vertexBuf[4] = {
-                {{-0.75, 0.75}, {0.0, 1.0},}, // 左上
-                {{ 0.75, 0.75}, {1.0, 1.0},}, // 右上
-                {{-0.75,-0.75}, {0.0, 0.0},}, // 左下
-                {{ 0.75,-0.75}, {1.0, 0.0},}, // 右下
-            };
-            glGenBuffers(1, &vertexBufId); // 生成 1 个顶点缓冲区对象，vertexBufId是绑定的唯一OpenGL标识
-            glBindBuffer(GL_ARRAY_BUFFER, vertexBufId); // 绑定为GL_ARRAY_BUFFER
-            glBufferData(GL_ARRAY_BUFFER, sizeof(vertexBuf), vertexBuf, GL_STATIC_DRAW); // 传输数据
-
-            glVertexAttribPointer(0, vertexBuf[0].location.size(), GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid *)(offsetof(Vertex, location)));// 位置
-            glEnableVertexAttribArray(0); // 启用VertexAttribArray
-            glVertexAttribPointer(1, vertexBuf[0].texture.size(), GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid *)(offsetof(Vertex, texture)));// 纹理
-            glEnableVertexAttribArray(1);
-
-            // Element Buffer Object(EBO)
-            GLuint elementBufId;
-            GLuint elementBuf[] = {
-                0, 1, 2, // 第一个三角形
-                1, 3, 2, // 第二个三角形
-            };
-            glGenBuffers(1, &elementBufId);
-            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, elementBufId); // 绑定为GL_ELEMENT_ARRAY_BUFFER
-            glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(elementBuf), elementBuf, GL_STATIC_DRAW);
-
-            _screenVertexArrayId.reset(new GLuint(vertexArrayId));
-            glBindVertexArray(0);
-            if (CheckError())
-                return false;
-        }
+        _screenVertexArray.Activate();
+        
         _program->Activate();
         
         // 创建帧缓冲（Frame Buffer Object）
@@ -532,49 +336,6 @@ void main()
         }
         
         CheckError();
-        glBindFramebuffer(GL_FRAMEBUFFER, 0); // 重新绑定到屏幕缓冲
-        
-        // 创建Vertex Array Object(VAO)。后续所有顶点操作都会储存到VAO中。OpenGL core模式下VAO必须要有。
-        GLuint vertexArrayId;
-        glGenVertexArrays(1, &vertexArrayId); // 生成顶点Array对象。【必须在创建Buffer前】
-        glBindVertexArray(vertexArrayId); // 绑定顶点Array
-        
-        // Vertex Buffer Object(VBO)
-        GLuint vertexBufId;
-        struct Vertex {
-            std::array<GLfloat, 2> location;
-            std::array<GLfloat, 3> color;
-            std::array<GLfloat, 2> texture;
-        } vertexBuf[4] = {
-            {{-0.75, 0.75}, {1.0, 0.0, 0.0}, {0.0, 1.0},}, // 左上
-            {{ 0.75, 0.75}, {0.0, 1.0, 0.0}, {1.0, 1.0},}, // 右上
-            {{-0.75,-0.75}, {0.0, 0.0, 1.0}, {0.0, 0.0},}, // 左下
-            {{ 0.75,-0.75}, {1.0, 0.0, 0.0}, {1.0, 0.0},}, // 右下
-        };
-        glGenBuffers(1, &vertexBufId); // 生成 1 个顶点缓冲区对象，vertexBufId是绑定的唯一OpenGL标识
-        glBindBuffer(GL_ARRAY_BUFFER, vertexBufId); // 绑定为GL_ARRAY_BUFFER
-        glBufferData(GL_ARRAY_BUFFER, sizeof(vertexBuf), vertexBuf, GL_STATIC_DRAW); // 传输数据
-        
-        glVertexAttribPointer(0, vertexBuf[0].location.size(), GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid *)(offsetof(Vertex, location)));// 位置
-        glEnableVertexAttribArray(0); // 启用VertexAttribArray
-        glVertexAttribPointer(1, vertexBuf[0].color.size(), GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid *)(offsetof(Vertex, color)));// 颜色
-        glEnableVertexAttribArray(1);
-        glVertexAttribPointer(2, vertexBuf[0].texture.size(), GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid *)(offsetof(Vertex, texture)));// 纹理
-        glEnableVertexAttribArray(2);
-        
-        
-        // Element Buffer Object(EBO)
-        GLuint elementBufId;
-        GLuint elementBuf[] = {
-            0, 1, 2, // 第一个三角形
-            1, 3, 2, // 第二个三角形
-        };
-        glGenBuffers(1, &elementBufId);
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, elementBufId); // 绑定为GL_ELEMENT_ARRAY_BUFFER
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(elementBuf), elementBuf, GL_STATIC_DRAW);
-        
-        _vertexArrayId.reset(new GLuint(vertexArrayId));
-        
         
         // 创建纹理
         for (auto &texture : _textures) {
@@ -584,10 +345,10 @@ void main()
         
         
         
-        // 这一行的作用是解除vertexBufId的激活状态，避免其它操作不小心改动到这里。不过这种情况很少见。
-        glBindVertexArray(0);
-        if (CheckError())
-            return false;
+//        // 这一行的作用是解除vertexBufId的激活状态，避免其它操作不小心改动到这里。不过这种情况很少见。
+//        glBindVertexArray(0);
+//        if (CheckError())
+//            return false;
 
 
 
@@ -606,12 +367,13 @@ protected:
     std::vector<GLTexture> _textures;
     
     std::unique_ptr<GLProgram> _program;
-    GL_IdHolder _vertexArrayId = GL_IdHolder(nullptr, VERTEX_ARRAY_DELETER);
+    
+    GLVertexArray _vertexArray = GLVertexArray(_context);
     GL_IdHolder _frameBufferId = GL_IdHolder(nullptr, FRAME_BUFFER_DELETER);
     
     
     std::unique_ptr<GLProgram> _screenProgram;
-    GL_IdHolder _screenVertexArrayId = GL_IdHolder(nullptr, VERTEX_ARRAY_DELETER);
+    GLVertexArray _screenVertexArray = GLVertexArray(_context);
     GL_IdHolder _frameBufferTextureId = GL_IdHolder(nullptr, FRAME_BUFFER_DELETER);
         
     std::array<GLfloat, 4> _clearColor;

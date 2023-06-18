@@ -139,8 +139,7 @@ std::optional<sp::ImageBuffer> LoadBufferFromImage(NSImage *image) {
         const GLchar *vertexShaderSource = R"(
         #version 330 core
         layout (location = 0) in vec2 aPos;
-        layout (location = 1) in vec3 aColor;
-        layout (location = 2) in vec2 aTexCoord;
+        layout (location = 1) in vec2 aTexCoord;
         
         uniform mat4 transform;
         
@@ -190,7 +189,7 @@ std::optional<sp::ImageBuffer> LoadBufferFromImage(NSImage *image) {
 
 - (void)drawRect:(NSRect)dirtyRect {
     NSLog(@"%@", NSStringFromRect(dirtyRect));
-    auto tm = clock();
+    NSDate *date = [NSDate date];
     [super drawRect:dirtyRect];
     
     pGLContext->switchContext();
@@ -198,7 +197,7 @@ std::optional<sp::ImageBuffer> LoadBufferFromImage(NSImage *image) {
     pGLContext->flush();
     glFinish(); // 添加glFinish()以阻塞等待GPU执行完成
 
-    NSLog(@"耗时：%.2fms", (clock() - tm) / 1000.0f);
+    NSLog(@"耗时：%.2fms", [[NSDate  date] timeIntervalSinceDate:date] * 1000.0f);
 }
 
 @end
