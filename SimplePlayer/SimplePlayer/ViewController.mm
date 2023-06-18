@@ -11,6 +11,7 @@
 @interface ViewController ()
 
 @property (nonatomic, assign) std::shared_ptr<IPreviewManager> preview;
+@property (nonatomic, strong) NSTimer *timer;
 
 @end
 
@@ -22,6 +23,9 @@
 
     self.preview = IPreviewManager::createIPreviewManager();
     self.preview->setParentViews((__bridge_retained void *)self.view);
+    
+    // FIXME: 这种写法会引入循环引用
+    self.timer = [NSTimer scheduledTimerWithTimeInterval:1.0 / 30 target:self selector:@selector(refresh:) userInfo:self repeats:YES];
 }
 
 
@@ -38,5 +42,11 @@
     }
 }
 
+- (void)refresh:(id)obj {
+    for(NSView *subView in self.view.subviews) {
+//        [subView setFrame:self.view.bounds];
+        [subView setNeedsDisplay:YES];
+    }
+}
 
 @end
