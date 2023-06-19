@@ -703,19 +703,24 @@ LearnOpenGL后续的几章都是关于3D绘制的，和需求不相关。因此�
 
 ## [帧缓冲(Frame Buffer)](https://learnopengl-cn.github.io/04%20Advanced%20OpenGL/05%20Framebuffers/)
 又称为**离屏渲染**。
-
-![](https://ask.qcloudimg.com/http-save/yehe-1068165/9cxpfisde2.png?imageView2/2/w/1200)
+> 帧缓冲本质上是个manager，本身并没有数据，实际的数据在颜色缓冲区、深度缓冲区、模板缓冲区中，manager只是管理这些有数据的缓冲区，对这些缓冲区的引用叫“附件”，参考下图：
+> ![](https://ask.qcloudimg.com/http-save/yehe-1068165/9cxpfisde2.png?imageView2/2/w/1200)
 
 被坑了好久，最后发现，**FBO的附着的Texture/RenderBuffer是用来同时写入多个缓冲的**，并不能拿来存放输入，并且启用多纹理写入需要调用`glDrawBuffers()`。换言之，**绝大多数情况下FrameBuffer只有一个输出缓冲**。
 
-渲染缓冲区RenderBuffer。需要特别注意的是，**RenderBuffer不能用作着色器的输入**，只能用于上屏或者`glReadPixels()`读取。
+渲染缓冲区RenderBuffer。需要特别注意的是，**RenderBuffer不能用作着色器的输入**，一般用于存储深度Depth和模版Stencil信息。对于大多数硬件来说，RenderBuffer和Texture的性能差异不大。[deferred rendering - Renderbuffer vs Texture](https://stackoverflow.com/questions/41182154/deferred-rendering-renderbuffer-vs-texture)
 > 原生像素数组。渲染缓冲区就像一个纹理，但使用内部格式存储像素。它针对像素传输操作进行了优化。它可以附加到帧缓冲区作为绘制像素的目的地，然后快速复制到视口或另一个帧缓冲区。这允许实现双缓冲算法，在显示前一个场景的同时绘制下一个场景。<br>
 > 渲染缓冲区也可用于存储仅用于单个绘制过程的深度和模板信息。这是可能的，因为只有实现本身需要读取渲染缓冲区数据，并且往往比纹理更快，因为使用了本机格式。<br>
 > 因为它使用本机格式，所以渲染缓冲区不能附加到着色器程序并用作采样器。
 
+因此，常见的调用方式是：
+1. 
 
-
-
+一些资料：
+- [17.opengl高级-帧缓冲(1)](https://cloud.tencent.com/developer/article/1658567)
+- [教程14：渲染到纹理](http://www.opengl-tutorial.org/cn/intermediate-tutorials/tutorial-14-render-to-texture/#%E7%BB%93%E6%9E%9C)
+- [现代opengl 设计 glDrawArrays与glDrawElements的功能与区别](https://blog.csdn.net/leon_zeng0/article/details/89291860)
+- [从0打造一个GPUImage(6)-GPUImage的多滤镜处理逻辑](https://juejin.cn/post/6844903716592549901)
 
 # 优质参考资料
 

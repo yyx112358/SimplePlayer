@@ -113,6 +113,7 @@ std::optional<sp::ImageBuffer> LoadBufferFromImage(NSImage *image) {
 @interface Preview_Mac : NSOpenGLView {
     std::shared_ptr<sp::GLContext> pGLContext;
     std::unique_ptr<sp::GLRendererBase> pRenderer;
+    std::unique_ptr<sp::GLRendererPreview> pRendererPreview;
 }
 
 @end
@@ -179,6 +180,10 @@ std::optional<sp::ImageBuffer> LoadBufferFromImage(NSImage *image) {
         if (buffer.has_value())
             pRenderer->UpdateTexture({*buffer});
         
+        pRendererPreview = std::make_unique<sp::GLRendererPreview>(pGLContext);
+        pRendererPreview->SetClearColor(0.75f, 0.5f, 0.5f, 1.0f);
+        pRendererPreview->UpdateTexture({pRenderer->outputTexture});
+        
     }
     return self;
 }
@@ -194,6 +199,8 @@ std::optional<sp::ImageBuffer> LoadBufferFromImage(NSImage *image) {
     
     pGLContext->switchContext();
     pRenderer->Render();
+    pRendererPreview->Render();
+    
     pGLContext->flush();
     glFinish(); // 添加glFinish()以阻塞等待GPU执行完成
 

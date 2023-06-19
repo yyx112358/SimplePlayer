@@ -92,7 +92,7 @@ public:
             glGenBuffers(1, &vertexBufId); // 生成 1 个顶点缓冲区对象，vertexBufId是绑定的唯一OpenGL标识
             glBindBuffer(GL_ARRAY_BUFFER, vertexBufId); // 绑定为GL_ARRAY_BUFFER
             glBufferData(GL_ARRAY_BUFFER, static_cast<GLsizei>(_vertexBuffer.size() * sizeof(_vertexBuffer[0])), _vertexBuffer.data(), GL_STATIC_DRAW); // 传输数据
-
+            
             glVertexAttribPointer(0, (GLsizei)_vertexBuffer[0].location.size(), GL_FLOAT, GL_FALSE, sizeof(_vertexBuffer[0]), (GLvoid *)(offsetof(VertexBuffer, location)));// 位置
             glEnableVertexAttribArray(0); // 启用VertexAttribArray
             glVertexAttribPointer(1, (GLsizei)_vertexBuffer[0].texture.size(), GL_FLOAT, GL_FALSE, sizeof(_vertexBuffer[0]), (GLvoid *)(offsetof(VertexBuffer, texture)));// 纹理
@@ -206,10 +206,10 @@ public:
             for (auto &tex : _attachTextures) {
                 if (tex->Activate() == false)
                     return false;
-
+                
                 glActiveTexture(attachId); // 激活纹理单元
                 glFramebufferTexture2D(GL_FRAMEBUFFER, attachId, GL_TEXTURE_2D, *tex->id(), 0);
-
+                
                 if (CheckError())
                     return false;
                 else
@@ -219,9 +219,9 @@ public:
             for (auto &rbo : _attachRenderBuffers) {
                 if (rbo->Activate() == false)
                     return false;
-
+                
                 glFramebufferRenderbuffer(GL_FRAMEBUFFER, attachId, GL_RENDERBUFFER, *rbo->id());
-
+                
                 if (CheckError())
                     return false;
                 else
@@ -253,7 +253,7 @@ protected:
 
 class GLRendererBase {
 public:
-    GLRendererBase(std::shared_ptr<GLContext> context) :_context(context), _program(new GLProgram(context)), _screenProgram(new GLProgram(context)) {}
+    GLRendererBase(std::shared_ptr<GLContext> context) :_context(context), _program(new GLProgram(context)) { outputTexture = std::make_shared<GLTexture>(_context, ImageBuffer{.width = 1920, .height = 1080, .pixelFormat = GL_RGBA});}
     
     virtual ~GLRendererBase() {
         _context->switchContext();
@@ -273,6 +273,16 @@ public:
             auto texture = std::make_shared<GLTexture>(_context, buffer);
             _textures.emplace_back(std::move(texture));
         }
+        _needUpdate = true;
+        return true;
+    }
+    
+    bool UpdateTexture(const std::vector<std::shared_ptr<GLTexture>> &textures) {
+        GLint MAX_TEXTURE_UNIT;
+        glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &MAX_TEXTURE_UNIT);
+        assert(textures.size() <= MAX_TEXTURE_UNIT);
+        
+        _textures = textures;
         _needUpdate = true;
         return true;
     }
@@ -307,47 +317,19 @@ public:
         // 更新内部参数
         if (_InternalUpdate() == false)
             return false;
-
+        
         return _InternalRender();
     }
-    
+    std::shared_ptr<GLTexture> outputTexture;
 protected:
     virtual bool _InternalUpdate() {
         if (_needUpdate == false)
             return true;
         
-        _screenProgram->UpdateShader({R"(
-#version 330 core
-layout (location = 0) in vec2 aPos;
-layout (location = 1) in vec2 aTexCoords;
-
-out vec2 TexCoords;
-
-void main()
-{
-    gl_Position = vec4(aPos.x, aPos.y, 0.0, 1.0);
-    TexCoords = aTexCoords;
-}
-)"}, {R"(
-#version 330 core
-out vec4 FragColor;
-
-in vec2 TexCoords;
-
-uniform sampler2D screenTexture;
-
-void main()
-{
-    FragColor = texture(screenTexture, TexCoords);
-}
-)"});
-        _screenProgram->Activate();
-        _screenVertexArray.Activate();
-        
         _program->Activate();
         
         // 创建一个FBO使用的空纹理
-        _frameBuffer->UpdateAttachTextures({std::make_shared<GLTexture>(_context, ImageBuffer{.width = 1920, .height = 1080, .pixelFormat = GL_RGBA})});
+        _frameBuffer->UpdateAttachTextures({outputTexture});
         _frameBuffer->Activate();
         
         // 创建纹理
@@ -356,15 +338,11 @@ void main()
                 return false;
         }
         
+        //        // 这一行的作用是解除vertexBufId的激活状态，避免其它操作不小心改动到这里。不过这种情况很少见。
+        //        glBindVertexArray(0);
+        //        if (CheckError())
+        //            return false;
         
-        
-//        // 这一行的作用是解除vertexBufId的激活状态，避免其它操作不小心改动到这里。不过这种情况很少见。
-//        glBindVertexArray(0);
-//        if (CheckError())
-//            return false;
-
-
-
         _needUpdate = false;
         return true;
     }
@@ -375,7 +353,7 @@ void main()
         glClearColor(_clearColor[0], _clearColor[1], _clearColor[2], _clearColor[3]);
         glClear(GL_COLOR_BUFFER_BIT);
         
-//        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // 取消注释后将启用线框模式
+        //        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // 取消注释后将启用线框模式
         _program->Activate(); // 启用Shader程序
         CheckError();
         
@@ -405,20 +383,6 @@ void main()
         _vertexArray.Render();
         CheckError();
         
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
-        glBindTexture(GL_TEXTURE_2D, 0);
-        glClearColor(1, 1, 1, 1);
-        glClear(GL_COLOR_BUFFER_BIT);
-
-        _screenProgram->Activate();
-        _screenVertexArray.Activate();
-        glActiveTexture(GL_TEXTURE0 + 0); // 激活纹理单元1
-        glBindTexture(GL_TEXTURE_2D, *_frameBuffer->GetOutputTexture()->id()); // 绑定纹理。根据上下文，这个纹理绑定到了纹理单元1
-//        glBindRenderbuffer(GL_RENDERBUFFER, *_frameBuffer->GetAttachRenderBuffers()[0]->id());
-        _screenProgram->UpdateUniform("screenTexture", 0); // 更新纹理uniform
-        _screenProgram->FlushUniform();
-
-        _screenVertexArray.Render();
         
         if (CheckError())
             return false;
@@ -440,18 +404,75 @@ protected:
     GLVertexArray _vertexArray = GLVertexArray(_context);
     std::shared_ptr<GLFrameBuffer> _frameBuffer = std::make_shared<GLFrameBuffer>(_context);
     
-    std::unique_ptr<GLProgram> _screenProgram;
-    GLVertexArray _screenVertexArray = GLVertexArray(_context);
-        
     std::array<GLfloat, 4> _clearColor;
 };
 
 class GLRendererPreview : public GLRendererBase {
 public:
-    GLRendererPreview(std::shared_ptr<GLContext> context):GLRendererBase(context) {}
+    GLRendererPreview(std::shared_ptr<GLContext> context):GLRendererBase(context) {
+        
+    }
     virtual ~GLRendererPreview() {}
     
+    
 protected:
+    bool _InternalUpdate() override {
+        if (_needUpdate == false)
+            return true;
+        
+        UpdateShader({R"(
+#version 330 core
+layout (location = 0) in vec2 aPos;
+layout (location = 1) in vec2 aTexCoords;
+
+out vec2 TexCoords;
+
+void main()
+{
+    gl_Position = vec4(aPos.x, aPos.y, 0.0, 1.0);
+    TexCoords = aTexCoords;
+}
+)"}, {R"(
+#version 330 core
+out vec4 FragColor;
+
+in vec2 TexCoords;
+
+uniform sampler2D screenTexture;
+
+void main()
+{
+    FragColor = texture(screenTexture, TexCoords);
+}
+)"});
+        _program->Activate();
+        _vertexArray.Activate();
+        
+        
+        _needUpdate = false;
+        return true;
+    }
+    
+    bool _InternalRender() override {
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        glClearColor(1, 1, 1, 1);
+        glClear(GL_COLOR_BUFFER_BIT);
+        
+        _program->Activate();
+        _vertexArray.Activate();
+        glActiveTexture(GL_TEXTURE0 + 0); // 激活纹理单元1
+        glBindTexture(GL_TEXTURE_2D, *_textures[0]->id()); // 绑定纹理。根据上下文，这个纹理绑定到了纹理单元1
+        //        glBindRenderbuffer(GL_RENDERBUFFER, *_frameBuffer->GetAttachRenderBuffers()[0]->id());
+        _program->UpdateUniform("screenTexture", 0); // 更新纹理uniform
+        _program->FlushUniform();
+        
+        _vertexArray.Render();
+        
+        if (CheckError())
+            return false;
+        
+        return true;
+    }
     
     
 };
