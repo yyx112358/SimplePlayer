@@ -12,10 +12,12 @@
 #import <Cocoa/Cocoa.h>
 
 #include <mutex>
-#include <any>
+#include <variant>
 #include <unordered_map>
 #include <vector>
 #include <memory>
+
+#import "../../../../thirdParty/glm/glm/fwd.hpp"
 
 #import "ImageReader.hpp"
 
@@ -52,7 +54,7 @@ protected:
 
 #define CheckError() GLContext::CheckGLError(__FILE__, __LINE__)
 
-
+typedef std::variant<int32_t, uint32_t, float, glm::mat4> GLUniform;
 
 class GLProgram {
 public:
@@ -73,7 +75,7 @@ public:
     
     bool UpdateShader(const std::vector<std::string> &vertexShader, const std::vector<std::string> &fragmentShader);
     
-    bool UpdateUniform(const std::string &name, std::any uniform);
+    bool UpdateUniform(const std::string &name, GLUniform uniform);
     
     bool FlushUniform();
     
@@ -95,7 +97,7 @@ protected:
     
     std::vector<std::string> _vertexShaderSource;
     std::vector<std::string> _fragmentShaderSource;
-    std::unordered_map<std::string, std::any> _uniformMap;
+    std::unordered_map<std::string, GLUniform> _uniformMap;
     
     GL_IdHolder _programId = GL_IdHolder(nullptr, PROGRAM_DELETER);
 };
@@ -205,26 +207,26 @@ protected:
 
 class Parameter {
 public:
-    std::any parameter;
-    std::any shadowParameter;
-    
-    void update(const std::any&input) {
-        shadowParameter = input;
-    }
-    std::any& get() {
-        return shadowParameter.has_value() ? shadowParameter : parameter;
-    }
-    std::any getReal() {
-        return parameter;
-    }
-    std::any& getAndUpdate() {
-        parameter.swap(shadowParameter);
-        shadowParameter.reset();
-        return get();
-    }
-    bool isUpdated() {
-        return shadowParameter.has_value() == false;
-    }
+//    std::any parameter;
+//    std::any shadowParameter;
+//    
+//    void update(const std::any&input) {
+//        shadowParameter = input;
+//    }
+//    std::any& get() {
+//        return shadowParameter.has_value() ? shadowParameter : parameter;
+//    }
+//    std::any getReal() {
+//        return parameter;
+//    }
+//    std::any& getAndUpdate() {
+//        parameter.swap(shadowParameter);
+//        shadowParameter.reset();
+//        return get();
+//    }
+//    bool isUpdated() {
+//        return shadowParameter.has_value() == false;
+//    }
 };
 
 }

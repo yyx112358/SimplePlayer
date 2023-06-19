@@ -124,7 +124,7 @@ bool GLProgram::UpdateShader(const std::vector<std::string> &vertexShader, const
     return true;
 }
 
-bool GLProgram::UpdateUniform(const std::string &name, std::any uniform) {
+bool GLProgram::UpdateUniform(const std::string &name, GLUniform uniform) {
     _uniformMap[name] = uniform;
     return true;
 }
@@ -224,30 +224,22 @@ void GLProgram::_UpdateUniform() {
         return;
     glUseProgram(*_programId);
     for (const auto &uniPair : _uniformMap) {
-        // 根据type调用对应的glUniformx()
-        const static std::unordered_map<std::type_index, std::function<void(GLint location, const std::any &)>>tbl = {
-            {typeid(int), [](GLint location, const std::any &val){ glUniform1i(location, std::any_cast<int>(val));}},
-            {typeid(float), [](GLint location, const std::any &val){ glUniform1f(location, std::any_cast<float>(val));}},
-            {typeid(glm::mat4), [](GLint location, const std::any &val){ glUniformMatrix4fv(location, 1, GL_FALSE, glm::value_ptr(std::any_cast<glm::mat4>(val))); }},
-        };
+
+        const GLUniform &value = uniPair.second;
         
-        
-        // 查找对应的方法
-        const std::any &value = uniPair.second;
+        // 查找对应location
         GLint location = glGetUniformLocation(*_programId, uniPair.first.c_str());
-        if (tbl.count(value.type()) == 0) {
-            NSLog(@"%s not found in %s", value.type().name(), __FUNCTION__);
-            abort();
-        }
-        if (value.has_value() == false || location < 0 || tbl.count(value.type()) == 0){
-            assert(value.has_value());
-            assert(location >= 0);
-            assert(tbl.count(value.type()));
-            continue;
-        }
-        // 调用
-        auto &f = tbl.at(value.type());
-        f(location, value);
+        assert(location >= 0);
+        
+        // 根据type调用对应的glUniformx()
+        if (std::holds_alternative<int>(value))
+            glUniform1i(location, std::get<int>(value));
+        else if (std::holds_alternative<float>(value))
+            glUniform1f(location, std::get<float>(value));
+        else if (std::holds_alternative<glm::mat4>(value))
+            glUniformMatrix4fv(location, 1, GL_FALSE, glm::value_ptr(std::get<glm::mat4>(value)));
+        else
+            assert(0);
     }
     _uniformMap.clear();
 }
