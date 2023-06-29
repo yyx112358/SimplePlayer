@@ -25,6 +25,7 @@
 #include "../../../../thirdParty/glm/glm/gtc/type_ptr.hpp"
 
 #import "GLContext.hpp"
+#include "ImageWriterBmp.h"
 
 namespace sp {
 
@@ -43,10 +44,10 @@ public:
     /// 默认矩形Vertex Buffer
     static const std::vector<VertexBuffer> &DEFAULT_RECT_VERTEX_BUFFER() {
         const static std::vector<VertexBuffer> buf = {
-            {{-0.75, 0.75}, {0.0, 1.0},}, // 左上
-            {{ 0.75, 0.75}, {1.0, 1.0},}, // 右上
-            {{-0.75,-0.75}, {0.0, 0.0},}, // 左下
-            {{ 0.75,-0.75}, {1.0, 0.0},}, // 右下
+            {{-1.0, 1.0}, {0.0, 1.0},}, // 左上
+            {{ 1.0, 1.0}, {1.0, 1.0},}, // 右上
+            {{-1.0,-1.0}, {0.0, 0.0},}, // 左下
+            {{ 1.0,-1.0}, {1.0, 0.0},}, // 右下
         };
         return buf;
     }
@@ -200,9 +201,9 @@ public:
             assert(_attachTextures.size() > 0 || _attachRenderBuffers.size() > 0);
             assert(_attachTextures.size() + _attachRenderBuffers.size() <= 16);
             
-            // TODO: DEPTH、STENCIL
             GLenum attachId = GL_COLOR_ATTACHMENT0;
             // Texture附着到FBO
+            // 绝大多数情况下，只会用到_attachTextures[0]。除非是需要同时在多个Texture上绘制
             for (auto &tex : _attachTextures) {
                 if (tex->Activate() == false)
                     return false;
@@ -216,6 +217,7 @@ public:
                     attachId++;
             }
             // RenderBuffer附着到FBO
+            // 不可作为被采样纹理。一般用于Depth/Stencil Buffer
             for (auto &rbo : _attachRenderBuffers) {
                 if (rbo->Activate() == false)
                     return false;
@@ -350,6 +352,7 @@ protected:
     virtual bool _InternalRender() {
         // 上屏绘制
         _frameBuffer->Activate();
+        glViewport(0, 0, outputTexture->width(), outputTexture->height());
         glClearColor(_clearColor[0], _clearColor[1], _clearColor[2], _clearColor[3]);
         glClear(GL_COLOR_BUFFER_BIT);
         
@@ -414,6 +417,11 @@ public:
     }
     virtual ~GLRendererPreview() {}
     
+    virtual bool UpdatePreviewSize(int width, int height) {
+        _width = width;
+        _height = height;
+        return true;
+    }
     
 protected:
     bool _InternalUpdate() override {
@@ -448,13 +456,13 @@ void main()
         _program->Activate();
         _vertexArray.Activate();
         
-        
         _needUpdate = false;
         return true;
     }
     
     bool _InternalRender() override {
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        glBindFramebuffer(GL_FRAMEBUFFER, 0); // 绑定到屏幕
+        glViewport(0, 0, _width, _height);
         glClearColor(1, 1, 1, 1);
         glClear(GL_COLOR_BUFFER_BIT);
         
@@ -462,7 +470,6 @@ void main()
         _vertexArray.Activate();
         glActiveTexture(GL_TEXTURE0 + 0); // 激活纹理单元1
         glBindTexture(GL_TEXTURE_2D, *_textures[0]->id()); // 绑定纹理。根据上下文，这个纹理绑定到了纹理单元1
-        //        glBindRenderbuffer(GL_RENDERBUFFER, *_frameBuffer->GetAttachRenderBuffers()[0]->id());
         _program->UpdateUniform("screenTexture", 0); // 更新纹理uniform
         _program->FlushUniform();
         
@@ -474,7 +481,8 @@ void main()
         return true;
     }
     
-    
+protected:
+    int _width = 0, _height = 0;
 };
 
 

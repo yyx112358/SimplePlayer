@@ -127,6 +127,8 @@ public:
     bool Activate();
     
     std::optional<GLuint> id() const;
+    GLsizei width() const {return _buffer ? _buffer->width : -1;}
+    GLsizei height() const {return _buffer ? _buffer->height : -1;}
     
 protected:
     virtual bool _UploadBuffer();

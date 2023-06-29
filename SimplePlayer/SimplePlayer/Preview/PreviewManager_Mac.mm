@@ -168,7 +168,7 @@ std::optional<sp::ImageBuffer> LoadBufferFromImage(NSImage *image) {
         {
             // 使用texture1进行颜色采样。
             // 纹理坐标系和OpenGL坐标系相反，因此y坐标取1-vtxTexCoord.y
-            FragColor = texture(texture0, vec2(vtxTexCoord.x, 1-vtxTexCoord.y)).bgra;
+            FragColor = texture(texture0, vec2(vtxTexCoord.x, 1-vtxTexCoord.y)).rgba;
         })";
         pRenderer->UpdateShader({vertexShaderSource}, {fragmentShaderSource});
         pRenderer->SetClearColor(0.2f, 0.3f, 0.3f, 1.0f);
@@ -199,6 +199,10 @@ std::optional<sp::ImageBuffer> LoadBufferFromImage(NSImage *image) {
     
     pGLContext->switchContext();
     pRenderer->Render();
+    
+    float scale = 2; // TODO: 自动获取Retina scale
+    
+    pRendererPreview->UpdatePreviewSize(dirtyRect.size.width * scale, dirtyRect.size.height * scale);
     pRendererPreview->Render();
     
     pGLContext->flush();
