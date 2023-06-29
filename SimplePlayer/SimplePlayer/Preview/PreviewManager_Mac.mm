@@ -179,10 +179,11 @@ std::optional<sp::ImageBuffer> LoadBufferFromImage(NSImage *image) {
         auto buffer = LoadBufferFromImage([NSImage imageNamed:@"texture.jpg"]);
         if (buffer.has_value())
             pRenderer->UpdateTexture({*buffer});
+        pRenderer->UpdateOutputTexture(std::make_shared<sp::GLTexture>(pGLContext, sp::ImageBuffer{.width = 1920, .height = 1080, .pixelFormat = GL_RGBA}));
         
         pRendererPreview = std::make_unique<sp::GLRendererPreview>(pGLContext);
         pRendererPreview->SetClearColor(0.75f, 0.5f, 0.5f, 1.0f);
-        pRendererPreview->UpdateTexture({pRenderer->outputTexture});
+        pRendererPreview->UpdateTexture({pRenderer->GetOutputTexture()});
         
     }
     return self;

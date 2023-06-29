@@ -255,7 +255,7 @@ protected:
 
 class GLRendererBase {
 public:
-    GLRendererBase(std::shared_ptr<GLContext> context) :_context(context), _program(new GLProgram(context)) { outputTexture = std::make_shared<GLTexture>(_context, ImageBuffer{.width = 1920, .height = 1080, .pixelFormat = GL_RGBA});}
+    GLRendererBase(std::shared_ptr<GLContext> context) :_context(context), _program(new GLProgram(context)) { }
     
     virtual ~GLRendererBase() {
         _context->switchContext();
@@ -287,6 +287,25 @@ public:
         _textures = textures;
         _needUpdate = true;
         return true;
+    }
+    
+    bool UpdateOutputTexture(std::shared_ptr<GLTexture> texture) {
+        _outputTexture = texture;
+        _needUpdate = true;
+        return true;
+    }
+    
+    std::shared_ptr<GLTexture> GetOutputTexture() {
+        return _outputTexture;
+    }
+    
+    bool UpdateTransform(const glm::mat4 &transform) {
+        _transform = transform;
+        return true;
+    }
+    
+    const glm::mat4 &GetTransform() {
+        return _transform;
     }
     
     void SetClearColor(GLfloat r, GLfloat g, GLfloat b, GLfloat a) {
@@ -322,7 +341,6 @@ public:
         
         return _InternalRender();
     }
-    std::shared_ptr<GLTexture> outputTexture;
 protected:
     virtual bool _InternalUpdate() {
         if (_needUpdate == false)
@@ -331,7 +349,7 @@ protected:
         _program->Activate();
         
         // 创建一个FBO使用的空纹理
-        _frameBuffer->UpdateAttachTextures({outputTexture});
+        _frameBuffer->UpdateAttachTextures({_outputTexture});
         _frameBuffer->Activate();
         
         // 创建纹理
@@ -339,6 +357,9 @@ protected:
             if (texture->Activate() == false)
                 return false;
         }
+        
+        if (_outputTexture->Activate() == false)
+            return false;
         
         //        // 这一行的作用是解除vertexBufId的激活状态，避免其它操作不小心改动到这里。不过这种情况很少见。
         //        glBindVertexArray(0);
@@ -352,7 +373,7 @@ protected:
     virtual bool _InternalRender() {
         // 上屏绘制
         _frameBuffer->Activate();
-        glViewport(0, 0, outputTexture->width(), outputTexture->height());
+        glViewport(0, 0, _outputTexture->width(), _outputTexture->height());
         glClearColor(_clearColor[0], _clearColor[1], _clearColor[2], _clearColor[3]);
         glClear(GL_COLOR_BUFFER_BIT);
         
@@ -374,12 +395,7 @@ protected:
         
         CheckError();
         
-        glm::mat4 trans(1.0f);
-//        static int angle = 0;
-//        trans = glm::translate(trans, glm::vec3(0.5f, 0.5f, 0.0f));
-//        trans = glm::rotate(trans, glm::radians(float(angle++)), glm::vec3(0.0f, 0.0f, 1.0f));
-//        trans = glm::scale(trans, glm::vec3(0.75f, 0.75f, 0.75f));
-        _program->UpdateUniform("transform", trans);
+        _program->UpdateUniform("transform", _transform);
         
         _program->FlushUniform();
         
@@ -401,7 +417,12 @@ protected:
     const std::shared_ptr<GLContext> _context;
     bool _needUpdate = true;
     
+    /// 输入纹理，多输入
     std::vector<std::shared_ptr<GLTexture>> _textures;
+    /// 输出纹理，单输出
+    std::shared_ptr<GLTexture> _outputTexture;
+    /// 变换矩阵
+    glm::mat4 _transform = glm::mat4(1.0f);
     
     std::unique_ptr<GLProgram> _program;
     GLVertexArray _vertexArray = GLVertexArray(_context);
