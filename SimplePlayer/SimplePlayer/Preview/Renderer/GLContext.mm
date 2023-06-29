@@ -316,3 +316,39 @@ bool GLTexture::_UploadBuffer() {
     _needUpdate = false;
     return true;
 }
+
+#pragma mark -GLRenderBuffer
+
+void GLRenderBuffer::RENDER_BUFFER_DELETER(GLuint *p) {
+    NSLog(@"Delete render buffer %d", *p);
+    glDeleteRenderbuffers(1, p);
+}
+
+bool GLRenderBuffer::Activate() {
+    _context->switchContext();
+    
+    if (_renderBufferId == nullptr) {
+        if (_width.has_value() == false || _height.has_value() == false)
+            return false;
+        
+        GLuint renderBufferId;
+        glGenRenderbuffers(1, &renderBufferId);
+        auto holder = GL_IdHolder(new GLuint(renderBufferId), RENDER_BUFFER_DELETER);
+        NSLog(@"Create render buffer %d", renderBufferId);
+        
+        glBindRenderbuffer(GL_RENDERBUFFER, renderBufferId);
+        glRenderbufferStorage(GL_RENDERBUFFER, GL_RGBA8, *_width, *_height);
+        
+        if (CheckError())
+            return false;
+        
+        _renderBufferId = std::move(holder);
+    }
+    glBindRenderbuffer(GL_RENDERBUFFER, *_renderBufferId);
+    
+    if (CheckError())
+        return false;
+    
+    // glBindRenderbuffer( GL_RENDERBUFFER, 0 );
+    return true;
+}
