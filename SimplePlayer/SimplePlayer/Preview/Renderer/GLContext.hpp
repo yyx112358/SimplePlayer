@@ -248,7 +248,7 @@ public:
             if (CheckError())
                 return false;
             _vertexBufferId.emplace(vertexBufId);
-            _vertexBufferSize.emplace(_vertexBuffer.size() * sizeof(_vertexBuffer[0]) / sizeof(float));
+            _vertexBufferSize.emplace(_vertexBuffer.size());
             _vertexBuffer.clear();
         }
         
