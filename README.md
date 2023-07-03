@@ -722,6 +722,31 @@ LearnOpenGL后续的几章都是关于3D绘制的，和需求不相关。因此�
 - [现代opengl 设计 glDrawArrays与glDrawElements的功能与区别](https://blog.csdn.net/leon_zeng0/article/details/89291860)
 - [从0打造一个GPUImage(6)-GPUImage的多滤镜处理逻辑](https://juejin.cn/post/6844903716592549901)
 
+# 2023年6月30日
+
+有一段时间没做过了，现在继续。
+
+字符画的基本思路：
+
+
+
+# 2023年7月3日
+解决了一个非常难查的问题。使用大批量的顶点绘制图片，当顶点数很多时候，会出现预期外的横、竖、斜线。<br>
+![](./Diary/Images/顶点过多时绘制错误.jpg)
+
+查了很久，一开始以为是顶点计算逻辑有问题，但最终发现并不是。后来发现是否出现非预期直线似乎与绘制个数有关，精确定位后发现如果顶点数超过512就有问题。根据[Vertices limitation in OpenGL](https://stackoverflow.com/questions/7123113/vertices-limitation-in-opengl)中的回答，检查了GL_MAX_ELEMENTS_VERTICES参数，发现M1芯片的上限是150000远超512，并不足以达到上限。
+
+最终，发现是代码有误，**计算的_vertexBufferSize超出了实际的顶点数**，因此绘制有误。
+```
+// 错误
+_vertexBufferSize.emplace(_vertexBuffer.size() * sizeof(_vertexBuffer[0]) / sizeof(float));
+glDrawArrays(GL_TRIANGLES, 0, *_vertexBufferSize);
+// 正确
+_vertexBufferSize.emplace(_vertexBuffer.size());
+glDrawArrays(GL_TRIANGLES, 0, *_vertexBufferSize);
+```
+另外，根据Stack Overflow的回答，当顶点数过多时候可能对绘制性能有很大影响，可能需要拆分为多个VBO。是否拆分视不同厂商的实现而定。
+
 # 优质参考资料
 
 [LearnOpenGL-CN](https://learnopengl-cn.github.io/)<br>
