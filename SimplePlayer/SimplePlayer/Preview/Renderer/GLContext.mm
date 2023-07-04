@@ -258,7 +258,7 @@ void GLTexture::UploadBuffer(ImageBuffer buffer) {
     _needUpdate = true;
 }
 
-std::optional<ImageBuffer> GLTexture::DownloadBuffer() {
+std::optional<ImageBuffer> GLTexture::DownloadBuffer() const {
     std::optional<ImageBuffer> buffer;
     if (_textureId == nullptr)
         return buffer;

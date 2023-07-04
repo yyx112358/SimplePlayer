@@ -153,30 +153,41 @@ std::optional<sp::ImageBuffer> LoadBufferFromImage(NSImage *image) {
 
         void main()
         {
-            int posX = int((aPos.x + 1) / 2 * texWidth), posY = int((1 - (1.0 + aPos.y) / 2) * texHeight);
-            int left = posX / charWidth * charWidth, top = posY / charHeight * charHeight;
-            int right = left + charWidth <= texWidth ? left + charWidth : texWidth;
-            int bottom = top + charHeight <= texHeight ? top + charHeight : texHeight;
+            gl_Position = transform * vec4(aPos.x, - aPos.y, 0.0, 1.0);
         
-            gl_Position = transform * vec4(aPos.x, aPos.y, 0.0, 1.0);
-
+            // 计算采样矩形坐标范围，aTexCoord是网格小矩形左上角
+            int posX = int(aTexCoord.x * texWidth), posY = int(aTexCoord.y * texHeight);
+            
+            int left = posX / charWidth * charWidth, top = posY / charHeight * charHeight;
+            int right = min(left + charWidth, texWidth);
+            int bottom = min(top + charHeight, texHeight);
+            
+            // 计算平均灰度
             float sumR = 0, sumG = 0, sumB = 0;
-            int xstep = 4, ystep = 4;
-            int x, y;
-            for (y = top; y < bottom; y += ystep)
+            int xstep = 4, ystep = 4; // 不需要每一个点取值，取一部分就可以
+            int amount = 0;
+            for (int y = top; y < bottom; y += ystep)
             {
-                for (x = left; x < right; x += xstep)
+                for (int x = left; x < right; x += xstep)
                 {
                     vec4 color = texture(texture0, vec2(float(x) / texWidth, float(y) / texHeight));
                     sumR += color.r;
                     sumG += color.g;
                     sumB += color.b;
+                    amount++;
                 }
             }
-            int amount = (bottom - top) * (right - left) / xstep / ystep;
-            vtxColor = vec3(sumR / amount, sumG / amount, sumB / amount);
+            float gray = 0.299f * sumR / amount + 0.587f * sumG / amount + 0.114 * sumB / amount;
+            gray = min(gray, 255.f / 256);
+            vtxColor = vec3(gray, gray, gray);
             
-            vtxTexCoord = aTexCoord;
+            // 计算对应的字符纹理坐标。字符纹理从左到右划分为256个charWidth * charHeight矩形，第n个矩形的平均灰度值为n。
+            float charTexX = int(gray * 256) / 256.0, charTexY = 1;
+            if ((aPos.x + 1) / 2 > aTexCoord.x)
+                charTexX = charTexX + 1.0f / 256;
+            if ((aPos.y + 1) / 2 < aTexCoord.y)
+                charTexY = 0;
+            vtxTexCoord = vec2(charTexX, charTexY);
         })";
 
         // 创建并编译Fragment Shader，方法基本一致
@@ -192,10 +203,8 @@ std::optional<sp::ImageBuffer> LoadBufferFromImage(NSImage *image) {
 
         void main()
         {
-            // 使用texture1进行颜色采样。
-            // 纹理坐标系和OpenGL坐标系相反，因此y坐标取1-vtxTexCoord.y
-            FragColor = vec4(vtxColor.rgb, 1.0);
-//            FragColor = texture(texture0, vec2(vtxTexCoord.x, 1-vtxTexCoord.y)).rgba;
+            FragColor = texture(texture1, vec2(vtxTexCoord.x, vtxTexCoord.y)).rgba;
+//            FragColor = vec4(vtxColor.rgb, 1.0);
         })";
         pRenderer->UpdateShader({vertexShaderSource}, {fragmentShaderSource});
         pRenderer->SetClearColor(0.2f, 0.3f, 0.3f, 1.0f);
@@ -204,9 +213,9 @@ std::optional<sp::ImageBuffer> LoadBufferFromImage(NSImage *image) {
         // initWithContentsOfFile读不出来。不深究了，直接用imageNamed
         //NSImage *image = [[NSImage alloc] initWithContentsOfFile:@"/Users/yangyixuan/Downloads/texture.jpg"];
         auto buffer = LoadBufferFromImage([NSImage imageNamed:@"texture.jpg"]);
-        auto charBuffer = LoadBufferFromImage([NSImage imageNamed:@"output1.bmp"]);
+        auto charBuffer = LoadBufferFromImage([NSImage imageNamed:@"charTexture.bmp"]);
         if (buffer.has_value() && charBuffer.has_value())
-            pRenderer->UpdateTexture({*buffer});
+            pRenderer->UpdateTexture({*buffer, *charBuffer});
         pRenderer->UpdateOutputTexture(std::make_shared<sp::GLTexture>(pGLContext, sp::ImageBuffer{.width = 1920, .height = 1080, .pixelFormat = GL_RGBA}));
         
         pRenderer->UpdateUniform("texWidth", buffer->width);
@@ -241,7 +250,7 @@ std::optional<sp::ImageBuffer> LoadBufferFromImage(NSImage *image) {
     pRendererPreview->Render();
     
     pGLContext->flush();
-    glFinish(); // 添加glFinish()以阻塞等待GPU执行完成
+//    glFinish(); // 添加glFinish()以阻塞等待GPU执行完成
 
     NSLog(@"耗时：%.2fms", [[NSDate  date] timeIntervalSinceDate:date] * 1000.0f);
 }

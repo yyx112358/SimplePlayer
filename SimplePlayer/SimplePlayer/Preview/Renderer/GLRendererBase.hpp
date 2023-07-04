@@ -312,8 +312,8 @@ protected:
                     GLVertexArray::VertexBuffer vtx;
                     vtx.location[0] = -1 + (posX / texWidth) * 2;
                     vtx.location[1] = -1 + (1 - posY / texHeight) * 2;
-                    vtx.texture[0]  =  0 + (posX / texWidth) / 1;
-                    vtx.texture[1]  =  0 + (1 - posY / texHeight) / 1;
+                    vtx.texture[0]  =  0 + (float(x) / texWidth) / 1;
+                    vtx.texture[1]  =  0 + (1 - float(y) / texHeight) / 1;
                     bufs.push_back(vtx);
                 }
                 { // 右上
@@ -321,8 +321,8 @@ protected:
                     GLVertexArray::VertexBuffer vtx;
                     vtx.location[0] = -1 + (posX / texWidth) * 2;
                     vtx.location[1] = -1 + (1 - posY / texHeight) * 2;
-                    vtx.texture[0]  =  0 + (posX / texWidth) / 1;
-                    vtx.texture[1]  =  0 + (1 - posY / texHeight) / 1;
+                    vtx.texture[0]  =  0 + (float(x) / texWidth) / 1;
+                    vtx.texture[1]  =  0 + (1 - float(y) / texHeight) / 1;
                     bufs.push_back(vtx);
                 }
                 { // 左下
@@ -330,8 +330,8 @@ protected:
                     GLVertexArray::VertexBuffer vtx;
                     vtx.location[0] = -1 + (posX / texWidth) * 2;
                     vtx.location[1] = -1 + (1 - posY / texHeight) * 2;
-                    vtx.texture[0]  =  0 + (posX / texWidth) / 1;
-                    vtx.texture[1]  =  0 + (1 - posY / texHeight) / 1;
+                    vtx.texture[0]  =  0 + (float(x) / texWidth) / 1;
+                    vtx.texture[1]  =  0 + (1 - float(y) / texHeight) / 1;
                     bufs.push_back(vtx);
                 }
                 { // 左下
@@ -339,8 +339,8 @@ protected:
                     GLVertexArray::VertexBuffer vtx;
                     vtx.location[0] = -1 + (posX / texWidth) * 2;
                     vtx.location[1] = -1 + (1 - posY / texHeight) * 2;
-                    vtx.texture[0]  =  0 + (posX / texWidth) / 1;
-                    vtx.texture[1]  =  0 + (1 - posY / texHeight) / 1;
+                    vtx.texture[0]  =  0 + (float(x) / texWidth) / 1;
+                    vtx.texture[1]  =  0 + (1 - float(y) / texHeight) / 1;
                     bufs.push_back(vtx);
                 }
                 { // 右上
@@ -348,8 +348,8 @@ protected:
                     GLVertexArray::VertexBuffer vtx;
                     vtx.location[0] = -1 + (posX / texWidth) * 2;
                     vtx.location[1] = -1 + (1 - posY / texHeight) * 2;
-                    vtx.texture[0]  =  0 + (posX / texWidth) / 1;
-                    vtx.texture[1]  =  0 + (1 - posY / texHeight) / 1;
+                    vtx.texture[0]  =  0 + (float(x) / texWidth) / 1;
+                    vtx.texture[1]  =  0 + (1 - float(y) / texHeight) / 1;
                     bufs.push_back(vtx);
                 }
                 { // 右下
@@ -357,8 +357,8 @@ protected:
                     GLVertexArray::VertexBuffer vtx;
                     vtx.location[0] = -1 + (posX / texWidth) * 2;
                     vtx.location[1] = -1 + (1 - posY / texHeight) * 2;
-                    vtx.texture[0]  =  0 + (posX / texWidth) / 1;
-                    vtx.texture[1]  =  0 + (1 - posY / texHeight) / 1;
+                    vtx.texture[0]  =  0 + (float(x) / texWidth) / 1;
+                    vtx.texture[1]  =  0 + (1 - float(y) / texHeight) / 1;
                     bufs.push_back(vtx);
                 }
             }
@@ -386,6 +386,12 @@ protected:
 //        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // 取消注释后将启用线框模式
         GLRendererBase::_InternalRender();
 //        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL); // 取消注释后将启用线框模式
+        static bool b = true;
+        if (b) {
+            if (auto buffer = _frameBuffer->GetOutputTexture()->DownloadBuffer())
+                writeBMP2File("output.bmp", buffer->data.get(), buffer->width, buffer->height, 4);
+            b = false;
+        }
         return true;
     }
     
