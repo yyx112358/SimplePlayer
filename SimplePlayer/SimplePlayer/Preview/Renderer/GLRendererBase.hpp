@@ -45,7 +45,7 @@ public:
     bool UpdateTexture(const std::vector<ImageBuffer> &buffers) {
         GLint MAX_TEXTURE_UNIT;
         glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &MAX_TEXTURE_UNIT);
-        assert(buffers.size() <= MAX_TEXTURE_UNIT);
+//        assert(buffers.size() <= MAX_TEXTURE_UNIT);
         
         for (auto &buffer : buffers) {
             auto texture = std::make_shared<GLTexture>(_context, buffer);
@@ -82,6 +82,10 @@ public:
     
     const glm::mat4 &GetTransform() {
         return _transform;
+    }
+    
+    bool UpdateUniform(const std::string &name, GLUniform uniform) {
+        return _program->UpdateUniform(name, uniform);
     }
     
     void SetClearColor(GLfloat r, GLfloat g, GLfloat b, GLfloat a) {
@@ -280,6 +284,113 @@ void main()
     
 protected:
     int _width = 0, _height = 0;
+};
+
+class GLRendererCharPainting : public GLRendererBase {
+public:
+    GLRendererCharPainting(std::shared_ptr<GLContext> context):GLRendererBase(context) {
+        
+    }
+    virtual ~GLRendererCharPainting() {}
+    
+    void SetCharSize(int width, int height) {
+        _charWidth = width;
+        _charHeight = height;
+        _needUpdate = true;
+    }
+    
+protected:
+    
+    void _AddVertexByDrawArray() {
+        int texWidth = _textures[0]->width(), texHeight = _textures[0]->height();
+        int charWidth = _charWidth, charHeight = _charHeight;
+        std::vector<GLVertexArray::VertexBuffer> bufs;
+        for (int y = 0; y < texHeight; y += charHeight) {
+            for (int x = 0; x < texWidth; x += charWidth) {
+                { // 左上
+                    float posX = x, posY = y;
+                    GLVertexArray::VertexBuffer vtx;
+                    vtx.location[0] = -1 + (posX / texWidth) * 2;
+                    vtx.location[1] = -1 + (1 - posY / texHeight) * 2;
+                    vtx.texture[0]  =  0 + (posX / texWidth) / 1;
+                    vtx.texture[1]  =  0 + (1 - posY / texHeight) / 1;
+                    bufs.push_back(vtx);
+                }
+                { // 右上
+                    float posX = x + charWidth, posY = y;
+                    GLVertexArray::VertexBuffer vtx;
+                    vtx.location[0] = -1 + (posX / texWidth) * 2;
+                    vtx.location[1] = -1 + (1 - posY / texHeight) * 2;
+                    vtx.texture[0]  =  0 + (posX / texWidth) / 1;
+                    vtx.texture[1]  =  0 + (1 - posY / texHeight) / 1;
+                    bufs.push_back(vtx);
+                }
+                { // 左下
+                    float posX = x, posY = y + charHeight;
+                    GLVertexArray::VertexBuffer vtx;
+                    vtx.location[0] = -1 + (posX / texWidth) * 2;
+                    vtx.location[1] = -1 + (1 - posY / texHeight) * 2;
+                    vtx.texture[0]  =  0 + (posX / texWidth) / 1;
+                    vtx.texture[1]  =  0 + (1 - posY / texHeight) / 1;
+                    bufs.push_back(vtx);
+                }
+                { // 左下
+                    float posX = x, posY = y + charHeight;
+                    GLVertexArray::VertexBuffer vtx;
+                    vtx.location[0] = -1 + (posX / texWidth) * 2;
+                    vtx.location[1] = -1 + (1 - posY / texHeight) * 2;
+                    vtx.texture[0]  =  0 + (posX / texWidth) / 1;
+                    vtx.texture[1]  =  0 + (1 - posY / texHeight) / 1;
+                    bufs.push_back(vtx);
+                }
+                { // 右上
+                    float posX = x + charWidth, posY = y;
+                    GLVertexArray::VertexBuffer vtx;
+                    vtx.location[0] = -1 + (posX / texWidth) * 2;
+                    vtx.location[1] = -1 + (1 - posY / texHeight) * 2;
+                    vtx.texture[0]  =  0 + (posX / texWidth) / 1;
+                    vtx.texture[1]  =  0 + (1 - posY / texHeight) / 1;
+                    bufs.push_back(vtx);
+                }
+                { // 右下
+                    float posX = x + charWidth, posY = y + charHeight;
+                    GLVertexArray::VertexBuffer vtx;
+                    vtx.location[0] = -1 + (posX / texWidth) * 2;
+                    vtx.location[1] = -1 + (1 - posY / texHeight) * 2;
+                    vtx.texture[0]  =  0 + (posX / texWidth) / 1;
+                    vtx.texture[1]  =  0 + (1 - posY / texHeight) / 1;
+                    bufs.push_back(vtx);
+                }
+            }
+        }
+        _vertexArray.UpdateVertexBuffer(bufs);
+        _vertexArray.UpdateElementBuffer({});
+        _vertexArray.Activate();
+    }
+    
+    bool _InternalUpdate() override {
+        if (_needUpdate == false)
+            return true;
+        
+
+        _AddVertexByDrawArray();
+        
+        GLint p = -1;
+        glGetIntegerv(GL_MAX_ELEMENTS_VERTICES, &p);
+        glGetIntegerv(GL_MAX_ELEMENTS_INDICES, &p);
+        
+        return GLRendererBase::_InternalUpdate();
+    }
+    
+    bool _InternalRender() override {
+//        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // 取消注释后将启用线框模式
+        GLRendererBase::_InternalRender();
+//        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL); // 取消注释后将启用线框模式
+        return true;
+    }
+    
+protected:
+    int _charWidth = 8, _charHeight = 12;
 };
 
 

@@ -112,7 +112,7 @@ std::optional<sp::ImageBuffer> LoadBufferFromImage(NSImage *image) {
 
 @interface Preview_Mac : NSOpenGLView {
     std::shared_ptr<sp::GLContext> pGLContext;
-    std::unique_ptr<sp::GLRendererBase> pRenderer;
+    std::unique_ptr<sp::GLRendererCharPainting> pRenderer;
     std::unique_ptr<sp::GLRendererPreview> pRendererPreview;
 }
 
@@ -130,7 +130,7 @@ std::optional<sp::ImageBuffer> LoadBufferFromImage(NSImage *image) {
         [self setOpenGLContext:pGLContext->context()];
         
         // 创建并初始化Renderer
-        pRenderer = std::make_unique<sp::GLRendererBase>(pGLContext);
+        pRenderer = std::make_unique<sp::GLRendererCharPainting>(pGLContext);
         // 创建并编译 Vertex shader
         /**
          * #version 330 core 显式指定版本
@@ -141,16 +141,41 @@ std::optional<sp::ImageBuffer> LoadBufferFromImage(NSImage *image) {
         #version 330 core
         layout (location = 0) in vec2 aPos;
         layout (location = 1) in vec2 aTexCoord;
-        
+
         uniform mat4 transform;
-        
+        uniform sampler2D texture0;
+        uniform sampler2D texture1;
+        uniform int texWidth, texHeight;
+        uniform int charWidth, charHeight;
+
         out vec3 vtxColor;
         out vec2 vtxTexCoord;
 
         void main()
         {
+            int posX = int((aPos.x + 1) / 2 * texWidth), posY = int((1 - (1.0 + aPos.y) / 2) * texHeight);
+            int left = posX / charWidth * charWidth, top = posY / charHeight * charHeight;
+            int right = left + charWidth <= texWidth ? left + charWidth : texWidth;
+            int bottom = top + charHeight <= texHeight ? top + charHeight : texHeight;
+        
             gl_Position = transform * vec4(aPos.x, aPos.y, 0.0, 1.0);
-            vtxColor = gl_Position.xyz;
+
+            float sumR = 0, sumG = 0, sumB = 0;
+            int xstep = 4, ystep = 4;
+            int x, y;
+            for (y = top; y < bottom; y += ystep)
+            {
+                for (x = left; x < right; x += xstep)
+                {
+                    vec4 color = texture(texture0, vec2(float(x) / texWidth, float(y) / texHeight));
+                    sumR += color.r;
+                    sumG += color.g;
+                    sumB += color.b;
+                }
+            }
+            int amount = (bottom - top) * (right - left) / xstep / ystep;
+            vtxColor = vec3(sumR / amount, sumG / amount, sumB / amount);
+            
             vtxTexCoord = aTexCoord;
         })";
 
@@ -163,12 +188,14 @@ std::optional<sp::ImageBuffer> LoadBufferFromImage(NSImage *image) {
         out vec4 FragColor;
         
         uniform sampler2D texture0;
+        uniform sampler2D texture1;
 
         void main()
         {
             // 使用texture1进行颜色采样。
             // 纹理坐标系和OpenGL坐标系相反，因此y坐标取1-vtxTexCoord.y
-            FragColor = texture(texture0, vec2(vtxTexCoord.x, 1-vtxTexCoord.y)).rgba;
+            FragColor = vec4(vtxColor.rgb, 1.0);
+//            FragColor = texture(texture0, vec2(vtxTexCoord.x, 1-vtxTexCoord.y)).rgba;
         })";
         pRenderer->UpdateShader({vertexShaderSource}, {fragmentShaderSource});
         pRenderer->SetClearColor(0.2f, 0.3f, 0.3f, 1.0f);
@@ -177,9 +204,16 @@ std::optional<sp::ImageBuffer> LoadBufferFromImage(NSImage *image) {
         // initWithContentsOfFile读不出来。不深究了，直接用imageNamed
         //NSImage *image = [[NSImage alloc] initWithContentsOfFile:@"/Users/yangyixuan/Downloads/texture.jpg"];
         auto buffer = LoadBufferFromImage([NSImage imageNamed:@"texture.jpg"]);
-        if (buffer.has_value())
+        auto charBuffer = LoadBufferFromImage([NSImage imageNamed:@"output1.bmp"]);
+        if (buffer.has_value() && charBuffer.has_value())
             pRenderer->UpdateTexture({*buffer});
         pRenderer->UpdateOutputTexture(std::make_shared<sp::GLTexture>(pGLContext, sp::ImageBuffer{.width = 1920, .height = 1080, .pixelFormat = GL_RGBA}));
+        
+        pRenderer->UpdateUniform("texWidth", buffer->width);
+        pRenderer->UpdateUniform("texHeight", buffer->height);
+        pRenderer->UpdateUniform("charWidth", 8);
+        pRenderer->UpdateUniform("charHeight", 12);
+        pRenderer->SetCharSize(8, 12);
         
         pRendererPreview = std::make_unique<sp::GLRendererPreview>(pGLContext);
         pRendererPreview->SetClearColor(0.75f, 0.5f, 0.5f, 1.0f);

@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		7A23A4142A4D367C005FDEB8 /* ImageWriterBmp.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7A23A4132A4D367C005FDEB8 /* ImageWriterBmp.cpp */; };
 		7A2699A02A2B7E00009C722B /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 7A26999F2A2B7E00009C722B /* AppDelegate.m */; };
 		7A2699A32A2B7E00009C722B /* ViewController.mm in Sources */ = {isa = PBXBuildFile; fileRef = 7A2699A22A2B7E00009C722B /* ViewController.mm */; };
 		7A2699A62A2B7E00009C722B /* SimplePlayer.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = 7A2699A42A2B7E00009C722B /* SimplePlayer.xcdatamodeld */; };
@@ -25,6 +26,8 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		7A23A4122A4D367C005FDEB8 /* ImageWriterBmp.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ImageWriterBmp.h; sourceTree = "<group>"; };
+		7A23A4132A4D367C005FDEB8 /* ImageWriterBmp.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = ImageWriterBmp.cpp; sourceTree = "<group>"; };
 		7A26999B2A2B7E00009C722B /* SimplePlayer.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SimplePlayer.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		7A26999E2A2B7E00009C722B /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
 		7A26999F2A2B7E00009C722B /* AppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AppDelegate.m; sourceTree = "<group>"; };
@@ -64,6 +67,15 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		7A23A4102A4D3639005FDEB8 /* Writer */ = {
+			isa = PBXGroup;
+			children = (
+				7A23A4122A4D367C005FDEB8 /* ImageWriterBmp.h */,
+				7A23A4132A4D367C005FDEB8 /* ImageWriterBmp.cpp */,
+			);
+			path = Writer;
+			sourceTree = "<group>";
+		};
 		7A2699922A2B7E00009C722B = {
 			isa = PBXGroup;
 			children = (
@@ -104,6 +116,7 @@
 		7A2699B82A2B81E9009C722B /* Preview */ = {
 			isa = PBXGroup;
 			children = (
+				7A23A4102A4D3639005FDEB8 /* Writer */,
 				7A658A072A35CF8000955DB9 /* Reader */,
 				7A7D566A2A3045C800F1D701 /* Renderer */,
 				7A2699B92A2B81E9009C722B /* IPreviewManager.hpp */,
@@ -225,6 +238,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				7A23A4142A4D367C005FDEB8 /* ImageWriterBmp.cpp in Sources */,
 				7A2699A62A2B7E00009C722B /* SimplePlayer.xcdatamodeld in Sources */,
 				7A2699A32A2B7E00009C722B /* ViewController.mm in Sources */,
 				7A6D8B4C2A3359DC00C40E5C /* GLRendererBase.mm in Sources */,
