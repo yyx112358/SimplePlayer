@@ -132,11 +132,6 @@ std::optional<sp::ImageBuffer> LoadBufferFromImage(NSImage *image) {
         // 创建并初始化Renderer
         pRenderer = std::make_unique<sp::GLRendererCharPainting>(pGLContext);
         // 创建并编译 Vertex shader
-        /**
-         * #version 330 core 显式指定版本
-         * layout (location = 0) in vec3 aPos;
-         * gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0); 位置透传。第四个分量（w）为
-         */
         const GLchar *vertexShaderSource = R"(
         #version 330 core
         layout (location = 0) in vec3 aPos;
@@ -153,10 +148,14 @@ std::optional<sp::ImageBuffer> LoadBufferFromImage(NSImage *image) {
 
         void main()
         {
-            gl_Position = transform * vec4(aPos.x, - aPos.y, 0.0, 1.0);
+            gl_Position = transform * vec4(aPos.x, aPos.y, 0.0, 1.0);
         
             // 计算采样矩形坐标范围，aTexCoord是网格小矩形左上角
-            int posX = int(aTexCoord.x * texWidth), posY = int(aTexCoord.y * texHeight);
+            int posX = int((aPos.x + 1) / 2 * texWidth + 0.5), posY = int((-aPos.y + 1) / 2 * texHeight + 0.5); // 注意，这里需要+0.5，以避免浮点误差导致计算出的整数posX、posY比预期值小1
+            if (aTexCoord.x == 1 || aTexCoord.x == 4 || aTexCoord.x == 5)
+                posX -= charWidth;
+            if (aTexCoord.x == 2 || aTexCoord.x == 3 || aTexCoord.x == 5)
+                posY -= charHeight;
             
             int left = posX / charWidth * charWidth, top = posY / charHeight * charHeight;
             int right = min(left + charWidth, texWidth);
@@ -178,16 +177,14 @@ std::optional<sp::ImageBuffer> LoadBufferFromImage(NSImage *image) {
                 }
             }
             float gray = 0.299f * sumR / amount + 0.587f * sumG / amount + 0.114 * sumB / amount;
-            gray = min(gray, 255.f / 256);
-            vtxColor = vec3(gray, gray, gray);
+            gray = min(gray, 255.f / 256); // 限制最大值，避免溢出
+            vtxColor = vec3(sumR / amount, sumG / amount, sumB / amount);
             
             // 计算对应的字符纹理坐标。字符纹理从左到右划分为256个charWidth * charHeight矩形，第n个矩形的平均灰度值为n。
             float charTexX = int(gray * 256) / 256.0, charTexY = 1;
-            //if ((aPos.x + 1) / 2 > aTexCoord.x)
-            if (aPos.z == 1 || aPos.z == 4 || aPos.z == 5)
+            if (aTexCoord.x == 1 || aTexCoord.x == 4 || aTexCoord.x == 5)
                 charTexX = charTexX + 1.0f / 256;
-            //if ((aPos.y + 1) / 2 < aTexCoord.y)
-            if (aPos.z == 2 || aPos.z == 3 || aPos.z == 5)
+            if (aTexCoord.x == 2 || aTexCoord.x == 3 || aTexCoord.x == 5)
                 charTexY = 0;
             vtxTexCoord = vec2(charTexX, charTexY);
         })";
@@ -205,8 +202,7 @@ std::optional<sp::ImageBuffer> LoadBufferFromImage(NSImage *image) {
 
         void main()
         {
-            FragColor = texture(texture1, vtxTexCoord).rgba;
-//            FragColor = vec4(vtxTexCoord.x, vtxTexCoord.y, 1.0, 1.0);
+            FragColor = texture(texture1, vtxTexCoord).rgba * vec4(vtxColor, 1.0);
         })";
         pRenderer->UpdateShader({vertexShaderSource}, {fragmentShaderSource});
         pRenderer->SetClearColor(0.2f, 0.3f, 0.3f, 1.0f);

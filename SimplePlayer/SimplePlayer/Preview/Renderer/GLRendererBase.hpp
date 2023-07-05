@@ -312,8 +312,7 @@ protected:
                     GLVertexArray::VertexBuffer vtx;
                     vtx.location[0] = -1 + (posX / texWidth) * 2;
                     vtx.location[1] = -1 + (1 - posY / texHeight) * 2;
-                    vtx.location[2] = 0;
-                    vtx.texture[0]  =  0 + (float(x) / texWidth) / 1;
+                    vtx.texture[0]  =  0;
                     vtx.texture[1]  =  0 + (1 - float(y) / texHeight) / 1;
                     bufs.push_back(vtx);
                 }
@@ -322,8 +321,7 @@ protected:
                     GLVertexArray::VertexBuffer vtx;
                     vtx.location[0] = -1 + (posX / texWidth) * 2;
                     vtx.location[1] = -1 + (1 - posY / texHeight) * 2;
-                    vtx.location[2] = 1;
-                    vtx.texture[0]  =  0 + (float(x) / texWidth) / 1;
+                    vtx.texture[0]  =  1;
                     vtx.texture[1]  =  0 + (1 - float(y) / texHeight) / 1;
                     bufs.push_back(vtx);
                 }
@@ -332,8 +330,7 @@ protected:
                     GLVertexArray::VertexBuffer vtx;
                     vtx.location[0] = -1 + (posX / texWidth) * 2;
                     vtx.location[1] = -1 + (1 - posY / texHeight) * 2;
-                    vtx.location[2] = 2;
-                    vtx.texture[0]  =  0 + (float(x) / texWidth) / 1;
+                    vtx.texture[0]  =  2;
                     vtx.texture[1]  =  0 + (1 - float(y) / texHeight) / 1;
                     bufs.push_back(vtx);
                 }
@@ -342,8 +339,7 @@ protected:
                     GLVertexArray::VertexBuffer vtx;
                     vtx.location[0] = -1 + (posX / texWidth) * 2;
                     vtx.location[1] = -1 + (1 - posY / texHeight) * 2;
-                    vtx.location[2] = 3;
-                    vtx.texture[0]  =  0 + (float(x) / texWidth) / 1;
+                    vtx.texture[0]  =  3;
                     vtx.texture[1]  =  0 + (1 - float(y) / texHeight) / 1;
                     bufs.push_back(vtx);
                 }
@@ -352,8 +348,7 @@ protected:
                     GLVertexArray::VertexBuffer vtx;
                     vtx.location[0] = -1 + (posX / texWidth) * 2;
                     vtx.location[1] = -1 + (1 - posY / texHeight) * 2;
-                    vtx.location[2] = 4;
-                    vtx.texture[0]  =  0 + (float(x) / texWidth) / 1;
+                    vtx.texture[0]  =  4;
                     vtx.texture[1]  =  0 + (1 - float(y) / texHeight) / 1;
                     bufs.push_back(vtx);
                 }
@@ -362,8 +357,7 @@ protected:
                     GLVertexArray::VertexBuffer vtx;
                     vtx.location[0] = -1 + (posX / texWidth) * 2;
                     vtx.location[1] = -1 + (1 - posY / texHeight) * 2;
-                    vtx.location[2] = 5;
-                    vtx.texture[0]  =  0 + (float(x) / texWidth) / 1;
+                    vtx.texture[0]  =  5;
                     vtx.texture[1]  =  0 + (1 - float(y) / texHeight) / 1;
                     bufs.push_back(vtx);
                 }
