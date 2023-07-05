@@ -139,7 +139,7 @@ std::optional<sp::ImageBuffer> LoadBufferFromImage(NSImage *image) {
          */
         const GLchar *vertexShaderSource = R"(
         #version 330 core
-        layout (location = 0) in vec2 aPos;
+        layout (location = 0) in vec3 aPos;
         layout (location = 1) in vec2 aTexCoord;
 
         uniform mat4 transform;
@@ -183,9 +183,11 @@ std::optional<sp::ImageBuffer> LoadBufferFromImage(NSImage *image) {
             
             // 计算对应的字符纹理坐标。字符纹理从左到右划分为256个charWidth * charHeight矩形，第n个矩形的平均灰度值为n。
             float charTexX = int(gray * 256) / 256.0, charTexY = 1;
-            if ((aPos.x + 1) / 2 > aTexCoord.x)
+            //if ((aPos.x + 1) / 2 > aTexCoord.x)
+            if (aPos.z == 1 || aPos.z == 4 || aPos.z == 5)
                 charTexX = charTexX + 1.0f / 256;
-            if ((aPos.y + 1) / 2 < aTexCoord.y)
+            //if ((aPos.y + 1) / 2 < aTexCoord.y)
+            if (aPos.z == 2 || aPos.z == 3 || aPos.z == 5)
                 charTexY = 0;
             vtxTexCoord = vec2(charTexX, charTexY);
         })";
@@ -203,8 +205,8 @@ std::optional<sp::ImageBuffer> LoadBufferFromImage(NSImage *image) {
 
         void main()
         {
-            FragColor = texture(texture1, vec2(vtxTexCoord.x, vtxTexCoord.y)).rgba;
-//            FragColor = vec4(vtxColor.rgb, 1.0);
+            FragColor = texture(texture1, vtxTexCoord).rgba;
+//            FragColor = vec4(vtxTexCoord.x, vtxTexCoord.y, 1.0, 1.0);
         })";
         pRenderer->UpdateShader({vertexShaderSource}, {fragmentShaderSource});
         pRenderer->SetClearColor(0.2f, 0.3f, 0.3f, 1.0f);

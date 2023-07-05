@@ -183,7 +183,7 @@ public:
     }
     
     typedef struct {
-        std::array<GLfloat, 2>location;
+        std::array<GLfloat, 3>location;
         std::array<GLfloat, 2>texture;
     } VertexBuffer;
     
