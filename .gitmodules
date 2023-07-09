@@ -1,0 +1,9 @@
+[submodule "thirdParty/glm"]
+	path = thirdParty/glm
+	url = https://github.com/g-truc/glm.git
+[submodule "thirdParty/glfw"]
+	path = thirdParty/glfw
+	url = https://github.com/glfw/glfw.git
+[submodule "thirdParty/FFmpeg"]
+	path = thirdParty/FFmpeg
+	url = https://github.com/FFmpeg/FFmpeg.git
