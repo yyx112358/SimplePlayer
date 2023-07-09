@@ -123,7 +123,7 @@ public:
     /// 上传Buffer，不阻塞。Activate时才真正上传
     void UploadBuffer(ImageBuffer buffer);
     
-    std::optional<ImageBuffer> DownloadBuffer() const;
+    std::optional<ImageBuffer> DownloadBuffer(std::optional<GLenum> pixelFormat = {}) const;
     
     bool Activate();
     

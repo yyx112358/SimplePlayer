@@ -258,7 +258,7 @@ void GLTexture::UploadBuffer(ImageBuffer buffer) {
     _needUpdate = true;
 }
 
-std::optional<ImageBuffer> GLTexture::DownloadBuffer() const {
+std::optional<ImageBuffer> GLTexture::DownloadBuffer(std::optional<GLenum> pixelFormat) const {
     std::optional<ImageBuffer> buffer;
     if (_textureId == nullptr)
         return buffer;
@@ -266,7 +266,7 @@ std::optional<ImageBuffer> GLTexture::DownloadBuffer() const {
     _context->switchContext();
     buffer = *_buffer;
     buffer->data = std::shared_ptr<uint8_t[]>(new uint8_t[_buffer->width * _buffer->height * 4]);
-    glReadPixels(0, 0, (GLsizei)_buffer->width, (GLsizei)_buffer->height, _buffer->pixelFormat, GL_UNSIGNED_BYTE, buffer->data.get());
+    glReadPixels(0, 0, (GLsizei)_buffer->width, (GLsizei)_buffer->height, pixelFormat.has_value() ? *pixelFormat : _buffer->pixelFormat, GL_UNSIGNED_BYTE, buffer->data.get());
     if (CheckError())
         return std::optional<ImageBuffer>();
     else
