@@ -16,22 +16,24 @@
 #include <any>
 
 
-#define GL_SILENCE_DEPRECATION
-#import <Cocoa/Cocoa.h>
-#import <OpenGL/gl3.h>
 
 #import "../../../../thirdParty/glm/glm/glm.hpp"
 #include "../../../../thirdParty/glm/glm/gtc/matrix_transform.hpp"
 #include "../../../../thirdParty/glm/glm/gtc/type_ptr.hpp"
 
-#import "GLContext.hpp"
+#import "IGLContext.hpp"
+#import "GLProgram.hpp"
+#include "GLTexture.hpp"
+#include "GLVertexArray.hpp"
+#include "GLFrameBuffer.hpp"
+#include "ImageReader.hpp"
 #include "ImageWriterBmp.h"
 
 namespace sp {
 
 class GLRendererBase {
 public:
-    GLRendererBase(std::shared_ptr<GLContext> context) :_context(context), _program(new GLProgram(context)) { }
+    GLRendererBase(std::shared_ptr<IGLContext> context) :_context(context), _program(new GLProgram(context)) { }
     
     virtual ~GLRendererBase() {
         _context->switchContext();
@@ -143,7 +145,7 @@ protected:
         
         //        // 这一行的作用是解除vertexBufId的激活状态，避免其它操作不小心改动到这里。不过这种情况很少见。
         //        glBindVertexArray(0);
-        //        if (CheckError())
+        //        if (GLCheckError())
         //            return false;
         
         _needUpdate = false;
@@ -159,7 +161,7 @@ protected:
         
         //        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // 取消注释后将启用线框模式
         _program->Activate(); // 启用Shader程序
-        CheckError();
+        GLCheckError();
         
         _vertexArray.Activate();
         for (int i = 0; i < _textures.size(); i++) {
@@ -173,17 +175,17 @@ protected:
             _program->UpdateUniform(textureName, i); // 更新纹理uniform
         }
         
-        CheckError();
+        GLCheckError();
         
         _program->UpdateUniform("transform", _transform);
         
         _program->FlushUniform();
         
         _vertexArray.Render();
-        CheckError();
+        GLCheckError();
         
         
-        if (CheckError())
+        if (GLCheckError())
             return false;
         
         return true;
@@ -194,7 +196,7 @@ protected:
 
     
 protected:
-    const std::shared_ptr<GLContext> _context;
+    const std::shared_ptr<IGLContext> _context;
     bool _needUpdate = true;
     
     /// 输入纹理，多输入
@@ -233,7 +235,7 @@ public:
     };
 
 public:
-    GLRendererPreview(std::shared_ptr<GLContext> context):GLRendererBase(context) {}
+    GLRendererPreview(std::shared_ptr<IGLContext> context):GLRendererBase(context) {}
     virtual ~GLRendererPreview() {}
     
     void UpdatePreviewSize(int width, int height)
@@ -374,7 +376,7 @@ protected:
         
         _vertexArray.Render();
         
-        if (CheckError())
+        if (GLCheckError())
             return false;
         
         return true;
@@ -389,7 +391,7 @@ protected:
 
 class GLRendererCharPainting : public GLRendererBase {
 public:
-    GLRendererCharPainting(std::shared_ptr<GLContext> context):GLRendererBase(context) {}
+    GLRendererCharPainting(std::shared_ptr<IGLContext> context):GLRendererBase(context) {}
     virtual ~GLRendererCharPainting() {}
     
     void SetCharSize(int width, int height)

@@ -1,5 +1,5 @@
 //
-//  ImageReader.h
+//  ImageReader.hpp
 //  SimplePlayer
 //
 //  Created by YangYixuan on 2023/6/11.

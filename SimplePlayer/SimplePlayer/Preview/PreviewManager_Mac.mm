@@ -18,6 +18,7 @@
 #import <Cocoa/Cocoa.h>
 #import <OpenGL/gl3.h>
 
+#include "GLContextMac.hpp"
 #include "GLRendererBase.hpp"
 #include "ImageReader.hpp"
 
@@ -111,7 +112,7 @@ std::optional<sp::ImageBuffer> LoadBufferFromImage(NSImage *image) {
 
 
 @interface Preview_Mac : NSOpenGLView {
-    std::shared_ptr<sp::GLContext> pGLContext;
+    std::shared_ptr<sp::GLContextMac> pGLContext;
     std::unique_ptr<sp::GLRendererCharPainting> pRenderer;
     std::unique_ptr<sp::GLRendererPreview> pRendererPreview;
 }
@@ -124,7 +125,7 @@ std::optional<sp::ImageBuffer> LoadBufferFromImage(NSImage *image) {
     self = [super initWithFrame:frameRect];
     if (self) {
         // 创建并初始化GLContext
-        pGLContext = std::make_shared<sp::GLContext>();
+        pGLContext = dynamic_pointer_cast<sp::GLContextMac>(sp::IGLContext::CreateGLContext());
         if (pGLContext->init() == false)
             return nil;
         [self setOpenGLContext:pGLContext->context()];
