@@ -12,13 +12,15 @@
 using namespace sp;
 
 
-void GLRenderBuffer::RENDER_BUFFER_DELETER(GLuint *p) {
+void GLRenderBuffer::RENDER_BUFFER_DELETER(GLuint *p)
+{
     SPLOGD("Delete render buffer %d", *p);
     glDeleteRenderbuffers(1, p);
 }
 
-bool GLRenderBuffer::Activate() {
-    _context->switchContext();
+bool GLRenderBuffer::Activate()
+{
+    _context->SwitchContext();
     
     if (_renderBufferId == nullptr) {
         if (_width.has_value() == false || _height.has_value() == false)

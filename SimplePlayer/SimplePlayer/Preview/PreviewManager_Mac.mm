@@ -19,7 +19,8 @@
 #import <OpenGL/gl3.h>
 
 #include "GLContextMac.hpp"
-#include "GLRendererBase.hpp"
+#include "GLRendererCharPainting.hpp"
+#include "GLRendererPreview.hpp"
 #include "ImageReader.hpp"
 
 std::optional<sp::ImageBuffer> LoadBufferFromImage(NSImage *image) {
@@ -126,7 +127,7 @@ std::optional<sp::ImageBuffer> LoadBufferFromImage(NSImage *image) {
     if (self) {
         // 创建并初始化GLContext
         pGLContext = dynamic_pointer_cast<sp::GLContextMac>(sp::IGLContext::CreateGLContext());
-        if (pGLContext->init() == false)
+        if (pGLContext->Init() == false)
             return nil;
         [self setOpenGLContext:pGLContext->context()];
         
@@ -161,7 +162,7 @@ std::optional<sp::ImageBuffer> LoadBufferFromImage(NSImage *image) {
     NSDate *date = [NSDate date];
     [super drawRect:dirtyRect];
     
-    pGLContext->switchContext();
+    pGLContext->SwitchContext();
     pRenderer->Render();
     
     float scale = 2; // TODO: 自动获取Retina scale
@@ -169,7 +170,7 @@ std::optional<sp::ImageBuffer> LoadBufferFromImage(NSImage *image) {
     pRendererPreview->UpdatePreviewSize(dirtyRect.size.width * scale, dirtyRect.size.height * scale);
     pRendererPreview->Render();
     
-    pGLContext->flush();
+    pGLContext->Flush();
 //    glFinish(); // 添加glFinish()以阻塞等待GPU执行完成
 
     NSLog(@"耗时：%.2fms", [[NSDate  date] timeIntervalSinceDate:date] * 1000.0f);

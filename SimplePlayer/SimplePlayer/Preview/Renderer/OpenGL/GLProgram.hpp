@@ -26,7 +26,7 @@ public:
     GLProgram(std::shared_ptr<IGLContext> context) :_context(context) {}
     
     virtual ~GLProgram() {
-        _context->switchContext();
+        _context->SwitchContext();
         _programId.reset();
         GLCheckError();
     }

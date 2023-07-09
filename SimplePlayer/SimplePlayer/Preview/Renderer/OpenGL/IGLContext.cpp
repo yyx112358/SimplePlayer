@@ -7,9 +7,6 @@
 
 #include "IGLContext.hpp"
 
-#include <mutex>
-#include <typeindex>
-
 #define GL_SILENCE_DEPRECATION
 #import <Cocoa/Cocoa.h>
 #import <OpenGL/gl3.h>
@@ -22,11 +19,13 @@ using namespace sp;
 
 #pragma mark -GLContext
 
-std::shared_ptr<IGLContext> IGLContext::CreateGLContext() {
+std::shared_ptr<IGLContext> IGLContext::CreateGLContext()
+{
     return std::make_shared<GLContextMac>();
 }
 
-bool IGLContext::CheckGLError(const char *function, int line) {
+bool IGLContext::CheckGLError(const char *function, int line)
+{
     GLenum errorCode;
     while ((errorCode = glGetError()) != GL_NO_ERROR)
     {

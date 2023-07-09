@@ -16,7 +16,7 @@ GLContextMac::~GLContextMac() {
     _context = nil;
 }
 
-bool GLContextMac::init() {
+bool GLContextMac::Init() {
     std::lock_guard lock(_mutex);
 
     NSOpenGLPixelFormatAttribute attrs[] =
@@ -34,8 +34,8 @@ bool GLContextMac::init() {
 }
 
 /// 切换到本Context
-bool GLContextMac::switchContext() {
-    if (_context == nil && init() == false)
+bool GLContextMac::SwitchContext() {
+    if (_context == nil && Init() == false)
         return false;
     std::lock_guard lock(_mutex);
     
@@ -45,8 +45,8 @@ bool GLContextMac::switchContext() {
 
 // 在OpenGL绘制完成后，调用flush方法将绘制的结果显示到窗口上
 // 应在最后一个GL操作完成时调用
-bool GLContextMac::flush() {
-    if (_context == nil && init() == false)
+bool GLContextMac::Flush() {
+    if (_context == nil && Init() == false)
         return false;
     std::lock_guard lock(_mutex);
     

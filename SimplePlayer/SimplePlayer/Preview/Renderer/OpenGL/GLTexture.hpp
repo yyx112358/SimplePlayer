@@ -6,13 +6,14 @@
 //
 
 #pragma once
+
 #include <optional>
 
 #include "IGLContext.hpp"
 #include "ImageReader.hpp"
 
-
 namespace sp {
+
 
 class GLTexture {
 public:
@@ -24,7 +25,7 @@ public:
     GLTexture(std::shared_ptr<IGLContext>context, GLsizei width, GLsizei height) : _context(context), _buffer(ImageBuffer{.width = width, .height = height, .pixelFormat = GL_RGBA}) {}
     
     virtual ~GLTexture() {
-        _context->switchContext();
+        _context->SwitchContext();
         
         _textureId.reset();
         _buffer.reset();
@@ -33,13 +34,14 @@ public:
     /// 上传Buffer，不阻塞。Activate时才真正上传
     void UploadBuffer(ImageBuffer buffer);
     
+    /// 下载Buffer
     std::optional<ImageBuffer> DownloadBuffer(std::optional<GLenum> pixelFormat = {}) const;
     
     bool Activate();
     
     std::optional<GLuint> id() const;
-    GLsizei width() const {return _buffer ? _buffer->width : -1;}
-    GLsizei height() const {return _buffer ? _buffer->height : -1;}
+    GLsizei width() const { return _buffer ? _buffer->width : -1; }
+    GLsizei height() const { return _buffer ? _buffer->height : -1; }
     
 protected:
     virtual bool _UploadBuffer();

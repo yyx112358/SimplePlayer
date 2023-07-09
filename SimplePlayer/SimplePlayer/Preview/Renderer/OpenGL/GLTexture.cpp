@@ -10,23 +10,25 @@
 
 using namespace sp;
 
-void GLTexture::TEXTURE_DELETER(GLuint *p) {
+void GLTexture::TEXTURE_DELETER(GLuint *p)
+{
     SPLOGD("Delete texture %d", *p);
     glDeleteTextures(1, p);
 }
-    
    
-void GLTexture::UploadBuffer(ImageBuffer buffer) {
+void GLTexture::UploadBuffer(ImageBuffer buffer)
+{
     _buffer = buffer;
     _needUpdate = true;
 }
 
-std::optional<ImageBuffer> GLTexture::DownloadBuffer(std::optional<GLenum> pixelFormat) const {
+std::optional<ImageBuffer> GLTexture::DownloadBuffer(std::optional<GLenum> pixelFormat) const
+{
     std::optional<ImageBuffer> buffer;
     if (_textureId == nullptr)
         return buffer;
     
-    _context->switchContext();
+    _context->SwitchContext();
     buffer = *_buffer;
     buffer->data = std::shared_ptr<uint8_t[]>(new uint8_t[_buffer->width * _buffer->height * 4]);
     glReadPixels(0, 0, (GLsizei)_buffer->width, (GLsizei)_buffer->height, pixelFormat.has_value() ? *pixelFormat : _buffer->pixelFormat, GL_UNSIGNED_BYTE, buffer->data.get());
@@ -36,8 +38,9 @@ std::optional<ImageBuffer> GLTexture::DownloadBuffer(std::optional<GLenum> pixel
         return buffer;
 }
 
-bool GLTexture::Activate() {
-    _context->switchContext();
+bool GLTexture::Activate()
+{
+    _context->SwitchContext();
     
     if (_UploadBuffer() == false)
         return false;
@@ -45,11 +48,13 @@ bool GLTexture::Activate() {
     return true;
 }
 
-std::optional<GLuint> GLTexture::id() const {
+std::optional<GLuint> GLTexture::id() const
+{
     return _textureId != nullptr ? std::make_optional<GLuint>(*_textureId) : std::make_optional<GLuint>();
 }
 
-bool GLTexture::_UploadBuffer() {
+bool GLTexture::_UploadBuffer()
+{
     if (_needUpdate == false)
         return true;
     

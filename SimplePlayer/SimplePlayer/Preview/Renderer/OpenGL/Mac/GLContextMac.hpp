@@ -21,9 +21,9 @@ class GLContextMac : public IGLContext
 public:
     virtual ~GLContextMac();
 
-    bool init() override;
-    bool switchContext() override;
-    bool flush() override;
+    bool Init() override;
+    bool SwitchContext() override;
+    bool Flush() override;
     
     NSOpenGLContext *context();
 

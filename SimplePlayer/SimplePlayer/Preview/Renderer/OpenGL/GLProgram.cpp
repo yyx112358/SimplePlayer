@@ -31,7 +31,7 @@ void GLProgram::PROGRAM_DELETER(GLuint *p)
 
 bool GLProgram::Activate()
 {
-    _context->switchContext();
+    _context->SwitchContext();
     
     _programId = _CompileOrGetProgram();
     assert(_programId != nullptr);
@@ -45,7 +45,7 @@ bool GLProgram::Activate()
 
 bool GLProgram::DeActivate()
 {
-    _context->switchContext();
+    _context->SwitchContext();
     glUseProgram(0);
     return true;
 }

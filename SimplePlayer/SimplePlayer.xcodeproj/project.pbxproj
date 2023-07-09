@@ -14,6 +14,8 @@
 		7A191B502A5AEFC10016692E /* GLVertexArray.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7A191B4E2A5AEFC10016692E /* GLVertexArray.cpp */; };
 		7A191B532A5AEFCF0016692E /* GLFrameBuffer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7A191B512A5AEFCF0016692E /* GLFrameBuffer.cpp */; };
 		7A191B582A5AF9200016692E /* GLContextMac.mm in Sources */ = {isa = PBXBuildFile; fileRef = 7A191B562A5AF9200016692E /* GLContextMac.mm */; };
+		7A191B5B2A5B006C0016692E /* GLRendererPreview.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7A191B592A5B006C0016692E /* GLRendererPreview.cpp */; };
+		7A191B5E2A5B025B0016692E /* GLRendererCharPainting.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7A191B5C2A5B025B0016692E /* GLRendererCharPainting.cpp */; };
 		7A23A4142A4D367C005FDEB8 /* ImageWriterBmp.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7A23A4132A4D367C005FDEB8 /* ImageWriterBmp.cpp */; };
 		7A2699A02A2B7E00009C722B /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 7A26999F2A2B7E00009C722B /* AppDelegate.m */; };
 		7A2699A32A2B7E00009C722B /* ViewController.mm in Sources */ = {isa = PBXBuildFile; fileRef = 7A2699A22A2B7E00009C722B /* ViewController.mm */; };
@@ -26,7 +28,7 @@
 		7A658A042A35A92F00955DB9 /* BasicFragment.glsl in Resources */ = {isa = PBXBuildFile; fileRef = 7A658A032A35A92F00955DB9 /* BasicFragment.glsl */; };
 		7A658A062A35CAFF00955DB9 /* charTexture.bmp in Resources */ = {isa = PBXBuildFile; fileRef = 7A658A052A35CAFF00955DB9 /* charTexture.bmp */; };
 		7A658A0A2A35D4DA00955DB9 /* texture.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 7A658A092A35D4D900955DB9 /* texture.jpg */; };
-		7A6D8B492A33582600C40E5C /* IGLContext.mm in Sources */ = {isa = PBXBuildFile; fileRef = 7A6D8B472A33582600C40E5C /* IGLContext.mm */; };
+		7A6D8B492A33582600C40E5C /* IGLContext.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7A6D8B472A33582600C40E5C /* IGLContext.cpp */; };
 		7A6D8B4C2A3359DC00C40E5C /* GLRendererBase.mm in Sources */ = {isa = PBXBuildFile; fileRef = 7A6D8B4A2A3359DC00C40E5C /* GLRendererBase.mm */; };
 		7A7120372A36E357005EB5D9 /* glm in Resources */ = {isa = PBXBuildFile; fileRef = 7A7120362A36E357005EB5D9 /* glm */; };
 		7A8669442A2F8C78006E8CC6 /* BasicVertex.glsl in Resources */ = {isa = PBXBuildFile; fileRef = 7A8669432A2F8C78006E8CC6 /* BasicVertex.glsl */; };
@@ -48,6 +50,10 @@
 		7A191B552A5AF5630016692E /* GLBaseDefine.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = GLBaseDefine.h; sourceTree = "<group>"; };
 		7A191B562A5AF9200016692E /* GLContextMac.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = GLContextMac.mm; sourceTree = "<group>"; };
 		7A191B572A5AF9200016692E /* GLContextMac.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = GLContextMac.hpp; sourceTree = "<group>"; };
+		7A191B592A5B006C0016692E /* GLRendererPreview.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = GLRendererPreview.cpp; sourceTree = "<group>"; };
+		7A191B5A2A5B006C0016692E /* GLRendererPreview.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = GLRendererPreview.hpp; sourceTree = "<group>"; };
+		7A191B5C2A5B025B0016692E /* GLRendererCharPainting.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = GLRendererCharPainting.cpp; sourceTree = "<group>"; };
+		7A191B5D2A5B025B0016692E /* GLRendererCharPainting.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = GLRendererCharPainting.hpp; sourceTree = "<group>"; };
 		7A23A4122A4D367C005FDEB8 /* ImageWriterBmp.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ImageWriterBmp.h; sourceTree = "<group>"; };
 		7A23A4132A4D367C005FDEB8 /* ImageWriterBmp.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = ImageWriterBmp.cpp; sourceTree = "<group>"; };
 		7A26999B2A2B7E00009C722B /* SimplePlayer.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SimplePlayer.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -68,7 +74,7 @@
 		7A658A052A35CAFF00955DB9 /* charTexture.bmp */ = {isa = PBXFileReference; lastKnownFileType = image.bmp; path = charTexture.bmp; sourceTree = "<group>"; };
 		7A658A082A35CF9200955DB9 /* ImageReader.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = ImageReader.hpp; sourceTree = "<group>"; };
 		7A658A092A35D4D900955DB9 /* texture.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = texture.jpg; sourceTree = "<group>"; };
-		7A6D8B472A33582600C40E5C /* IGLContext.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = IGLContext.mm; sourceTree = "<group>"; };
+		7A6D8B472A33582600C40E5C /* IGLContext.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = IGLContext.cpp; sourceTree = "<group>"; };
 		7A6D8B482A33582600C40E5C /* IGLContext.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = IGLContext.hpp; sourceTree = "<group>"; };
 		7A6D8B4A2A3359DC00C40E5C /* GLRendererBase.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = GLRendererBase.mm; sourceTree = "<group>"; };
 		7A6D8B4B2A3359DC00C40E5C /* GLRendererBase.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = GLRendererBase.hpp; sourceTree = "<group>"; };
@@ -189,6 +195,10 @@
 				7A8669422A2F8C33006E8CC6 /* Shaders */,
 				7A6D8B4A2A3359DC00C40E5C /* GLRendererBase.mm */,
 				7A6D8B4B2A3359DC00C40E5C /* GLRendererBase.hpp */,
+				7A191B592A5B006C0016692E /* GLRendererPreview.cpp */,
+				7A191B5A2A5B006C0016692E /* GLRendererPreview.hpp */,
+				7A191B5C2A5B025B0016692E /* GLRendererCharPainting.cpp */,
+				7A191B5D2A5B025B0016692E /* GLRendererCharPainting.hpp */,
 			);
 			path = Renderer;
 			sourceTree = "<group>";
@@ -206,7 +216,7 @@
 			isa = PBXGroup;
 			children = (
 				7A191B542A5AF12E0016692E /* Mac */,
-				7A6D8B472A33582600C40E5C /* IGLContext.mm */,
+				7A6D8B472A33582600C40E5C /* IGLContext.cpp */,
 				7A6D8B482A33582600C40E5C /* IGLContext.hpp */,
 				7A191B3E2A5AE4460016692E /* GLProgram.cpp */,
 				7A191B3F2A5AE4460016692E /* GLProgram.hpp */,
@@ -299,12 +309,14 @@
 			files = (
 				7A23A4142A4D367C005FDEB8 /* ImageWriterBmp.cpp in Sources */,
 				7A191B502A5AEFC10016692E /* GLVertexArray.cpp in Sources */,
+				7A191B5B2A5B006C0016692E /* GLRendererPreview.cpp in Sources */,
 				7A2699A62A2B7E00009C722B /* SimplePlayer.xcdatamodeld in Sources */,
+				7A191B5E2A5B025B0016692E /* GLRendererCharPainting.cpp in Sources */,
 				7A2699A32A2B7E00009C722B /* ViewController.mm in Sources */,
 				7A191B532A5AEFCF0016692E /* GLFrameBuffer.cpp in Sources */,
 				7A6D8B4C2A3359DC00C40E5C /* GLRendererBase.mm in Sources */,
 				7A191B4D2A5AEFB40016692E /* GLRenderBuffer.cpp in Sources */,
-				7A6D8B492A33582600C40E5C /* IGLContext.mm in Sources */,
+				7A6D8B492A33582600C40E5C /* IGLContext.cpp in Sources */,
 				7A2699AD2A2B7E01009C722B /* main.m in Sources */,
 				7A2699A02A2B7E00009C722B /* AppDelegate.m in Sources */,
 				7A191B4A2A5AEFA10016692E /* GLTexture.cpp in Sources */,
