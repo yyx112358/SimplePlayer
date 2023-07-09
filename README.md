@@ -722,19 +722,16 @@ LearnOpenGL后续的几章都是关于3D绘制的，和需求不相关。因此�
 - [现代opengl 设计 glDrawArrays与glDrawElements的功能与区别](https://blog.csdn.net/leon_zeng0/article/details/89291860)
 - [从0打造一个GPUImage(6)-GPUImage的多滤镜处理逻辑](https://juejin.cn/post/6844903716592549901)
 
-# 2023年6月30日
-
-有一段时间没做过了，现在继续。
-
-字符画的基本思路：
-
-
 
 # 2023年7月3日
 解决了一个非常难查的问题。使用大批量的顶点绘制图片，当顶点数很多时候，会出现预期外的横、竖、斜线。<br>
 ![](./Diary/Images/顶点过多时绘制错误.jpg)
 
-查了很久，一开始以为是顶点计算逻辑有问题，但最终发现并不是。后来发现是否出现非预期直线似乎与绘制个数有关，精确定位后发现如果顶点数超过512就有问题。根据[Vertices limitation in OpenGL](https://stackoverflow.com/questions/7123113/vertices-limitation-in-opengl)中的回答，检查了GL_MAX_ELEMENTS_VERTICES参数，发现M1芯片的上限是150000远超512，并不足以达到上限。
+查了很久，一开始以为是顶点计算逻辑有问题，但最终发现并不是。后来发现是否出现非预期直线似乎与绘制个数有关，精确定位后发现如果顶点数超过512就有问题。根据[Vertices limitation in OpenGL](https://stackoverflow.com/questions/7123113/vertices-limitation-in-opengl)中的回答，检查了GL_MAX_ELEMENTS_VERTICES参数，发现M1芯片的上限是：
+- `GL_MAX_ELEMENTS_VERTICES`：1048575
+- `GL_MAX_ELEMENTS_INDICES`：150000
+
+这些数字远超512，并不足以达到上限。
 
 最终，发现是代码有误，**计算的_vertexBufferSize超出了实际的顶点数**，因此绘制有误。
 ```
@@ -746,6 +743,554 @@ _vertexBufferSize.emplace(_vertexBuffer.size());
 glDrawArrays(GL_TRIANGLES, 0, *_vertexBufferSize);
 ```
 另外，根据Stack Overflow的回答，当顶点数过多时候可能对绘制性能有很大影响，可能需要拆分为多个VBO。是否拆分视不同厂商的实现而定。
+
+最终的代码如下：
+```
+void _AddVertexByDrawArray() {
+    int texWidth = _textures[0]->width(), texHeight = _textures[0]->height();
+    int charWidth = _charWidth, charHeight = _charHeight;
+    std::vector<GLVertexArray::VertexBuffer> bufs;
+    for (int y = 0; y < texHeight; y += charHeight) {
+        for (int x = 0; x < texWidth; x += charWidth) {
+            { // 左上
+                float posX = x, posY = y;
+                GLVertexArray::VertexBuffer vtx;
+                vtx.location[0] = -1 + (posX / texWidth) * 2;
+                vtx.location[1] = -1 + (1 - posY / texHeight) * 2;
+                vtx.texture[0]  =  0 + (posX / texWidth) / 1;
+                vtx.texture[1]  =  0 + (1 - posY / texHeight) / 1;
+                bufs.push_back(vtx);
+            }
+            { // 右上
+                float posX = x + charWidth, posY = y;
+                GLVertexArray::VertexBuffer vtx;
+                vtx.location[0] = -1 + (posX / texWidth) * 2;
+                vtx.location[1] = -1 + (1 - posY / texHeight) * 2;
+                vtx.texture[0]  =  0 + (posX / texWidth) / 1;
+                vtx.texture[1]  =  0 + (1 - posY / texHeight) / 1;
+                bufs.push_back(vtx);
+            }
+            { // 左下
+                float posX = x, posY = y + charHeight;
+                GLVertexArray::VertexBuffer vtx;
+                vtx.location[0] = -1 + (posX / texWidth) * 2;
+                vtx.location[1] = -1 + (1 - posY / texHeight) * 2;
+                vtx.texture[0]  =  0 + (posX / texWidth) / 1;
+                vtx.texture[1]  =  0 + (1 - posY / texHeight) / 1;
+                bufs.push_back(vtx);
+            }
+            { // 左下
+                float posX = x, posY = y + charHeight;
+                GLVertexArray::VertexBuffer vtx;
+                vtx.location[0] = -1 + (posX / texWidth) * 2;
+                vtx.location[1] = -1 + (1 - posY / texHeight) * 2;
+                vtx.texture[0]  =  0 + (posX / texWidth) / 1;
+                vtx.texture[1]  =  0 + (1 - posY / texHeight) / 1;
+                bufs.push_back(vtx);
+            }
+            { // 右上
+                float posX = x + charWidth, posY = y;
+                GLVertexArray::VertexBuffer vtx;
+                vtx.location[0] = -1 + (posX / texWidth) * 2;
+                vtx.location[1] = -1 + (1 - posY / texHeight) * 2;
+                vtx.texture[0]  =  0 + (posX / texWidth) / 1;
+                vtx.texture[1]  =  0 + (1 - posY / texHeight) / 1;
+                bufs.push_back(vtx);
+            }
+            { // 右下
+                float posX = x + charWidth, posY = y + charHeight;
+                GLVertexArray::VertexBuffer vtx;
+                vtx.location[0] = -1 + (posX / texWidth) * 2;
+                vtx.location[1] = -1 + (1 - posY / texHeight) * 2;
+                vtx.texture[0]  =  0 + (posX / texWidth) / 1;
+                vtx.texture[1]  =  0 + (1 - posY / texHeight) / 1;
+                bufs.push_back(vtx);
+            }
+        }
+    }
+    _vertexArray.UpdateVertexBuffer(bufs);
+    _vertexArray.UpdateElementBuffer({});
+    _vertexArray.Activate();
+}
+
+bool _InternalUpdate() override {
+    if (_needUpdate == false)
+        return true;
+
+    _AddVertexByDrawArray();
+    return GLRendererBase::_InternalUpdate();
+}
+```
+Shader
+```
+const GLchar *vertexShaderSource = R"(
+#version 330 core
+layout (location = 0) in vec2 aPos;
+layout (location = 1) in vec2 aTexCoord;
+
+uniform mat4 transform;
+uniform sampler2D texture0;
+uniform sampler2D texture1;
+uniform int texWidth, texHeight;
+uniform int charWidth, charHeight;
+
+out vec3 vtxColor;
+out vec2 vtxTexCoord;
+
+void main()
+{
+    int posX = int((aPos.x + 1) / 2 * texWidth), posY = int((1 - (1.0 + aPos.y) / 2) * texHeight);
+    int left = posX / charWidth * charWidth, top = posY / charHeight * charHeight;
+    int right = left + charWidth <= texWidth ? left + charWidth : texWidth;
+    int bottom = top + charHeight <= texHeight ? top + charHeight : texHeight;
+
+    gl_Position = transform * vec4(aPos.x, aPos.y, 0.0, 1.0);
+
+    float sumR = 0, sumG = 0, sumB = 0;
+    int xstep = 4, ystep = 4; // 不需要每一个点取值，取一部分就可以
+    int x, y;
+    for (y = top; y < bottom; y += ystep)
+    {
+        for (x = left; x < right; x += xstep)
+        {
+            vec4 color = texture(texture0, vec2(float(x) / texWidth, float(y) / texHeight));
+            sumR += color.r;
+            sumG += color.g;
+            sumB += color.b;
+        }
+    }
+    int amount = (bottom - top) * (right - left) / xstep / ystep;
+    float gray = 0.299f * sumR / amount + 0.587f * sumG / amount + 0.114 * sumB / amount;
+    vtxColor = vec3(gray, gray, gray);
+    
+    vtxTexCoord = aTexCoord;
+})";
+
+// 创建并编译Fragment Shader，方法基本一致
+const GLchar *fragmentShaderSource = R"(
+#version 330 core
+in vec3  vtxColor;
+in vec2  vtxTexCoord;
+
+out vec4 FragColor;
+
+uniform sampler2D texture0;
+uniform sampler2D texture1;
+
+void main()
+{
+    FragColor = vec4(vtxColor.rgb, 1.0);
+})";
+```
+绘制效果：
+![](Diary/Images/CharPainting/网格分割成品图.png)
+
+
+# 2023年7月5日
+
+调试了两天，终于比较好地把字符画Shader完成了。对OpenGL的熟悉程度明显提高了。<br>
+## 主要思路
+1. 前置:生成字符纹理
+   1. 使用PIL黑色背景上从左到右绘制出0~255的所有ASCII码，每个字符宽8像素，高12像素，字体为等宽字体。之所以不用OpenCV画是因为OpenCV支持的字体太少了。
+   2. 使用OpenCV将图片划分为256份，计算每一份的平均灰度
+   3. 按照平均灰度重排字符，平均灰度为n的字符下标为n。
+   4. 最终，获得一个宽256*8px，高12px的bmp图像，图像中第n个字符的平均灰度为n。
+   5. 结果如下：<br>![](SimplePlayer/SimplePlayer/charTexture.bmp)
+2. 输入两个纹理：texture0是待处理图片，texture1是字符画纹理
+3. 将原图划分为8*12小矩形
+4. VertexShader，计算顶点所在小矩形的平均灰度，并根据平均灰度计算出字符纹理顶点位置
+5. FragmentShader，根据VertexShader传递过来的字符纹理顶点位置将字符纹理绘制到输出纹理上。
+
+之所以在VertexShader中计算，是因为同一个小矩形的平均灰度一样，没有必要每一个像素都计算一次。相比于FragmentShader，平均灰度的计算次数减少到6/(8*12)。当然，坏处就是代码写起来更复杂。<br>
+当然，每个顶点计算一次还是有5次冗余计算。应该还可以进一步优化。
+
+## 踩坑
+网上代码计算均值、高斯分布（[GLSL着色器实现高斯滤波代码_glsl求均值](https://blog.csdn.net/mutex86/article/details/9615631)）等都是使用FragmentShader实现的，相比之下，VertexShader实现版本就复杂了很多，踩了很多的坑。这些坑都很有意义，值得用一大段来记录。<br>
+
+### 浮点坐标转整数坐标
+第一个版本的字符画程序，总是有部分小矩阵的字符是错乱的。如下：<br>
+![](Diary/Images/CharPainting/字符错乱.png)<br>
+
+百思不得其解。稍微修改一下FragmentShader，让它不绘制字符，直接绘制灰度值：<br>
+```FragColor = texture(texture1, vtxTexCoord).rgba;```<br>
+
+绘制出来的是这样的：<br>
+![](Diary/Images/CharPainting/字符错乱：用灰度值绘制三角形.png)
+仔细看可以看出，出问题的小矩形，上下灰度（也有少数是左右）明显是不一样的。放大一点看得更清楚：<br>
+![](Diary/Images/CharPainting/字符错乱：放大.png)
+
+所以，出问题的根本是**顶点对应的矩形范围不正确**。但是到底是哪里导致不正确，一直没有想清楚。直到后来灵机一动，才发现是浮点误差问题。具体原因如下：
+```
+// 左上角顶点
+float posX = x, posY = y;
+vtx.location[0] = -1 + (posX / texWidth) * 2;
+vtx.location[1] = -1 + (1 - posY / texHeight) * 2;
+```
+在这里，整数x、y被归一化为0~1的浮点数。<br>
+随后，在Shader中，这个的浮点坐标被反归一化为整数值。并最终对应到字符纹理对应位置。
+```
+int posX = (aPos.x + 1) / 2 * texWidth, posY = (-aPos.y + 1) / 2 * texHeight;
+```
+这个值非常重要，决定了是哪一个矩形。然而，**浮点数和整数的相互转换是有误差的**，例如某个矩形的上边缘本来应该是1000，但是反归一化之后得到999.999997，再做一次截断就变成了999，相当于就变成了**相邻矩形**。而下侧可能反归一化得到1001.000004，没有误差。这样，同一个矩形的顶点自认为不是同一个矩形，绘制出来的图像自然就是错误的了。<br>
+之所以一部分显示正确一部分不正确，是因为部分矩形和相邻的矩形灰度差不多，所以即使有偏差也不影响。但是对于少数矩形，特别是图像中一些灰度值变化剧烈的区域，就更容易出现这种问题。
+
+找到原因，就很简单了，**+0.5 四舍五入即可**：
+```
+int posX = int((aPos.x + 1) / 2 * texWidth + 0.5), posY = int((-aPos.y + 1) / 2 * texHeight + 0.5); // 四舍五入
+```
+
+### 在VS代码中获知当前顶点是矩形中哪个位置
+使用VertexShader的坏处就是，一个顶点同时属于四周的四个矩形，在Shader中没有办法判断出当前想绘制的到底是哪一个矩形。所以，必须有一个办法能告诉Shader。<br>
+![](Diary/Images/CharPainting/网格分割成品图.png)<br>
+
+#### 通过与左上角进行坐标比较获取位置
+显而易见的解法就是把相关信息通过VBO传给Shader了。一开始，是把该顶点对应矩形的左上角传递给Shader
+```
+{ // 左上
+    float posX = x, posY = y;
+    GLVertexArray::VertexBuffer vtx;
+    vtx.location[0] = -1 + (posX / texWidth) * 2;
+    vtx.location[1] = -1 + (1 - posY / texHeight) * 2;
+    vtx.texture[0]  =  0 + (float(x) / texWidth) / 1;
+    vtx.texture[1]  =  0 + (1 - float(y) / texHeight) / 1;
+}
+{ // 右上
+    // ...
+    vtx.texture[0]  =  0 + (float(x) / texWidth) / 1;     // 左上角顶点坐标
+    vtx.texture[1]  =  0 + (1 - float(y) / texHeight) / 1;
+}
+// 其它顶点...
+```
+那么，很容易想到，只要把该点的坐标和矩形左上角坐标比较一下，如果x更大说明是右侧，如果y更大说明是下侧，这样就能知道该点是矩形的哪一个顶点了。
+```
+float charTexX = int(gray * 256) / 256.0, charTexY = 1;
+if ((aPos.x + 1) / 2 > aTexCoord.x) // 右侧
+    charTexX = charTexX + 1.0f / 256;
+if ((aPos.y + 1) / 2 < aTexCoord.y) // 下侧
+    charTexY = 0;
+vtxTexCoord = vec2(charTexX, charTexY);
+```
+但是，实际绘制出来的却出现了很多纵向的黑条：<br>
+![](Diary/Images/CharPainting/纵向黑条.png)
+
+查了很久，甚至都换了一种方法完成了字符画程序，都没有查到原因。直到今天开始写日记，决心一定要把问题查清楚，这才查清楚。分析过程如下：<br>
+首先，仔细观察，发现黑条并不是全黑，有一部分是有图像的，y轴方向有变化，x轴方向无变化。因此，推测是x轴计算的问题，左侧和右侧顶点的x值相同！<br>
+![](Diary/Images/CharPainting/纵向黑条：放大.png)<br>
+因此，直接让FragmentShader将上述两个if判断的结果作为颜色输出：
+
+Vertex Shader:
+```
+charTexX = (aPos.x + 1) / 2 > aTexCoord.x ? 0 : 1;
+charTexY = (aPos.y + 1) / 2 < aTexCoord.y ? 0 : 1;
+vtxTexCoord = vec2(charTexX, charTexY);
+```
+Fragment Shader:<br>
+```
+FragColor = vec4(vtxTexCoord.xy, 0.0, 1.0);
+```
+绘图如下：
+![](Diary/Images/CharPainting/纵向黑条：调查.png)
+
+显然，黑条的位置，y轴方向正常变化（G渐变），x轴方向都是0（R都是0）。因此，显然是`(aPos.x + 1) / 2 > aTexCoord.x`这个判定有问题。<br>
+GPU上没办法调试，但是aPos和aTexCoord都是CPU计算出来的值，所以可以加assert：
+```
+{ // 左上
+    float posX = x, posY = y;
+    GLVertexArray::VertexBuffer vtx;
+    vtx.location[0] = -1 + (posX / texWidth) * 2;
+    vtx.location[1] = -1 + (1 - posY / texHeight) * 2;
+    vtx.texture[0]  =  0 + (float(x) / texWidth) / 1;
+    vtx.texture[1]  =  0 + (1 - float(y) / texHeight) / 1;
+    bufs.push_back(vtx);
+    
+    assert((vtx.location[0] + 1) / 2 <= vtx.texture[0]);
+}
+```
+果然命中了断言。命令行调试一下：
+```
+(lldb) po (vtx.location[0] + 1) / 2
+0.0166666806
+
+(lldb) po vtx.texture[0]
+0.0166666675
+
+(lldb) po (vtx.location[0] + 1) / 2 <= vtx.texture[0]
+<nil>
+```
+**所以，这又是一个浮点误差问题！**<br>
+**！！！吐了啊！！！**<br>
+
+之所以集中在左侧，是因为vtx.location[0]靠近-1，远离0，精度相比于vtx.texture[0]要低一些，因此vtx.location[0] + 1后，就出现了精度误差问题。<br>
+这可不是+0.5就能解决的了，所以，这个方法Pass！<br>
+原始代码见commit：b3177e28b8cdde12c00c95897367af5baa57b1bb，初步实现字符画，但存在多道纵向黑条
+
+#### 直接传递顶点序号
+其实，只需要很简单的办法就可以了，那就是CPU计算VBO时候，直接把顶点序号传进去不就得了。<br>
+VBO：
+```
+{ // 左上
+    float posX = x, posY = y;
+    GLVertexArray::VertexBuffer vtx;
+    vtx.location[0] = -1 + (posX / texWidth) * 2;
+    vtx.location[1] = -1 + (1 - posY / texHeight) * 2;
+    vtx.texture[0]  =  0;
+    bufs.push_back(vtx);
+}
+{ // 右上
+    vtx.texture[0]  =  1;
+}
+{ // 左下
+    vtx.texture[0]  =  2;
+}
+{ // 右下
+    vtx.texture[0]  =  3;
+}
+```
+Shader：
+```
+if (aTexCoord.x == 1 || aTexCoord.x == 3)
+    charTexX = charTexX + 1.0f / 256;
+if (aTexCoord.x == 2 || aTexCoord.x == 3)
+    charTexY = 1;
+```
+多简单……多直接啊……
+
+
+### 灰度值溢出
+![](Diary/Images/CharPainting/灰度溢出.png)
+灰度值溢出就很简单了，简单来说，因为程序需要根据平均灰度去查找表（也就是字符纹理）。因此，如果值超出了1，就会显示异常。所以，灰度归一化时候，不能是`gray * 256`，而应该是`gray * 255`。
+
+### 字符反向
+字符反向就不贴图了，就是纹理坐标系和顶点坐标系相反的问题。
+
+## 成品代码
+GLRendererCharPainting
+```
+class GLRendererCharPainting : public GLRendererBase {
+public:
+    GLRendererCharPainting(std::shared_ptr<GLContext> context):GLRendererBase(context) {}
+    virtual ~GLRendererCharPainting() {}
+    
+    void SetCharSize(int width, int height)
+    {
+        _charWidth = width;
+        _charHeight = height;
+        _needUpdate = true;
+    }
+    
+protected:
+    
+    void _AddVertex()
+    {
+        // 将整个画面划分为_charWidth * _charHeight的小矩形
+        int texWidth = _textures[0]->width(), texHeight = _textures[0]->height();
+        int charWidth = _charWidth, charHeight = _charHeight;
+        std::vector<GLVertexArray::VertexBuffer> bufs;
+        std::vector<GLVertexArray::ElementBuffer> elems;
+        GLuint rectCnt = 0;
+        for (int y = 0; y < texHeight; y += charHeight) {
+            for (int x = 0; x < texWidth; x += charWidth) {
+                // 这里其实还有优化空间，矩形上的每一个点也是相邻矩形上的点，因此VBO数量可以压缩为1/4。
+                // 但是现在的性能已经很好了，一帧不到2ms。不做进一步优化了。
+                { // 左上
+                    float posX = x, posY = y;
+                    GLVertexArray::VertexBuffer vtx;
+                    vtx.location[0] = -1 + (posX / texWidth) * 2;
+                    vtx.location[1] = -1 + (1 - posY / texHeight) * 2;
+                    vtx.texture[0]  =  0;
+                    bufs.push_back(vtx);
+                }
+                { // 右上
+                    float posX = x + charWidth, posY = y;
+                    GLVertexArray::VertexBuffer vtx;
+                    vtx.location[0] = -1 + (posX / texWidth) * 2;
+                    vtx.location[1] = -1 + (1 - posY / texHeight) * 2;
+                    vtx.texture[0]  =  1;
+                    bufs.push_back(vtx);
+                }
+                { // 左下
+                    float posX = x, posY = y + charHeight;
+                    GLVertexArray::VertexBuffer vtx;
+                    vtx.location[0] = -1 + (posX / texWidth) * 2;
+                    vtx.location[1] = -1 + (1 - posY / texHeight) * 2;
+                    vtx.texture[0]  =  2;
+                    bufs.push_back(vtx);
+                }
+                { // 右下
+                    float posX = x + charWidth, posY = y + charHeight;
+                    GLVertexArray::VertexBuffer vtx;
+                    vtx.location[0] = -1 + (posX / texWidth) * 2;
+                    vtx.location[1] = -1 + (1 - posY / texHeight) * 2;
+                    vtx.texture[0]  =  3;
+                    bufs.push_back(vtx);
+                }
+                elems.push_back({rectCnt * 4 + 0, rectCnt * 4 + 1, rectCnt * 4 + 2});
+                elems.push_back({rectCnt * 4 + 1, rectCnt * 4 + 3, rectCnt * 4 + 2});
+                rectCnt++;
+            }
+        }
+        _vertexArray.UpdateVertexBuffer(bufs);
+        _vertexArray.UpdateElementBuffer(elems);
+        _vertexArray.Activate();
+    }
+    
+    bool _InternalUpdate() override
+    {
+        if (_needUpdate == false)
+            return true;
+        
+        const GLchar *vertexShaderSource = R"(
+        #version 330 core
+        layout (location = 0) in vec3 aPos;
+        layout (location = 1) in vec2 aTexCoord;
+
+        uniform mat4 transform;
+        uniform sampler2D texture0;
+        uniform sampler2D texture1;
+        uniform int texWidth, texHeight;
+        uniform int charWidth, charHeight;
+
+        out vec3 vtxColor;
+        out vec2 vtxTexCoord;
+
+        void main()
+        {
+            gl_Position = transform * vec4(aPos.x, aPos.y, 0.0, 1.0);
+        
+            // 计算采样矩形坐标范围，aTexCoord.x是顶点在小矩形中的位置（0左上，1右上，2左下，3右下）
+            int posX = int((aPos.x + 1) / 2 * texWidth + 0.5), posY = int((-aPos.y + 1) / 2 * texHeight + 0.5); // 注意，这里需要+0.5，以避免浮点误差导致计算出的整数posX、posY比预期值小1
+            if (aTexCoord.x == 1 || aTexCoord.x == 3)
+                posX -= charWidth;
+            if (aTexCoord.x == 2 || aTexCoord.x == 3)
+                posY -= charHeight;
+            
+            int left = posX / charWidth * charWidth, top = posY / charHeight * charHeight;
+            int right = min(left + charWidth, texWidth);
+            int bottom = min(top + charHeight, texHeight);
+            
+            // 计算平均灰度
+            float sumR = 0, sumG = 0, sumB = 0;
+            int xstep = 4, ystep = 4; // 不需要每一个点取值，取一部分就可以
+            int amount = 0;
+            for (int y = top; y < bottom; y += ystep)
+            {
+                for (int x = left; x < right; x += xstep)
+                {
+                    vec4 color = texture(texture0, vec2(float(x) / texWidth, float(y) / texHeight));
+                    sumR += color.r;
+                    sumG += color.g;
+                    sumB += color.b;
+                    amount++;
+                }
+            }
+            // 计算均值
+            float gray = 0.299f * sumR / amount + 0.587f * sumG / amount + 0.114 * sumB / amount;
+            gray *= 255.f / 256; // 限制最大值，避免溢出
+            vtxColor = vec3(sumR / amount, sumG / amount, sumB / amount);
+            
+            // 计算对应的字符纹理坐标。字符纹理从左到右划分为256个charWidth * charHeight矩形，第n个矩形的平均灰度值为n。
+            float charTexX = int(gray * 256) / 256.0, charTexY = 0;
+            if (aTexCoord.x == 1 || aTexCoord.x == 3)
+                charTexX = charTexX + 1.0f / 256;
+            if (aTexCoord.x == 2 || aTexCoord.x == 3)
+                charTexY = 1;
+            vtxTexCoord = vec2(charTexX, charTexY);
+        })";
+
+        const GLchar *fragmentShaderSource = R"(
+        #version 330 core
+        in vec3  vtxColor;
+        in vec2  vtxTexCoord;
+        
+        out vec4 FragColor;
+        
+        uniform sampler2D texture0;
+        uniform sampler2D texture1;
+
+        void main()
+        {
+            FragColor = texture(texture1, vtxTexCoord).rgba * vec4(vtxColor, 1.0);
+        })";
+        UpdateShader({vertexShaderSource}, {fragmentShaderSource});
+        
+        
+        _AddVertex();
+        
+        return GLRendererBase::_InternalUpdate();
+    }
+    
+    bool _InternalRender() override
+    {
+//        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // 取消注释后将启用线框模式
+        
+        UpdateUniform("texWidth", _textures[0]->width());
+        UpdateUniform("texHeight", _textures[0]->height());
+        UpdateUniform("charWidth", _charWidth);
+        UpdateUniform("charHeight", _charHeight);
+        
+        GLRendererBase::_InternalRender();
+//        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL); // 取消注释后将启用线框模式
+        
+        // 存bmp图
+        static bool b = true;
+        if (b) {
+            if (auto buffer = _frameBuffer->GetOutputTexture()->DownloadBuffer())
+                writeBMP2File("output.bmp", buffer->data.get(), buffer->width, buffer->height, 4);
+            b = false;
+        }
+        return true;
+    }
+    
+protected:
+    int _charWidth = 8, _charHeight = 12;
+};
+```
+初始化：
+```
+- (instancetype)initWithFrame:(NSRect)frameRect {
+    self = [super initWithFrame:frameRect];
+    if (self) {
+        // 创建并初始化GLContext
+        pGLContext = std::make_shared<sp::GLContext>();
+        if (pGLContext->init() == false)
+            return nil;
+        [self setOpenGLContext:pGLContext->context()];
+        
+        // 创建并初始化Renderer
+        pRenderer = std::make_unique<sp::GLRendererCharPainting>(pGLContext);
+        pRenderer->SetClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+        
+        // 加载纹理
+        auto buffer = LoadBufferFromImage([NSImage imageNamed:@"texture.jpg"]); // 待转换图像
+        auto charBuffer = LoadBufferFromImage([NSImage imageNamed:@"charTexture.bmp"]); // 字符纹理
+        if (buffer.has_value() && charBuffer.has_value())
+            pRenderer->UpdateTexture({*buffer, *charBuffer});
+        pRenderer->UpdateOutputTexture(std::make_shared<sp::GLTexture>(pGLContext, sp::ImageBuffer{.width = 1920, .height = 1080, .pixelFormat = GL_RGBA}));
+        
+        // 指定字符尺寸
+        pRenderer->SetCharSize(8, 12);
+        
+        pRendererPreview = std::make_unique<sp::GLRendererPreview>(pGLContext);
+        pRendererPreview->SetClearColor(0.75f, 0.5f, 0.5f, 1.0f);
+        pRendererPreview->UpdateTexture({pRenderer->GetOutputTexture()});
+        
+    }
+    return self;
+}
+```
+最终成品，撒花！
+
+![](Diary/Images/CharPainting/字符画成品.png)
+
+
+# 2023年7月9日
+
+OpenGL最后一部分，坐标变换。<br>
+主要的需求是把纹理通过旋转缩放显示在屏幕上，保证以Fit模式显示而不是Stretch拉伸模式。<br>
+依然是经典图片：![](https://learnopengl-cn.github.io/img/01/08/coordinate_systems.png)
+
+
+另外，参考[Linux 内核代码风格](https://www.kernel.org/doc/html/v4.13/translations/zh_CN/coding-style.html)，决定微调代码风格，**函数大括号换行，条件语句不换行**。
 
 # 优质参考资料
 

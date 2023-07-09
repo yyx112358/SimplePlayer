@@ -123,7 +123,7 @@ public:
     /// 上传Buffer，不阻塞。Activate时才真正上传
     void UploadBuffer(ImageBuffer buffer);
     
-    std::optional<ImageBuffer> DownloadBuffer();
+    std::optional<ImageBuffer> DownloadBuffer(std::optional<GLenum> pixelFormat = {}) const;
     
     bool Activate();
     
@@ -190,10 +190,10 @@ public:
     /// 默认矩形Vertex Buffer
     static const std::vector<VertexBuffer> &DEFAULT_RECT_VERTEX_BUFFER() {
         const static std::vector<VertexBuffer> buf = {
-            {{-1.0, 1.0}, {0.0, 1.0},}, // 左上
-            {{ 1.0, 1.0}, {1.0, 1.0},}, // 右上
-            {{-1.0,-1.0}, {0.0, 0.0},}, // 左下
-            {{ 1.0,-1.0}, {1.0, 0.0},}, // 右下
+            {{-0.95, 0.95}, {0.0, 1.0},}, // 左上
+            {{ 0.95, 0.95}, {1.0, 1.0},}, // 右上
+            {{-0.95,-0.95}, {0.0, 0.0},}, // 左下
+            {{ 0.95,-0.95}, {1.0, 0.0},}, // 右下
         };
         return buf;
     }

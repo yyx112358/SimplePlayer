@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		7A23A4142A4D367C005FDEB8 /* ImageWriterBmp.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7A23A4132A4D367C005FDEB8 /* ImageWriterBmp.cpp */; };
 		7A2699A02A2B7E00009C722B /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 7A26999F2A2B7E00009C722B /* AppDelegate.m */; };
 		7A2699A32A2B7E00009C722B /* ViewController.mm in Sources */ = {isa = PBXBuildFile; fileRef = 7A2699A22A2B7E00009C722B /* ViewController.mm */; };
 		7A2699A62A2B7E00009C722B /* SimplePlayer.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = 7A2699A42A2B7E00009C722B /* SimplePlayer.xcdatamodeld */; };
@@ -16,7 +17,7 @@
 		7A2699BC2A2B81E9009C722B /* PreviewManager_Mac.mm in Sources */ = {isa = PBXBuildFile; fileRef = 7A2699BA2A2B81E9009C722B /* PreviewManager_Mac.mm */; };
 		7A269A2A2A2C9CFD009C722B /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7A269A292A2C9CFD009C722B /* OpenGL.framework */; };
 		7A658A042A35A92F00955DB9 /* BasicFragment.glsl in Resources */ = {isa = PBXBuildFile; fileRef = 7A658A032A35A92F00955DB9 /* BasicFragment.glsl */; };
-		7A658A062A35CAFF00955DB9 /* output1.bmp in Resources */ = {isa = PBXBuildFile; fileRef = 7A658A052A35CAFF00955DB9 /* output1.bmp */; };
+		7A658A062A35CAFF00955DB9 /* charTexture.bmp in Resources */ = {isa = PBXBuildFile; fileRef = 7A658A052A35CAFF00955DB9 /* charTexture.bmp */; };
 		7A658A0A2A35D4DA00955DB9 /* texture.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 7A658A092A35D4D900955DB9 /* texture.jpg */; };
 		7A6D8B492A33582600C40E5C /* GLContext.mm in Sources */ = {isa = PBXBuildFile; fileRef = 7A6D8B472A33582600C40E5C /* GLContext.mm */; };
 		7A6D8B4C2A3359DC00C40E5C /* GLRendererBase.mm in Sources */ = {isa = PBXBuildFile; fileRef = 7A6D8B4A2A3359DC00C40E5C /* GLRendererBase.mm */; };
@@ -25,6 +26,8 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		7A23A4122A4D367C005FDEB8 /* ImageWriterBmp.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ImageWriterBmp.h; sourceTree = "<group>"; };
+		7A23A4132A4D367C005FDEB8 /* ImageWriterBmp.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = ImageWriterBmp.cpp; sourceTree = "<group>"; };
 		7A26999B2A2B7E00009C722B /* SimplePlayer.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SimplePlayer.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		7A26999E2A2B7E00009C722B /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
 		7A26999F2A2B7E00009C722B /* AppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AppDelegate.m; sourceTree = "<group>"; };
@@ -40,7 +43,7 @@
 		7A2699BB2A2B81E9009C722B /* PreviewManager_Mac.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PreviewManager_Mac.h; sourceTree = "<group>"; };
 		7A269A292A2C9CFD009C722B /* OpenGL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGL.framework; path = System/Library/Frameworks/OpenGL.framework; sourceTree = SDKROOT; };
 		7A658A032A35A92F00955DB9 /* BasicFragment.glsl */ = {isa = PBXFileReference; lastKnownFileType = text; path = BasicFragment.glsl; sourceTree = "<group>"; };
-		7A658A052A35CAFF00955DB9 /* output1.bmp */ = {isa = PBXFileReference; lastKnownFileType = image.bmp; path = output1.bmp; sourceTree = "<group>"; };
+		7A658A052A35CAFF00955DB9 /* charTexture.bmp */ = {isa = PBXFileReference; lastKnownFileType = image.bmp; path = charTexture.bmp; sourceTree = "<group>"; };
 		7A658A082A35CF9200955DB9 /* ImageReader.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = ImageReader.hpp; sourceTree = "<group>"; };
 		7A658A092A35D4D900955DB9 /* texture.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = texture.jpg; sourceTree = "<group>"; };
 		7A6D8B472A33582600C40E5C /* GLContext.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = GLContext.mm; sourceTree = "<group>"; };
@@ -64,6 +67,15 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		7A23A4102A4D3639005FDEB8 /* Writer */ = {
+			isa = PBXGroup;
+			children = (
+				7A23A4122A4D367C005FDEB8 /* ImageWriterBmp.h */,
+				7A23A4132A4D367C005FDEB8 /* ImageWriterBmp.cpp */,
+			);
+			path = Writer;
+			sourceTree = "<group>";
+		};
 		7A2699922A2B7E00009C722B = {
 			isa = PBXGroup;
 			children = (
@@ -90,7 +102,7 @@
 				7A26999F2A2B7E00009C722B /* AppDelegate.m */,
 				7A2699A12A2B7E00009C722B /* ViewController.h */,
 				7A2699A22A2B7E00009C722B /* ViewController.mm */,
-				7A658A052A35CAFF00955DB9 /* output1.bmp */,
+				7A658A052A35CAFF00955DB9 /* charTexture.bmp */,
 				7A658A092A35D4D900955DB9 /* texture.jpg */,
 				7A2699A72A2B7E01009C722B /* Assets.xcassets */,
 				7A2699A92A2B7E01009C722B /* Main.storyboard */,
@@ -104,6 +116,7 @@
 		7A2699B82A2B81E9009C722B /* Preview */ = {
 			isa = PBXGroup;
 			children = (
+				7A23A4102A4D3639005FDEB8 /* Writer */,
 				7A658A072A35CF8000955DB9 /* Reader */,
 				7A7D566A2A3045C800F1D701 /* Renderer */,
 				7A2699B92A2B81E9009C722B /* IPreviewManager.hpp */,
@@ -213,7 +226,7 @@
 				7A7120372A36E357005EB5D9 /* glm in Resources */,
 				7A2699A82A2B7E01009C722B /* Assets.xcassets in Resources */,
 				7A8669442A2F8C78006E8CC6 /* BasicVertex.glsl in Resources */,
-				7A658A062A35CAFF00955DB9 /* output1.bmp in Resources */,
+				7A658A062A35CAFF00955DB9 /* charTexture.bmp in Resources */,
 				7A2699AB2A2B7E01009C722B /* Main.storyboard in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -225,6 +238,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				7A23A4142A4D367C005FDEB8 /* ImageWriterBmp.cpp in Sources */,
 				7A2699A62A2B7E00009C722B /* SimplePlayer.xcdatamodeld in Sources */,
 				7A2699A32A2B7E00009C722B /* ViewController.mm in Sources */,
 				7A6D8B4C2A3359DC00C40E5C /* GLRendererBase.mm in Sources */,
