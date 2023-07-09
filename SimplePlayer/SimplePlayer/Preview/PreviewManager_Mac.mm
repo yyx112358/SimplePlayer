@@ -150,11 +150,11 @@ std::optional<sp::ImageBuffer> LoadBufferFromImage(NSImage *image) {
         {
             gl_Position = transform * vec4(aPos.x, aPos.y, 0.0, 1.0);
         
-            // 计算采样矩形坐标范围，aTexCoord是网格小矩形左上角
+            // 计算采样矩形坐标范围，aTexCoord.x是顶点在小矩形中的位置（0左上，1右上，2左下，3右下）
             int posX = int((aPos.x + 1) / 2 * texWidth + 0.5), posY = int((-aPos.y + 1) / 2 * texHeight + 0.5); // 注意，这里需要+0.5，以避免浮点误差导致计算出的整数posX、posY比预期值小1
-            if (aTexCoord.x == 1 || aTexCoord.x == 4 || aTexCoord.x == 5)
+            if (aTexCoord.x == 1 || aTexCoord.x == 3)
                 posX -= charWidth;
-            if (aTexCoord.x == 2 || aTexCoord.x == 3 || aTexCoord.x == 5)
+            if (aTexCoord.x == 2 || aTexCoord.x == 3)
                 posY -= charHeight;
             
             int left = posX / charWidth * charWidth, top = posY / charHeight * charHeight;
@@ -176,16 +176,17 @@ std::optional<sp::ImageBuffer> LoadBufferFromImage(NSImage *image) {
                     amount++;
                 }
             }
+            // 计算均值
             float gray = 0.299f * sumR / amount + 0.587f * sumG / amount + 0.114 * sumB / amount;
-            gray = min(gray, 255.f / 256); // 限制最大值，避免溢出
+            gray *= 255.f / 256; // 限制最大值，避免溢出
             vtxColor = vec3(sumR / amount, sumG / amount, sumB / amount);
             
             // 计算对应的字符纹理坐标。字符纹理从左到右划分为256个charWidth * charHeight矩形，第n个矩形的平均灰度值为n。
-            float charTexX = int(gray * 256) / 256.0, charTexY = 1;
-            if (aTexCoord.x == 1 || aTexCoord.x == 4 || aTexCoord.x == 5)
+            float charTexX = int(gray * 256) / 256.0, charTexY = 0;
+            if (aTexCoord.x == 1 || aTexCoord.x == 3)
                 charTexX = charTexX + 1.0f / 256;
-            if (aTexCoord.x == 2 || aTexCoord.x == 3 || aTexCoord.x == 5)
-                charTexY = 0;
+            if (aTexCoord.x == 2 || aTexCoord.x == 3)
+                charTexY = 1;
             vtxTexCoord = vec2(charTexX, charTexY);
         })";
 

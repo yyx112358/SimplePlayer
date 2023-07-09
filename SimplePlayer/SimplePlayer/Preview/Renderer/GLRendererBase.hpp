@@ -301,19 +301,23 @@ public:
     
 protected:
     
-    void _AddVertexByDrawArray() {
+    void _AddVertex() {
+        // 将整个画面划分为_charWidth * _charHeight的小矩形
         int texWidth = _textures[0]->width(), texHeight = _textures[0]->height();
         int charWidth = _charWidth, charHeight = _charHeight;
         std::vector<GLVertexArray::VertexBuffer> bufs;
+        std::vector<GLVertexArray::ElementBuffer> elems;
+        GLuint rectCnt = 0;
         for (int y = 0; y < texHeight; y += charHeight) {
             for (int x = 0; x < texWidth; x += charWidth) {
+                // 这里其实还有优化空间，矩形上的每一个点也是相邻矩形上的点，因此VBO数量可以压缩为1/4。
+                // 但是现在的性能已经很好了，一帧不到2ms。不做进一步优化了。
                 { // 左上
                     float posX = x, posY = y;
                     GLVertexArray::VertexBuffer vtx;
                     vtx.location[0] = -1 + (posX / texWidth) * 2;
                     vtx.location[1] = -1 + (1 - posY / texHeight) * 2;
                     vtx.texture[0]  =  0;
-                    vtx.texture[1]  =  0 + (1 - float(y) / texHeight) / 1;
                     bufs.push_back(vtx);
                 }
                 { // 右上
@@ -322,7 +326,6 @@ protected:
                     vtx.location[0] = -1 + (posX / texWidth) * 2;
                     vtx.location[1] = -1 + (1 - posY / texHeight) * 2;
                     vtx.texture[0]  =  1;
-                    vtx.texture[1]  =  0 + (1 - float(y) / texHeight) / 1;
                     bufs.push_back(vtx);
                 }
                 { // 左下
@@ -331,25 +334,6 @@ protected:
                     vtx.location[0] = -1 + (posX / texWidth) * 2;
                     vtx.location[1] = -1 + (1 - posY / texHeight) * 2;
                     vtx.texture[0]  =  2;
-                    vtx.texture[1]  =  0 + (1 - float(y) / texHeight) / 1;
-                    bufs.push_back(vtx);
-                }
-                { // 左下
-                    float posX = x, posY = y + charHeight;
-                    GLVertexArray::VertexBuffer vtx;
-                    vtx.location[0] = -1 + (posX / texWidth) * 2;
-                    vtx.location[1] = -1 + (1 - posY / texHeight) * 2;
-                    vtx.texture[0]  =  3;
-                    vtx.texture[1]  =  0 + (1 - float(y) / texHeight) / 1;
-                    bufs.push_back(vtx);
-                }
-                { // 右上
-                    float posX = x + charWidth, posY = y;
-                    GLVertexArray::VertexBuffer vtx;
-                    vtx.location[0] = -1 + (posX / texWidth) * 2;
-                    vtx.location[1] = -1 + (1 - posY / texHeight) * 2;
-                    vtx.texture[0]  =  4;
-                    vtx.texture[1]  =  0 + (1 - float(y) / texHeight) / 1;
                     bufs.push_back(vtx);
                 }
                 { // 右下
@@ -357,14 +341,16 @@ protected:
                     GLVertexArray::VertexBuffer vtx;
                     vtx.location[0] = -1 + (posX / texWidth) * 2;
                     vtx.location[1] = -1 + (1 - posY / texHeight) * 2;
-                    vtx.texture[0]  =  5;
-                    vtx.texture[1]  =  0 + (1 - float(y) / texHeight) / 1;
+                    vtx.texture[0]  =  3;
                     bufs.push_back(vtx);
                 }
+                elems.push_back({rectCnt * 4 + 0, rectCnt * 4 + 1, rectCnt * 4 + 2});
+                elems.push_back({rectCnt * 4 + 1, rectCnt * 4 + 3, rectCnt * 4 + 2});
+                rectCnt++;
             }
         }
         _vertexArray.UpdateVertexBuffer(bufs);
-        _vertexArray.UpdateElementBuffer({});
+        _vertexArray.UpdateElementBuffer(elems);
         _vertexArray.Activate();
     }
     
@@ -372,8 +358,7 @@ protected:
         if (_needUpdate == false)
             return true;
         
-
-        _AddVertexByDrawArray();
+        _AddVertex();
         
         GLint p = -1;
         glGetIntegerv(GL_MAX_ELEMENTS_VERTICES, &p);
