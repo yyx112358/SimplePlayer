@@ -10,13 +10,19 @@
 
 using namespace sp;
 
+extern std::shared_ptr<sp::IGLContext> CreateGLContextMac()
+{
+    return std::make_shared<GLContextMac>();
+}
 
-GLContextMac::~GLContextMac() {
+GLContextMac::~GLContextMac()
+{
     std::lock_guard lock(_mutex);
     _context = nil;
 }
 
-bool GLContextMac::Init() {
+bool GLContextMac::Init()
+{
     std::lock_guard lock(_mutex);
 
     NSOpenGLPixelFormatAttribute attrs[] =
@@ -34,7 +40,8 @@ bool GLContextMac::Init() {
 }
 
 /// 切换到本Context
-bool GLContextMac::SwitchContext() {
+bool GLContextMac::SwitchContext()
+{
     if (_context == nil && Init() == false)
         return false;
     std::lock_guard lock(_mutex);
@@ -45,7 +52,8 @@ bool GLContextMac::SwitchContext() {
 
 // 在OpenGL绘制完成后，调用flush方法将绘制的结果显示到窗口上
 // 应在最后一个GL操作完成时调用
-bool GLContextMac::Flush() {
+bool GLContextMac::Flush()
+{
     if (_context == nil && Init() == false)
         return false;
     std::lock_guard lock(_mutex);
@@ -54,6 +62,7 @@ bool GLContextMac::Flush() {
     return true;
 }
 
-NSOpenGLContext *GLContextMac::context() {
+NSOpenGLContext *GLContextMac::context()
+{
     return _context;
 }

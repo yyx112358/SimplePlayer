@@ -7,12 +7,16 @@
 
 #include "IGLContext.hpp"
 
-#define GL_SILENCE_DEPRECATION
-#import <Cocoa/Cocoa.h>
-#import <OpenGL/gl3.h>
-
-#include "GLContextMac.hpp"
 #include "SPLog.h"
+
+
+#if __APPLE__ && !defined(TARGET_OS_IPHONE)
+
+#define GL_SILENCE_DEPRECATION
+#import <OpenGL/gl3.h>
+#include "GLContextMac.hpp"
+
+#endif // __APPLE__ && !TARGET_OS_IPHONE
 
 using namespace sp;
 
@@ -21,7 +25,7 @@ using namespace sp;
 
 std::shared_ptr<IGLContext> IGLContext::CreateGLContext()
 {
-    return std::make_shared<GLContextMac>();
+    return CreateGLContextMac();
 }
 
 bool IGLContext::CheckGLError(const char *function, int line)

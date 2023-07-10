@@ -9,12 +9,17 @@
 
 #include "IGLContext.hpp"
 
+extern std::shared_ptr<sp::IGLContext> CreateGLContextMac();
+
+#if __OBJC__
+
 #define GL_SILENCE_DEPRECATION
 #import <Cocoa/Cocoa.h>
 #import <OpenGL/gl3.h>
 #include <mutex>
 
 namespace sp {
+
 
 class GLContextMac : public IGLContext
 {
@@ -34,3 +39,5 @@ protected:
 
 
 }
+
+#endif
