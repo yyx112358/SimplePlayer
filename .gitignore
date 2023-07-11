@@ -34,3 +34,4 @@
 *.xcuserstate
 
 thirdParty/build
+.DS_Store

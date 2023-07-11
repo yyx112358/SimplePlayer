@@ -25,3 +25,5 @@ do
     mkdir -p $BUILD_DIR/lib
     cp $SOURCE_DIR/$libname/*.a $BUILD_DIR/lib/
 done
+
+make clean
