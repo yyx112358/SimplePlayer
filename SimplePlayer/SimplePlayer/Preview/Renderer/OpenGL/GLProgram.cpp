@@ -8,9 +8,9 @@
 #include "GLProgram.hpp"
 
 #include <string>
-#include "../../../../../thirdParty/glm/glm/glm.hpp"
-#include "../../../../../thirdParty/glm/glm/gtc/matrix_transform.hpp"
-#include "../../../../../thirdParty/glm/glm/gtc/type_ptr.hpp"
+#include "glm/glm.hpp"
+#include "glm/gtc/matrix_transform.hpp"
+#include "glm/gtc/type_ptr.hpp"
 
 #include "SPLog.h"
 

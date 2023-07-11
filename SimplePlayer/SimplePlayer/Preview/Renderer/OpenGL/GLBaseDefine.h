@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include "../../../../../thirdParty/glm/glm/fwd.hpp"
+#include "glm/fwd.hpp"
 #include <memory>
 
 #if __APPLE__

@@ -25,12 +25,19 @@
 		7A2699AD2A2B7E01009C722B /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 7A2699AC2A2B7E01009C722B /* main.m */; };
 		7A2699BC2A2B81E9009C722B /* PreviewManager_Mac.mm in Sources */ = {isa = PBXBuildFile; fileRef = 7A2699BA2A2B81E9009C722B /* PreviewManager_Mac.mm */; };
 		7A269A2A2A2C9CFD009C722B /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7A269A292A2C9CFD009C722B /* OpenGL.framework */; };
+		7A31BA6B2A5D5DB10057E592 /* libavcodec.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 7A31B6A12A5D553D0057E592 /* libavcodec.a */; };
+		7A31BA6C2A5D5DB10057E592 /* libavdevice.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 7A31B6A02A5D553D0057E592 /* libavdevice.a */; };
+		7A31BA6D2A5D5DB10057E592 /* libavfilter.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 7A31B6A32A5D553D0057E592 /* libavfilter.a */; };
+		7A31BA6E2A5D5DB10057E592 /* libavformat.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 7A31B6A42A5D553D0057E592 /* libavformat.a */; };
+		7A31BA6F2A5D5DB10057E592 /* libavutil.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 7A31B6A22A5D553D0057E592 /* libavutil.a */; };
+		7A31BA702A5D5DB10057E592 /* libpostproc.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 7A31B6A52A5D553D0057E592 /* libpostproc.a */; };
+		7A31BA712A5D5DB10057E592 /* libswresample.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 7A31B69E2A5D553C0057E592 /* libswresample.a */; };
+		7A31BA722A5D5DB10057E592 /* libswscale.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 7A31B69F2A5D553C0057E592 /* libswscale.a */; };
 		7A658A042A35A92F00955DB9 /* BasicFragment.glsl in Resources */ = {isa = PBXBuildFile; fileRef = 7A658A032A35A92F00955DB9 /* BasicFragment.glsl */; };
 		7A658A062A35CAFF00955DB9 /* charTexture.bmp in Resources */ = {isa = PBXBuildFile; fileRef = 7A658A052A35CAFF00955DB9 /* charTexture.bmp */; };
 		7A658A0A2A35D4DA00955DB9 /* texture.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 7A658A092A35D4D900955DB9 /* texture.jpg */; };
 		7A6D8B492A33582600C40E5C /* IGLContext.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7A6D8B472A33582600C40E5C /* IGLContext.cpp */; };
 		7A6D8B4C2A3359DC00C40E5C /* GLRendererBase.mm in Sources */ = {isa = PBXBuildFile; fileRef = 7A6D8B4A2A3359DC00C40E5C /* GLRendererBase.mm */; };
-		7A7120372A36E357005EB5D9 /* glm in Resources */ = {isa = PBXBuildFile; fileRef = 7A7120362A36E357005EB5D9 /* glm */; };
 		7A8669442A2F8C78006E8CC6 /* BasicVertex.glsl in Resources */ = {isa = PBXBuildFile; fileRef = 7A8669432A2F8C78006E8CC6 /* BasicVertex.glsl */; };
 /* End PBXBuildFile section */
 
@@ -70,6 +77,14 @@
 		7A2699BA2A2B81E9009C722B /* PreviewManager_Mac.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = PreviewManager_Mac.mm; sourceTree = "<group>"; };
 		7A2699BB2A2B81E9009C722B /* PreviewManager_Mac.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PreviewManager_Mac.h; sourceTree = "<group>"; };
 		7A269A292A2C9CFD009C722B /* OpenGL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGL.framework; path = System/Library/Frameworks/OpenGL.framework; sourceTree = SDKROOT; };
+		7A31B69E2A5D553C0057E592 /* libswresample.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libswresample.a; path = ../thirdParty/build/FFMpeg/lib/libswresample.a; sourceTree = "<group>"; };
+		7A31B69F2A5D553C0057E592 /* libswscale.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libswscale.a; path = ../thirdParty/build/FFMpeg/lib/libswscale.a; sourceTree = "<group>"; };
+		7A31B6A02A5D553D0057E592 /* libavdevice.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libavdevice.a; path = ../thirdParty/build/FFMpeg/lib/libavdevice.a; sourceTree = "<group>"; };
+		7A31B6A12A5D553D0057E592 /* libavcodec.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libavcodec.a; path = ../thirdParty/build/FFMpeg/lib/libavcodec.a; sourceTree = "<group>"; };
+		7A31B6A22A5D553D0057E592 /* libavutil.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libavutil.a; path = ../thirdParty/build/FFMpeg/lib/libavutil.a; sourceTree = "<group>"; };
+		7A31B6A32A5D553D0057E592 /* libavfilter.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libavfilter.a; path = ../thirdParty/build/FFMpeg/lib/libavfilter.a; sourceTree = "<group>"; };
+		7A31B6A42A5D553D0057E592 /* libavformat.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libavformat.a; path = ../thirdParty/build/FFMpeg/lib/libavformat.a; sourceTree = "<group>"; };
+		7A31B6A52A5D553D0057E592 /* libpostproc.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libpostproc.a; path = ../thirdParty/build/FFMpeg/lib/libpostproc.a; sourceTree = "<group>"; };
 		7A658A032A35A92F00955DB9 /* BasicFragment.glsl */ = {isa = PBXFileReference; lastKnownFileType = text; path = BasicFragment.glsl; sourceTree = "<group>"; };
 		7A658A052A35CAFF00955DB9 /* charTexture.bmp */ = {isa = PBXFileReference; lastKnownFileType = image.bmp; path = charTexture.bmp; sourceTree = "<group>"; };
 		7A658A082A35CF9200955DB9 /* ImageReader.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = ImageReader.hpp; sourceTree = "<group>"; };
@@ -78,7 +93,6 @@
 		7A6D8B482A33582600C40E5C /* IGLContext.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = IGLContext.hpp; sourceTree = "<group>"; };
 		7A6D8B4A2A3359DC00C40E5C /* GLRendererBase.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = GLRendererBase.mm; sourceTree = "<group>"; };
 		7A6D8B4B2A3359DC00C40E5C /* GLRendererBase.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = GLRendererBase.hpp; sourceTree = "<group>"; };
-		7A7120362A36E357005EB5D9 /* glm */ = {isa = PBXFileReference; lastKnownFileType = folder; name = glm; path = ../../thirdParty/glm/glm; sourceTree = "<group>"; };
 		7A8669432A2F8C78006E8CC6 /* BasicVertex.glsl */ = {isa = PBXFileReference; lastKnownFileType = text; path = BasicVertex.glsl; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -87,7 +101,15 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				7A31BA712A5D5DB10057E592 /* libswresample.a in Frameworks */,
+				7A31BA6F2A5D5DB10057E592 /* libavutil.a in Frameworks */,
+				7A31BA702A5D5DB10057E592 /* libpostproc.a in Frameworks */,
+				7A31BA6D2A5D5DB10057E592 /* libavfilter.a in Frameworks */,
 				7A269A2A2A2C9CFD009C722B /* OpenGL.framework in Frameworks */,
+				7A31BA6C2A5D5DB10057E592 /* libavdevice.a in Frameworks */,
+				7A31BA722A5D5DB10057E592 /* libswscale.a in Frameworks */,
+				7A31BA6E2A5D5DB10057E592 /* libavformat.a in Frameworks */,
+				7A31BA6B2A5D5DB10057E592 /* libavcodec.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -142,7 +164,6 @@
 			isa = PBXGroup;
 			children = (
 				7A191B412A5AE5D20016692E /* Base */,
-				7A7120362A36E357005EB5D9 /* glm */,
 				7A2699B82A2B81E9009C722B /* Preview */,
 				7A26999E2A2B7E00009C722B /* AppDelegate.h */,
 				7A26999F2A2B7E00009C722B /* AppDelegate.m */,
@@ -175,6 +196,14 @@
 		7A269A282A2C9CFD009C722B /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				7A31B6A12A5D553D0057E592 /* libavcodec.a */,
+				7A31B6A02A5D553D0057E592 /* libavdevice.a */,
+				7A31B6A32A5D553D0057E592 /* libavfilter.a */,
+				7A31B6A42A5D553D0057E592 /* libavformat.a */,
+				7A31B6A22A5D553D0057E592 /* libavutil.a */,
+				7A31B6A52A5D553D0057E592 /* libpostproc.a */,
+				7A31B69E2A5D553C0057E592 /* libswresample.a */,
+				7A31B69F2A5D553C0057E592 /* libswscale.a */,
 				7A269A292A2C9CFD009C722B /* OpenGL.framework */,
 			);
 			name = Frameworks;
@@ -292,7 +321,6 @@
 			files = (
 				7A658A0A2A35D4DA00955DB9 /* texture.jpg in Resources */,
 				7A658A042A35A92F00955DB9 /* BasicFragment.glsl in Resources */,
-				7A7120372A36E357005EB5D9 /* glm in Resources */,
 				7A2699A82A2B7E01009C722B /* Assets.xcassets in Resources */,
 				7A8669442A2F8C78006E8CC6 /* BasicVertex.glsl in Resources */,
 				7A658A062A35CAFF00955DB9 /* charTexture.bmp in Resources */,
@@ -462,7 +490,10 @@
 				DEVELOPMENT_TEAM = LK67A9XFJ9;
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				HEADER_SEARCH_PATHS = "../../thirdParty/glm/**";
+				HEADER_SEARCH_PATHS = (
+					../thirdParty/glm,
+					../thirdParty/build/FFMpeg/include,
+				);
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				INFOPLIST_KEY_NSMainStoryboardFile = Main;
 				INFOPLIST_KEY_NSPrincipalClass = NSApplication;
@@ -470,6 +501,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
+				LIBRARY_SEARCH_PATHS = ../thirdParty/build/FFMpeg/lib;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.yyx.SimplePlayer;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -491,7 +523,10 @@
 				DEVELOPMENT_TEAM = LK67A9XFJ9;
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				HEADER_SEARCH_PATHS = "../../thirdParty/glm/**";
+				HEADER_SEARCH_PATHS = (
+					../thirdParty/glm,
+					../thirdParty/build/FFMpeg/include,
+				);
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				INFOPLIST_KEY_NSMainStoryboardFile = Main;
 				INFOPLIST_KEY_NSPrincipalClass = NSApplication;
@@ -499,6 +534,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
+				LIBRARY_SEARCH_PATHS = ../thirdParty/build/FFMpeg/lib;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.yyx.SimplePlayer;
 				PRODUCT_NAME = "$(TARGET_NAME)";

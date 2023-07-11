@@ -8,6 +8,12 @@
 #import "ViewController.h"
 #import "IPreviewManager.hpp"
 
+
+extern "C" {
+#include "libavformat/avformat.h"
+}
+
+
 @interface ViewController ()
 
 @property (nonatomic, assign) std::shared_ptr<IPreviewManager> preview;
@@ -26,6 +32,7 @@
     
     // FIXME: 这种写法会引入循环引用
     self.timer = [NSTimer scheduledTimerWithTimeInterval:1.0 / 30 target:self selector:@selector(refresh:) userInfo:self repeats:YES];
+    NSLog(@"%s", avformat_configuration()) ;
 }
 
 

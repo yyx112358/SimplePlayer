@@ -8,7 +8,7 @@
 #ifndef GLRendererBase_hpp
 #define GLRendererBase_hpp
 
-#include "../../../../thirdParty/glm/glm/ext/matrix_float4x4.hpp"
+#include "glm/ext/matrix_float4x4.hpp"
 
 #import "IGLContext.hpp"
 #import "GLProgram.hpp"

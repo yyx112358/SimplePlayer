@@ -13,14 +13,15 @@ cd $SOURCE_DIR
 
 # 复制header和lib
 libnames=("libavcodec" "libavdevice" "libavfilter" "libavformat" "libavutil" "libpostproc" "libswresample" "libswscale")
-
 cd ../build
+CUR_DIR=`pwd`
 for libname in "${libnames[@]}"
 do
-    echo $libname
+    echo "Copy $CUR_DIR/$SOURCE_DIR/$libname/*.h ---> $CUR_DIR/$BUILD_DIR/include/$libname/"
     mkdir -p $BUILD_DIR/include/$libname
     cp -r $SOURCE_DIR/$libname/*.h $BUILD_DIR/include/$libname/
     
+    echo "Copy $CUR_DIR/$SOURCE_DIR/$libname/*.a ---> $CUR_DIR/$BUILD_DIR/lib/"
     mkdir -p $BUILD_DIR/lib
     cp $SOURCE_DIR/$libname/*.a $BUILD_DIR/lib/
 done
