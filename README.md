@@ -20,9 +20,7 @@
 
 综合ChatGPT、[CMake 良心教程，教你从入门到入魂](https://zhuanlan.zhihu.com/p/500002865)、[全网最细的CMake教程！(强烈建议收藏)](https://zhuanlan.zhihu.com/p/534439206) 编写cmakelist，构造了基本的工程。cmake入门还是很简单的。
 
-# [2023年5月31日 ~ 2023年7月9日（OpenGL学习）](./Diary/2023年5月31日%20~%202023年7月9日（OpenGL学习）.md)
-
-# 2023年7月10日
+# [日记](./DevelopDiary/SimplePlayer/SimplePlayer.md)
 
 
 
