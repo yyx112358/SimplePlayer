@@ -32,3 +32,5 @@
 *.app
 *.xcbkptlist
 *.xcuserstate
+
+thirdParty/build
