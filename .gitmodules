@@ -7,3 +7,6 @@
 [submodule "thirdParty/FFmpeg"]
 	path = thirdParty/FFmpeg
 	url = https://github.com/FFmpeg/FFmpeg.git
+[submodule "DevelopDiary"]
+	path = DevelopDiary
+	url = https://github.com/yyx112358/DevelopDiary.git
