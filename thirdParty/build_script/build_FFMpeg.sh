@@ -8,8 +8,8 @@ rm -rf $BUILD_DIR
 
 # 编译FFMpeg
 cd $SOURCE_DIR
-# ./configure --enable-debug --enable-ffplay --enable-nonfree --enable-gpl
-# make -j10
+./configure --enable-debug --enable-ffplay --enable-nonfree --enable-gpl
+make -j10
 
 # 复制header和lib
 libnames=("libavcodec" "libavdevice" "libavfilter" "libavformat" "libavutil" "libpostproc" "libswresample" "libswscale")
@@ -26,4 +26,6 @@ do
     cp $SOURCE_DIR/$libname/*.a $BUILD_DIR/lib/
 done
 
+# 清除中间文件
+cd $SOURCE_DIR
 make clean
