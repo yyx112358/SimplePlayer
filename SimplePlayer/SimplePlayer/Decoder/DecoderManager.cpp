@@ -70,7 +70,9 @@ bool DecoderManager::init(const std::string &path)
     av_log_set_level(AV_LOG_DEBUG);
     RUN(avformat_find_stream_info(fmtCtx, nullptr), return false);
     av_dump_format(fmtCtx, 0, cpath, 0);
+    
     // 寻找解码器
+    AVPixelFormat srcPixelFormat = (AVPixelFormat)AVPixelFormat::AV_PIX_FMT_YUV420P;
     for (int i = 0; i < fmtCtx->nb_streams; i++) {
         AVStream *stream = fmtCtx->streams[i];
         const AVCodec *codec = avcodec_find_decoder(stream->codecpar->codec_id);
@@ -81,13 +83,14 @@ bool DecoderManager::init(const std::string &path)
         if (codecCtx[i]->codec_type == AVMEDIA_TYPE_VIDEO) {
             buffer.width = stream->codecpar->width;
             buffer.height = stream->codecpar->height;
+            srcPixelFormat = (AVPixelFormat)stream->codecpar->format;
             buffer.pixelFormat = AVPixelFormat::AV_PIX_FMT_RGBA;
             buffer.data = std::shared_ptr<uint8_t[]>(new uint8_t[buffer.width * buffer.height * 4]);
         }
     }
     if (codecCtx[0]->codec_type != AVMEDIA_TYPE_VIDEO)
         std::swap(codecCtx[0], codecCtx[1]);
-    swsCtx = sws_getContext(buffer.width, buffer.height, buffer.pixelFormat, 1920, 1080, AVPixelFormat::AV_PIX_FMT_RGBA, SWS_FAST_BILINEAR, nullptr, nullptr, nullptr);
+    swsCtx = sws_getContext(buffer.width, buffer.height, srcPixelFormat, 1920, 1080, AVPixelFormat::AV_PIX_FMT_RGBA, SWS_FAST_BILINEAR, nullptr, nullptr, nullptr);
     
     return true;
 }
@@ -130,11 +133,11 @@ std::optional<Frame> DecoderManager::getNextFrame(bool &eof)
         int dstLineSizes[4] = {frame->width * 4};
         
         sws_scale(swsCtx, frame->data, frame->linesize, 0, buffer.height, dstData, dstLineSizes);
-        
+        buffer.pixelFormat = AVPixelFormat::AV_PIX_FMT_RGBA;
         static bool isSave = true;
         if (isSave) {
             writeBMP2File("decode.bmp", buffer.data.get(), frame->width, frame->height, 4);
-//            isSave = false;
+            isSave = false;
         }
         result = buffer;
         av_frame_unref(frame);
