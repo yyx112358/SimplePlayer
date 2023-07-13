@@ -22,7 +22,7 @@ public:
 public:
     GLTexture(std::shared_ptr<IGLContext>context) : _context(context) {}
     GLTexture(std::shared_ptr<IGLContext>context, ImageBuffer buffer) : _context(context), _buffer(std::move(buffer)) {}
-    GLTexture(std::shared_ptr<IGLContext>context, GLsizei width, GLsizei height) : _context(context), _buffer(ImageBuffer{.width = width, .height = height, .pixelFormat = GL_RGBA}) {}
+    GLTexture(std::shared_ptr<IGLContext>context, GLsizei width, GLsizei height) : _context(context), _buffer(ImageBuffer{.width = width, .height = height, .pixelFormat = AV_PIX_FMT_RGBA}) {}
     
     virtual ~GLTexture() {
         _context->SwitchContext();

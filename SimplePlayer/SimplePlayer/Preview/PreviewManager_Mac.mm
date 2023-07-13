@@ -140,7 +140,7 @@ std::optional<sp::ImageBuffer> LoadBufferFromImage(NSImage *image) {
         auto charBuffer = LoadBufferFromImage([NSImage imageNamed:@"charTexture.bmp"]); // 字符纹理
         if (buffer.has_value() && charBuffer.has_value())
             pRenderer->UpdateTexture({*buffer, *charBuffer});
-        pRenderer->UpdateOutputTexture(std::make_shared<sp::GLTexture>(pGLContext, sp::ImageBuffer{.width = 1920, .height = 1080, .pixelFormat = GL_RGBA}));
+        pRenderer->UpdateOutputTexture(std::make_shared<sp::GLTexture>(pGLContext, sp::ImageBuffer{.width = 1920, .height = 1080, .pixelFormat = AV_PIX_FMT_RGBA}));
         
         // 指定字符尺寸
         pRenderer->SetCharSize(8, 12);

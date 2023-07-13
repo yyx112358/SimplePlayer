@@ -31,7 +31,7 @@ std::optional<ImageBuffer> GLTexture::DownloadBuffer(std::optional<GLenum> pixel
     _context->SwitchContext();
     buffer = *_buffer;
     buffer->data = std::shared_ptr<uint8_t[]>(new uint8_t[_buffer->width * _buffer->height * 4]);
-    glReadPixels(0, 0, (GLsizei)_buffer->width, (GLsizei)_buffer->height, pixelFormat.has_value() ? *pixelFormat : _buffer->pixelFormat, GL_UNSIGNED_BYTE, buffer->data.get());
+    glReadPixels(0, 0, (GLsizei)_buffer->width, (GLsizei)_buffer->height, pixelFormat.has_value() ? *pixelFormat : AVPixelFormat2GLFormat(_buffer->pixelFormat), GL_UNSIGNED_BYTE, buffer->data.get());
     if (GLCheckError())
         return std::optional<ImageBuffer>();
     else
@@ -72,7 +72,8 @@ bool GLTexture::_UploadBuffer()
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, _textureMinFilter);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, _textureMagFilter);
     
-    glTexImage2D(GL_TEXTURE_2D, 0, _buffer->pixelFormat, _buffer->width, _buffer->height, 0, _buffer->pixelFormat, GL_UNSIGNED_BYTE, _buffer->data.get()); // 上传纹理。如果_buffer->data为空，则生成空纹理
+    GLenum glPixFmt = AVPixelFormat2GLFormat(_buffer->pixelFormat);
+    glTexImage2D(GL_TEXTURE_2D, 0, glPixFmt, _buffer->width, _buffer->height, 0, glPixFmt, GL_UNSIGNED_BYTE, _buffer->data.get()); // 上传纹理。如果_buffer->data为空，则生成空纹理
     // glGenerateMipmap(GL_TEXTURE_2D); // 如果需要生成mipmap的话
     _buffer->data.reset();// 释放内存
     
