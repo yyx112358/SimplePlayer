@@ -81,20 +81,21 @@ bool DecoderManager::init(const std::string &path)
         if (codecCtx[i]->codec_type == AVMEDIA_TYPE_VIDEO) {
             buffer.width = stream->codecpar->width;
             buffer.height = stream->codecpar->height;
-            buffer.pixelFormat = (AVPixelFormat)stream->codecpar->format;
+            buffer.pixelFormat = AVPixelFormat::AV_PIX_FMT_RGBA;
+            buffer.data = std::shared_ptr<uint8_t[]>(new uint8_t[buffer.width * buffer.height * 4]);
         }
     }
     if (codecCtx[0]->codec_type != AVMEDIA_TYPE_VIDEO)
         std::swap(codecCtx[0], codecCtx[1]);
-    swsCtx = sws_getContext(buffer.width, buffer.height, buffer.pixelFormat, 1920, 1080, AVPixelFormat::AV_PIX_FMT_BGRA, SWS_FAST_BILINEAR, nullptr, nullptr, nullptr);
+    swsCtx = sws_getContext(buffer.width, buffer.height, buffer.pixelFormat, 1920, 1080, AVPixelFormat::AV_PIX_FMT_RGBA, SWS_FAST_BILINEAR, nullptr, nullptr, nullptr);
     
     return true;
 }
 #undef RUN_INIT
 
-std::optional<ImageBuffer> DecoderManager::getNextFrame(bool &eof)
+std::optional<Frame> DecoderManager::getNextFrame(bool &eof)
 {
-    std::optional<ImageBuffer> result;
+    std::optional<Frame> result;
     eof = false;
     
     if (packet == nullptr) {
@@ -123,21 +124,19 @@ std::optional<ImageBuffer> DecoderManager::getNextFrame(bool &eof)
             break;
         }
         
-        AVPixelFormat format = (AVPixelFormat)frame->format;
         SPLOGD("pts:%d", frame->pts, frame->width, frame->height, frame->format);
         
-        
-        uint8_t *dstData[4] = {(uint8_t *)malloc(frame->width * frame->height * 4)};
+        uint8_t *dstData[4] = {buffer.data.get()};
         int dstLineSizes[4] = {frame->width * 4};
         
         sws_scale(swsCtx, frame->data, frame->linesize, 0, buffer.height, dstData, dstLineSizes);
         
         static bool isSave = true;
         if (isSave) {
-            writeBMP2File("decode.bmp", dstData[0], frame->width, frame->height, 4);
-            isSave = false;
+            writeBMP2File("decode.bmp", buffer.data.get(), frame->width, frame->height, 4);
+//            isSave = false;
         }
-        free(dstData[0]);
+        result = buffer;
         av_frame_unref(frame);
     }
     av_packet_unref(packet);

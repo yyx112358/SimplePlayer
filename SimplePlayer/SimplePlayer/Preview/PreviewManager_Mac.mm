@@ -23,8 +23,8 @@
 #include "GLRendererPreview.hpp"
 #include "ImageReader.hpp"
 
-std::optional<sp::ImageBuffer> LoadBufferFromImage(NSImage *image) {
-    std::optional<sp::ImageBuffer> result;
+std::optional<sp::Frame> LoadBufferFromImage(NSImage *image) {
+    std::optional<sp::Frame> result;
     if (image == nil)
         return result;
     // 转CGImage
@@ -60,7 +60,7 @@ std::optional<sp::ImageBuffer> LoadBufferFromImage(NSImage *image) {
     CVPixelBufferUnlockBaseAddress(pixelBuf, 0);
     
     // 转data
-    sp::ImageBuffer imageBuffer;
+    sp::Frame imageBuffer;
     imageBuffer.width = (GLsizei)width;
     imageBuffer.height = (GLsizei)height;
     imageBuffer.data = std::shared_ptr<uint8_t[]>(new uint8_t[width * height * 4]);
@@ -116,6 +116,13 @@ std::optional<sp::ImageBuffer> LoadBufferFromImage(NSImage *image) {
     std::shared_ptr<sp::GLContextMac> pGLContext;
     std::unique_ptr<sp::GLRendererCharPainting> pRenderer;
     std::unique_ptr<sp::GLRendererPreview> pRendererPreview;
+    
+    // TODO: 引入队列
+    std::shared_ptr<sp::GLTexture> imageTexture;
+    std::shared_ptr<sp::GLTexture> charTexture;
+    
+    std::optional<sp::Frame> imageBuffer;
+    std::optional<sp::Frame> charBuffer;
 }
 
 @end
@@ -135,20 +142,18 @@ std::optional<sp::ImageBuffer> LoadBufferFromImage(NSImage *image) {
         pRenderer = std::make_unique<sp::GLRendererCharPainting>(pGLContext);
         pRenderer->SetClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         
-        // 加载纹理
-        auto buffer = LoadBufferFromImage([NSImage imageNamed:@"texture.jpg"]); // 待转换图像
-        auto charBuffer = LoadBufferFromImage([NSImage imageNamed:@"charTexture.bmp"]); // 字符纹理
-        if (buffer.has_value() && charBuffer.has_value())
-            pRenderer->UpdateTexture({*buffer, *charBuffer});
-        pRenderer->UpdateOutputTexture(std::make_shared<sp::GLTexture>(pGLContext, sp::ImageBuffer{.width = 1920, .height = 1080, .pixelFormat = AV_PIX_FMT_RGBA}));
-        
         // 指定字符尺寸
         pRenderer->SetCharSize(8, 12);
         
+        // 上屏Renderer
         pRendererPreview = std::make_unique<sp::GLRendererPreview>(pGLContext);
         pRendererPreview->SetClearColor(0.75f, 0.5f, 0.5f, 1.0f);
-        pRendererPreview->UpdateTexture({pRenderer->GetOutputTexture()});
         
+//        imageBuffer = LoadBufferFromImage([NSImage imageNamed:@"texture.jpg"]); // 待转换图像
+        charBuffer = LoadBufferFromImage([NSImage imageNamed:@"charTexture.bmp"]); // 字符纹理
+        
+        imageTexture = std::make_shared<sp::GLTexture>(pGLContext);
+        charTexture = std::make_shared<sp::GLTexture>(pGLContext, *charBuffer);
     }
     return self;
 }
@@ -158,11 +163,28 @@ std::optional<sp::ImageBuffer> LoadBufferFromImage(NSImage *image) {
 }
 
 - (void)drawRect:(NSRect)dirtyRect {
-    NSLog(@"%@", NSStringFromRect(dirtyRect));
     NSDate *date = [NSDate date];
     [super drawRect:dirtyRect];
+    if (imageBuffer.has_value() == false || charBuffer.has_value() == false)
+        return;
+    NSLog(@"%@", NSStringFromRect(dirtyRect));
     
     pGLContext->SwitchContext();
+    
+    // 加载纹理
+    imageTexture->UploadBuffer(*imageBuffer);
+//    charTexture->UploadBuffer(*charBuffer);
+    imageBuffer.reset();
+    
+    pRenderer->UpdateTexture({imageTexture, charTexture});
+    
+    if (std::shared_ptr<sp::GLTexture> outputTexture = pRenderer->GetOutputTexture(); outputTexture == nullptr) {
+        pRenderer->UpdateOutputTexture(std::make_shared<sp::GLTexture>(pGLContext, sp::Frame{.width = imageTexture->width(), .height = imageTexture->height(), .pixelFormat = AV_PIX_FMT_RGBA}));
+    } else if (outputTexture->width() != imageTexture->width() || outputTexture->height() != imageTexture->height()) {
+        outputTexture->UploadBuffer(sp::Frame{.width = imageTexture->width(), .height = imageTexture->height(), .pixelFormat = AV_PIX_FMT_RGBA});
+    }
+    pRendererPreview->UpdateTexture({pRenderer->GetOutputTexture()});
+    
     pRenderer->Render();
     
     float scale = 2; // TODO: 自动获取Retina scale
@@ -176,18 +198,30 @@ std::optional<sp::ImageBuffer> LoadBufferFromImage(NSImage *image) {
     NSLog(@"耗时：%.2fms", [[NSDate  date] timeIntervalSinceDate:date] * 1000.0f);
 }
 
+- (void) setBuffer:(std::optional<sp::Frame>)frame {
+    imageBuffer = frame;
+}
+
 @end
 
+NSMutableArray<Preview_Mac *> *previews;
 
 bool PreviewManager_Mac::setParentViews(void *parents) {
+    if (previews == nil)
+        previews = [NSMutableArray array];
+    
     NSView *superView = (__bridge NSView *)parents;
     Preview_Mac * preview = [[Preview_Mac alloc] initWithFrame:superView.bounds];
     [superView addSubview:preview];
+    [previews addObject:preview];
     
     return true;
 }
 
-bool PreviewManager_Mac::render(void *data, int width, int height) {
+bool PreviewManager_Mac::render(std::optional<sp::Frame> frame) {
+    for (Preview_Mac *preview in previews) {
+        [preview setBuffer:frame];
+    }
     
     return true;
 }

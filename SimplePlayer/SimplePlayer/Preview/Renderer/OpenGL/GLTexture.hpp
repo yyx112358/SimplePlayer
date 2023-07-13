@@ -10,7 +10,7 @@
 #include <optional>
 
 #include "IGLContext.hpp"
-#include "ImageReader.hpp"
+#include "Frame.hpp"
 
 namespace sp {
 
@@ -21,8 +21,8 @@ public:
     
 public:
     GLTexture(std::shared_ptr<IGLContext>context) : _context(context) {}
-    GLTexture(std::shared_ptr<IGLContext>context, ImageBuffer buffer) : _context(context), _buffer(std::move(buffer)) {}
-    GLTexture(std::shared_ptr<IGLContext>context, GLsizei width, GLsizei height) : _context(context), _buffer(ImageBuffer{.width = width, .height = height, .pixelFormat = AV_PIX_FMT_RGBA}) {}
+    GLTexture(std::shared_ptr<IGLContext>context, Frame buffer) : _context(context), _buffer(std::move(buffer)) {}
+    GLTexture(std::shared_ptr<IGLContext>context, GLsizei width, GLsizei height) : _context(context), _buffer(Frame{.width = width, .height = height, .pixelFormat = AV_PIX_FMT_RGBA}) {}
     
     virtual ~GLTexture() {
         _context->SwitchContext();
@@ -32,10 +32,10 @@ public:
     }
     
     /// 上传Buffer，不阻塞。Activate时才真正上传
-    void UploadBuffer(ImageBuffer buffer);
+    void UploadBuffer(Frame buffer);
     
     /// 下载Buffer
-    std::optional<ImageBuffer> DownloadBuffer(std::optional<GLenum> pixelFormat = {}) const;
+    std::optional<Frame> DownloadBuffer(std::optional<GLenum> pixelFormat = {}) const;
     
     bool Activate();
     
@@ -51,7 +51,7 @@ protected:
     GL_IdHolder _textureId = GL_IdHolder(nullptr, TEXTURE_DELETER);
     bool _needUpdate = true;
     
-    std::optional<ImageBuffer> _buffer;
+    std::optional<Frame> _buffer;
     GLenum _textureWrapS = GL_CLAMP_TO_EDGE, _textureWrapT = GL_CLAMP_TO_EDGE;
     GLenum _textureMinFilter = GL_NEAREST, _textureMagFilter = GL_LINEAR;
 };

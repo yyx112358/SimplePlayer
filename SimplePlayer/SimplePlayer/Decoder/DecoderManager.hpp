@@ -10,7 +10,7 @@
 #include <string>
 #include <optional>
 
-#include "ImageReader.hpp"
+#include "Frame.hpp"
 
 struct AVFormatContext;
 struct AVCodecContext;
@@ -25,7 +25,7 @@ public:
     ~DecoderManager();
     
     bool init(const std::string &path);
-    std::optional<ImageBuffer> getNextFrame(bool &eof);
+    std::optional<Frame> getNextFrame(bool &eof);
     
 protected:
     struct AVFormatContext *fmtCtx = nullptr;
@@ -33,7 +33,7 @@ protected:
     struct AVPacket *packet = nullptr;
     struct AVFrame *frame = nullptr;
     struct SwsContext *swsCtx = nullptr;
-    ImageBuffer buffer;
+    Frame buffer;
 };
 
 

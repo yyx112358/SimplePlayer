@@ -34,7 +34,7 @@ public:
         return true;
     }
     
-    bool UpdateTexture(const std::vector<ImageBuffer> &buffers) {
+    bool UpdateTexture(const std::vector<Frame> &buffers) {
         for (auto &buffer : buffers) {
             auto texture = std::make_shared<GLTexture>(_context, buffer);
             _textures.emplace_back(std::move(texture));

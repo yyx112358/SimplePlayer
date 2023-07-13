@@ -15,6 +15,7 @@ public:
 public:
     bool setParentViews(void *parents) override;
     
-    bool render(void *data, int width, int height) override;
+    bool render(std::optional<sp::Frame> frame) override;
+    
 };
 

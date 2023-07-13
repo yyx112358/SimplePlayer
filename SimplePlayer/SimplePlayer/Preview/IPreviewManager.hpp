@@ -9,6 +9,9 @@
 #define IPreviewManager_hpp
 
 #include <memory>
+#include <optional>
+
+#include "Frame.hpp"
 
 class IPreviewManager {
 public:
@@ -16,7 +19,7 @@ public:
 public:
     virtual bool setParentViews(void *parents) = 0;
     
-    virtual bool render(void *data, int width, int height) = 0;
+    virtual bool render(std::optional<sp::Frame> frame) = 0;
 };
 
 #endif /* IPreviewManager_hpp */
