@@ -30,7 +30,6 @@
 		7A31BA6D2A5D5DB10057E592 /* libavfilter.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 7A31B6A32A5D553D0057E592 /* libavfilter.a */; };
 		7A31BA6E2A5D5DB10057E592 /* libavformat.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 7A31B6A42A5D553D0057E592 /* libavformat.a */; };
 		7A31BA6F2A5D5DB10057E592 /* libavutil.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 7A31B6A22A5D553D0057E592 /* libavutil.a */; };
-		7A31BA702A5D5DB10057E592 /* libpostproc.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 7A31B6A52A5D553D0057E592 /* libpostproc.a */; };
 		7A31BA712A5D5DB10057E592 /* libswresample.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 7A31B69E2A5D553C0057E592 /* libswresample.a */; };
 		7A31BA722A5D5DB10057E592 /* libswscale.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 7A31B69F2A5D553C0057E592 /* libswscale.a */; };
 		7A56B2792A5DB09600094E41 /* AudioToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7A56B2782A5DB09600094E41 /* AudioToolbox.framework */; };
@@ -46,6 +45,11 @@
 		7A6D8B492A33582600C40E5C /* IGLContext.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7A6D8B472A33582600C40E5C /* IGLContext.cpp */; };
 		7A6D8B4C2A3359DC00C40E5C /* GLRendererBase.mm in Sources */ = {isa = PBXBuildFile; fileRef = 7A6D8B4A2A3359DC00C40E5C /* GLRendererBase.mm */; };
 		7A8669442A2F8C78006E8CC6 /* BasicVertex.glsl in Resources */ = {isa = PBXBuildFile; fileRef = 7A8669432A2F8C78006E8CC6 /* BasicVertex.glsl */; };
+		7AA2BC6B2A5EAD5A00BACC4F /* libpostproc.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 7A31B6A52A5D553D0057E592 /* libpostproc.a */; };
+		7AA2BC6E2A5EAFF300BACC4F /* Sync.mp4 in Resources */ = {isa = PBXBuildFile; fileRef = 7AA2BC6D2A5EAFF300BACC4F /* Sync.mp4 */; };
+		7AA2BC772A5EBDD400BACC4F /* DecoderManager.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7AA2BC752A5EBDD400BACC4F /* DecoderManager.cpp */; };
+		7AF6C80F2A602057009EBFB8 /* HDR.MOV in Resources */ = {isa = PBXBuildFile; fileRef = 7AF6C80D2A602057009EBFB8 /* HDR.MOV */; };
+		7AF6C8112A6020B8009EBFB8 /* 1：1视频.MOV in Resources */ = {isa = PBXBuildFile; fileRef = 7AF6C8102A6020B8009EBFB8 /* 1：1视频.MOV */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -108,6 +112,11 @@
 		7A6D8B4A2A3359DC00C40E5C /* GLRendererBase.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = GLRendererBase.mm; sourceTree = "<group>"; };
 		7A6D8B4B2A3359DC00C40E5C /* GLRendererBase.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = GLRendererBase.hpp; sourceTree = "<group>"; };
 		7A8669432A2F8C78006E8CC6 /* BasicVertex.glsl */ = {isa = PBXFileReference; lastKnownFileType = text; path = BasicVertex.glsl; sourceTree = "<group>"; };
+		7AA2BC6D2A5EAFF300BACC4F /* Sync.mp4 */ = {isa = PBXFileReference; lastKnownFileType = file; name = Sync.mp4; path = ../../DevelopDiary/SimplePlayer/Videos/Sync.mp4; sourceTree = "<group>"; };
+		7AA2BC752A5EBDD400BACC4F /* DecoderManager.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = DecoderManager.cpp; sourceTree = "<group>"; };
+		7AA2BC762A5EBDD400BACC4F /* DecoderManager.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = DecoderManager.hpp; sourceTree = "<group>"; };
+		7AF6C80D2A602057009EBFB8 /* HDR.MOV */ = {isa = PBXFileReference; lastKnownFileType = video.quicktime; name = HDR.MOV; path = ../../DevelopDiary/SimplePlayer/Videos/HDR.MOV; sourceTree = "<group>"; };
+		7AF6C8102A6020B8009EBFB8 /* 1：1视频.MOV */ = {isa = PBXFileReference; lastKnownFileType = video.quicktime; name = "1：1视频.MOV"; path = "../../DevelopDiary/SimplePlayer/Videos/1：1视频.MOV"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -125,9 +134,9 @@
 				7A31BA6E2A5D5DB10057E592 /* libavformat.a in Frameworks */,
 				7A31BA6D2A5D5DB10057E592 /* libavfilter.a in Frameworks */,
 				7A31BA6F2A5D5DB10057E592 /* libavutil.a in Frameworks */,
-				7A31BA702A5D5DB10057E592 /* libpostproc.a in Frameworks */,
 				7A31BA722A5D5DB10057E592 /* libswscale.a in Frameworks */,
 				7A31BA712A5D5DB10057E592 /* libswresample.a in Frameworks */,
+				7AA2BC6B2A5EAD5A00BACC4F /* libpostproc.a in Frameworks */,
 				7A56B2812A5DB0D100094E41 /* libbz2.tbd in Frameworks */,
 				7A56B2852A5DB0ED00094E41 /* libiconv.tbd in Frameworks */,
 				7A56B2832A5DB0E100094E41 /* libz.tbd in Frameworks */,
@@ -184,12 +193,16 @@
 		7A26999D2A2B7E00009C722B /* SimplePlayer */ = {
 			isa = PBXGroup;
 			children = (
+				7AA2BC742A5EBDA600BACC4F /* Decoder */,
 				7A191B412A5AE5D20016692E /* Base */,
 				7A2699B82A2B81E9009C722B /* Preview */,
 				7A26999E2A2B7E00009C722B /* AppDelegate.h */,
 				7A26999F2A2B7E00009C722B /* AppDelegate.m */,
 				7A2699A12A2B7E00009C722B /* ViewController.h */,
 				7A2699A22A2B7E00009C722B /* ViewController.mm */,
+				7AF6C8102A6020B8009EBFB8 /* 1：1视频.MOV */,
+				7AA2BC6D2A5EAFF300BACC4F /* Sync.mp4 */,
+				7AF6C80D2A602057009EBFB8 /* HDR.MOV */,
 				7A658A052A35CAFF00955DB9 /* charTexture.bmp */,
 				7A658A092A35D4D900955DB9 /* texture.jpg */,
 				7A2699A72A2B7E01009C722B /* Assets.xcassets */,
@@ -267,6 +280,15 @@
 				7A658A032A35A92F00955DB9 /* BasicFragment.glsl */,
 			);
 			path = Shaders;
+			sourceTree = "<group>";
+		};
+		7AA2BC742A5EBDA600BACC4F /* Decoder */ = {
+			isa = PBXGroup;
+			children = (
+				7AA2BC752A5EBDD400BACC4F /* DecoderManager.cpp */,
+				7AA2BC762A5EBDD400BACC4F /* DecoderManager.hpp */,
+			);
+			path = Decoder;
 			sourceTree = "<group>";
 		};
 		7AE0CC062A5AE39300F91B29 /* OpenGL */ = {
@@ -349,6 +371,9 @@
 			files = (
 				7A658A0A2A35D4DA00955DB9 /* texture.jpg in Resources */,
 				7A658A042A35A92F00955DB9 /* BasicFragment.glsl in Resources */,
+				7AF6C8112A6020B8009EBFB8 /* 1：1视频.MOV in Resources */,
+				7AA2BC6E2A5EAFF300BACC4F /* Sync.mp4 in Resources */,
+				7AF6C80F2A602057009EBFB8 /* HDR.MOV in Resources */,
 				7A2699A82A2B7E01009C722B /* Assets.xcassets in Resources */,
 				7A8669442A2F8C78006E8CC6 /* BasicVertex.glsl in Resources */,
 				7A658A062A35CAFF00955DB9 /* charTexture.bmp in Resources */,
@@ -371,6 +396,7 @@
 				7A2699A32A2B7E00009C722B /* ViewController.mm in Sources */,
 				7A191B532A5AEFCF0016692E /* GLFrameBuffer.cpp in Sources */,
 				7A6D8B4C2A3359DC00C40E5C /* GLRendererBase.mm in Sources */,
+				7AA2BC772A5EBDD400BACC4F /* DecoderManager.cpp in Sources */,
 				7A191B4D2A5AEFB40016692E /* GLRenderBuffer.cpp in Sources */,
 				7A6D8B492A33582600C40E5C /* IGLContext.cpp in Sources */,
 				7A2699AD2A2B7E01009C722B /* main.m in Sources */,

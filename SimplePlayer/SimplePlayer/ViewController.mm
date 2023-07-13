@@ -8,19 +8,17 @@
 #import "ViewController.h"
 #import "IPreviewManager.hpp"
 
-
-extern "C" {
-#include "libavformat/avformat.h"
-#include "libavcodec/avcodec.h"
-}
+#include "SPLog.h"
+#include "DecoderManager.hpp"
 
 
 @interface ViewController ()
 
 @property (nonatomic, assign) std::shared_ptr<IPreviewManager> preview;
 @property (nonatomic, strong) NSTimer *timer;
-
+@property (nonatomic, assign) std::shared_ptr<sp::DecoderManager> decoder;
 @end
+
 
 
 @implementation ViewController
@@ -32,12 +30,16 @@ extern "C" {
     self.preview->setParentViews((__bridge_retained void *)self.view);
     
     // FIXME: 这种写法会引入循环引用
-    self.timer = [NSTimer scheduledTimerWithTimeInterval:1.0 / 30 target:self selector:@selector(refresh:) userInfo:self repeats:YES];
-    NSLog(@"%s", avformat_configuration()) ;
+    self.timer = [NSTimer scheduledTimerWithTimeInterval:1.0 / 1000 target:self selector:@selector(refresh:) userInfo:self repeats:YES];
+    [self loadVideo];
+}
+
+- (void)loadVideo {
     
-    av_log_set_level(AV_LOG_VERBOSE);
-    AVFormatContext *inputCtx = nullptr;
-    int ret = avformat_open_input(&inputCtx, "../../DevelopDiary/SimplePlayer/Videos/Sync.mp4", nullptr, nullptr);
+    NSString *video = [[NSBundle mainBundle] pathForResource:@"1：1视频" ofType:@"MOV"];
+    
+    self.decoder = std::make_shared<sp::DecoderManager>();
+    _decoder->init(video.UTF8String);
 }
 
 
@@ -55,6 +57,16 @@ extern "C" {
 }
 
 - (void)refresh:(id)obj {
+    if (self.decoder != nullptr) {
+        bool eof = false;
+        if (auto frame = _decoder->getNextFrame(eof).has_value()) {
+            
+        } else if (eof == true) {
+            _decoder = nullptr;
+        }
+    }
+
+    
     for(NSView *subView in self.view.subviews) {
 //        [subView setFrame:self.view.bounds];
         [subView setNeedsDisplay:YES];
