@@ -31,12 +31,12 @@ void SPLog(const ESPLogLevel level, const char *fuction, int line, const char *f
 
     std::tm* localTime = std::localtime(&time);
     
-    printf("%d:%d:%d.%lld %s[%d] [SimplePlayer] ", localTime->tm_hour, localTime->tm_min, localTime->tm_sec, milliseconds.count(), fuction, line);
+    printf("%2d:%2d:%2d.%3lld %s[%d] [SimplePlayer] ", localTime->tm_hour, localTime->tm_min, localTime->tm_sec, milliseconds.count(), fuction, line);
     
     va_list args;
     va_start(args, fmt);
 
-    printf(fmt, args);
+    vprintf(fmt, args);
     putchar('\n');
     
     va_end(args);
