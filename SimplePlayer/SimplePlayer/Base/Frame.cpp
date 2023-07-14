@@ -8,6 +8,19 @@
 #include "Frame.hpp"
 #import <OpenGL/gl3.h>
 
+using namespace sp;
+
+bool Frame::operator == (const Frame & other) const {
+    return width == other.width && height == other.height
+        && type == other.height && pixelFormat == other.pixelFormat
+        && data == other.data;
+}
+
+bool Frame::equalExceptData(const Frame &other) const {
+    return width == other.width && height == other.height
+        && type == other.height && pixelFormat == other.pixelFormat;
+}
+
 uint32_t sp::Frame::glFormat() const {
     switch (this->pixelFormat) {
         case AV_PIX_FMT_RGBA: return GL_RGBA;

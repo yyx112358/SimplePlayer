@@ -19,6 +19,9 @@ struct Frame {
     enum AVPixelFormat pixelFormat = AV_PIX_FMT_RGBA;
     std::shared_ptr<uint8_t[]> data = nullptr;
     
+    bool operator == (const Frame & other) const;
+    bool equalExceptData(const Frame & other) const;
+    
     uint32_t glFormat() const;
 };
 

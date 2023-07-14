@@ -49,7 +49,8 @@ protected:
 protected:
     const std::shared_ptr<IGLContext> _context;
     GL_IdHolder _textureId = GL_IdHolder(nullptr, TEXTURE_DELETER);
-    bool _needUpdate = true;
+    bool _needUpdate = true;        // 需要执行更新
+    bool _needUpdateAll = false;    // 需要重建Texture
     
     std::optional<Frame> _buffer;
     GLenum _textureWrapS = GL_CLAMP_TO_EDGE, _textureWrapT = GL_CLAMP_TO_EDGE;
