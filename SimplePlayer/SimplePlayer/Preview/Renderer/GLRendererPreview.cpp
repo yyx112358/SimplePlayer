@@ -71,33 +71,7 @@ bool GLRendererPreview::_InternalUpdate()
 {
     if (_needUpdate == false)
         return true;
-    
-    UpdateShader({R"(
-    #version 330 core
-    layout (location = 0) in vec2 aPos;
-    layout (location = 1) in vec2 aTexCoords;
 
-    uniform mat4 transform;
-    out vec2 TexCoords;
-
-    void main()
-    {
-        gl_Position = transform * vec4(aPos.x, aPos.y, 0.0, 1.0);
-        TexCoords = aTexCoords;
-    }
-    )"}, {R"(
-    #version 330 core
-    out vec4 FragColor;
-
-    in vec2 TexCoords;
-
-    uniform sampler2D screenTexture;
-
-    void main()
-    {
-        FragColor = texture(screenTexture, TexCoords);
-    }
-    )"});
     _program->Activate();
     _vertexArray.Activate();
     

@@ -61,10 +61,8 @@ bool DecoderManager::init(const std::string &path)
     av_log_set_level(AV_LOG_DEBUG);
 //    av_log_set_callback(my_log_callback);
     fmtCtx = nullptr;
-    if (int ret = avformat_open_input(&fmtCtx, cpath, nullptr, nullptr); ret >= 0)
-        SPLOGI("Open %s Successed!", cpath);
-    else
-        SPLOGE("Open %s Failed! Reason: %s", cpath, av_err2str(ret));
+    RUN_INIT(avformat_open_input(&fmtCtx, cpath, nullptr, nullptr));
+    SPLOGI("Open %s Successed!", cpath);
     
     // 探测流信息
     av_log_set_level(AV_LOG_DEBUG);
@@ -103,7 +101,6 @@ std::optional<Frame> DecoderManager::getNextFrame(bool &eof)
     
     if (packet == nullptr) {
         packet = av_packet_alloc();
-//        av_init_packet(packet);
         packet->data = nullptr;
         packet->size = 0;
     }
@@ -142,7 +139,8 @@ std::optional<Frame> DecoderManager::getNextFrame(bool &eof)
         result = buffer;
         av_frame_unref(frame);
     }
-    av_packet_unref(packet);
+    av_packet_free(&packet);
+    packet = nullptr;
     
     return result;
 }
