@@ -31,8 +31,11 @@ std::optional<Frame> GLTexture::DownloadBuffer(std::optional<GLenum> pixelFormat
     
     _context->SwitchContext();
     buffer = *_buffer;
-    buffer->data = std::shared_ptr<uint8_t[]>(new uint8_t[_buffer->width * _buffer->height * 4]);
-    glReadPixels(0, 0, (GLsizei)_buffer->width, (GLsizei)_buffer->height, pixelFormat.has_value() ? *pixelFormat : _buffer->glFormat(), GL_UNSIGNED_BYTE, buffer->data.get());
+    buffer->data = std::shared_ptr<uint8_t[]>(new uint8_t[buffer->width * buffer->height * 4]);
+    
+    // 用于从Texture下载数据，OpenGL ES不支持
+    glGetTexImage(GL_TEXTURE_2D, 0, pixelFormat.has_value() ? *pixelFormat : buffer->glFormat(), GL_UNSIGNED_BYTE, buffer->data.get());
+
     if (GLCheckError())
         return std::optional<Frame>();
     else

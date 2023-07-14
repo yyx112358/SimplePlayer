@@ -76,3 +76,21 @@ bool GLFrameBuffer::Activate()
     
     return true;
 }
+
+
+std::optional<Frame> GLFrameBuffer::DownloadFrame(std::optional<GLenum> pixelFormat) const {
+    std::optional<Frame> buffer;
+    assert(0);
+//    if (_attachTextures.size() == 0 || _attachTextures[0]->id().has_value() == false)
+//        return buffer;
+//
+//    _context->SwitchContext();
+//    buffer = _attachTextures[0]->;
+//    buffer->data = std::shared_ptr<uint8_t[]>(new uint8_t[_buffer->width * _buffer->height * 4]);
+//    // 从FrameBuffer下载数据
+//    glReadPixels(0, 0, (GLsizei)_buffer->width, (GLsizei)_buffer->height, pixelFormat.has_value() ? *pixelFormat : _buffer->glFormat(), GL_UNSIGNED_BYTE, buffer->data.get());
+//    if (GLCheckError())
+//        return std::optional<Frame>();
+//    else
+//        return buffer;
+}

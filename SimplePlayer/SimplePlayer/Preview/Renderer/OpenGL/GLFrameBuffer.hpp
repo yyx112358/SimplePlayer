@@ -49,6 +49,9 @@ public:
     
     bool Activate();
     
+    /// 下载Buffer
+    std::optional<Frame> DownloadFrame(std::optional<GLenum> pixelFormat = {}) const;
+    
 protected:
     const std::shared_ptr<IGLContext> _context;
     GL_IdHolder _frameBufferId = GL_IdHolder(nullptr, FRAME_BUFFER_DELETER);
