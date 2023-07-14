@@ -13,7 +13,7 @@ using namespace sp;
 void GLVertexArray::VERTEX_ARRAY_DELETER(GLuint *p)
 {
     SPLOGD("Delete vertex array %d", *p);
-    glDeleteTextures(1, p);
+    glDeleteVertexArrays(1, p);
 }
 
 /// 默认矩形Vertex Buffer
