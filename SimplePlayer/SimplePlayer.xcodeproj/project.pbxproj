@@ -49,7 +49,7 @@
 		7AA2BC6E2A5EAFF300BACC4F /* Sync.mp4 in Resources */ = {isa = PBXBuildFile; fileRef = 7AA2BC6D2A5EAFF300BACC4F /* Sync.mp4 */; };
 		7AA2BC772A5EBDD400BACC4F /* DecoderManager.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7AA2BC752A5EBDD400BACC4F /* DecoderManager.cpp */; };
 		7AF6C80F2A602057009EBFB8 /* HDR.MOV in Resources */ = {isa = PBXBuildFile; fileRef = 7AF6C80D2A602057009EBFB8 /* HDR.MOV */; };
-		7AF6C8112A6020B8009EBFB8 /* 1：1视频.MOV in Resources */ = {isa = PBXBuildFile; fileRef = 7AF6C8102A6020B8009EBFB8 /* 1：1视频.MOV */; };
+		7AF6C8112A6020B8009EBFB8 /* 1：1.MOV in Resources */ = {isa = PBXBuildFile; fileRef = 7AF6C8102A6020B8009EBFB8 /* 1：1.MOV */; };
 		7AF6C8142A60276C009EBFB8 /* Frame.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7AF6C8122A60276C009EBFB8 /* Frame.cpp */; };
 /* End PBXBuildFile section */
 
@@ -117,7 +117,7 @@
 		7AA2BC752A5EBDD400BACC4F /* DecoderManager.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = DecoderManager.cpp; sourceTree = "<group>"; };
 		7AA2BC762A5EBDD400BACC4F /* DecoderManager.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = DecoderManager.hpp; sourceTree = "<group>"; };
 		7AF6C80D2A602057009EBFB8 /* HDR.MOV */ = {isa = PBXFileReference; lastKnownFileType = video.quicktime; name = HDR.MOV; path = ../../DevelopDiary/SimplePlayer/Videos/HDR.MOV; sourceTree = "<group>"; };
-		7AF6C8102A6020B8009EBFB8 /* 1：1视频.MOV */ = {isa = PBXFileReference; lastKnownFileType = video.quicktime; name = "1：1视频.MOV"; path = "../../DevelopDiary/SimplePlayer/Videos/1：1视频.MOV"; sourceTree = "<group>"; };
+		7AF6C8102A6020B8009EBFB8 /* 1：1.MOV */ = {isa = PBXFileReference; lastKnownFileType = video.quicktime; name = "1：1.MOV"; path = "../../DevelopDiary/SimplePlayer/Videos/1：1.MOV"; sourceTree = "<group>"; };
 		7AF6C8122A60276C009EBFB8 /* Frame.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = Frame.cpp; sourceTree = "<group>"; };
 		7AF6C8132A60276C009EBFB8 /* Frame.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = Frame.hpp; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -205,7 +205,7 @@
 				7A26999F2A2B7E00009C722B /* AppDelegate.m */,
 				7A2699A12A2B7E00009C722B /* ViewController.h */,
 				7A2699A22A2B7E00009C722B /* ViewController.mm */,
-				7AF6C8102A6020B8009EBFB8 /* 1：1视频.MOV */,
+				7AF6C8102A6020B8009EBFB8 /* 1：1.MOV */,
 				7AA2BC6D2A5EAFF300BACC4F /* Sync.mp4 */,
 				7AF6C80D2A602057009EBFB8 /* HDR.MOV */,
 				7A658A052A35CAFF00955DB9 /* charTexture.bmp */,
@@ -376,7 +376,7 @@
 			files = (
 				7A658A0A2A35D4DA00955DB9 /* texture.jpg in Resources */,
 				7A658A042A35A92F00955DB9 /* BasicFragment.glsl in Resources */,
-				7AF6C8112A6020B8009EBFB8 /* 1：1视频.MOV in Resources */,
+				7AF6C8112A6020B8009EBFB8 /* 1：1.MOV in Resources */,
 				7AA2BC6E2A5EAFF300BACC4F /* Sync.mp4 in Resources */,
 				7AF6C80F2A602057009EBFB8 /* HDR.MOV in Resources */,
 				7A2699A82A2B7E01009C722B /* Assets.xcassets in Resources */,

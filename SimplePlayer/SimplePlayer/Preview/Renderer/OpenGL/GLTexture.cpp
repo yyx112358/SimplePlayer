@@ -95,9 +95,11 @@ bool GLTexture::_UploadBuffer()
         
         _textureId = std::move(holder);
     }
-
+    
+    glBindTexture(GL_TEXTURE_2D, *_textureId);
     glTexImage2D(GL_TEXTURE_2D, 0, _buffer->glFormat(), _buffer->width, _buffer->height, 0, _buffer->glFormat(), GL_UNSIGNED_BYTE, _buffer->data.get()); // 上传纹理。如果_buffer->data为空，则生成空纹理
     // glGenerateMipmap(GL_TEXTURE_2D); // 如果需要生成mipmap的话
+
     _buffer->data.reset();// 释放内存
     
     if (GLCheckError())
