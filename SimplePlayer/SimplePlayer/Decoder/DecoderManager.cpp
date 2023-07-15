@@ -24,6 +24,12 @@ struct AVFormatContext;
         SPLOGE("[ERROR] %s == %d | %s", #expr, ret, av_err2str(ret));\
         then;\
     }
+#define ALLOC(expr, then) \
+    expr; \
+    if (expr == nullptr) { \
+        SPLOGE("[ERROR] %s Failed", #expr);\
+        then;\
+    }
 
 class AVFormatContextHolder {
 public:
@@ -37,110 +43,150 @@ public:
 
 DecoderManager::~DecoderManager()
 {
-    if (swsCtx != nullptr)
-        sws_freeContext(swsCtx);
-    if (frame != nullptr)
-        av_frame_free(&frame);
-    if (packet != nullptr)
-        av_packet_free(&packet);
-    for (auto &ctx : codecCtx) {
-        if (ctx != nullptr)
-            avcodec_free_context(&ctx);
-    }
-    if (fmtCtx != nullptr)
-        avformat_free_context(fmtCtx);
+    unInit();
 }
 
 #define RUN_INIT(expr) RUN(expr, return false)
 bool DecoderManager::init(const std::string &path)
 {
     SPLOGV("%s", avformat_configuration()) ;
+    unInit();
     
     // 打开文件
     const char *cpath = path.c_str();
     av_log_set_level(AV_LOG_DEBUG);
 //    av_log_set_callback(my_log_callback);
-    fmtCtx = nullptr;
-    RUN_INIT(avformat_open_input(&fmtCtx, cpath, nullptr, nullptr));
+    _fmtCtx = nullptr;
+    RUN_INIT(avformat_open_input(&_fmtCtx, cpath, nullptr, nullptr));
     SPLOGI("Open %s Successed!", cpath);
     
     // 探测流信息
     av_log_set_level(AV_LOG_DEBUG);
-    RUN(avformat_find_stream_info(fmtCtx, nullptr), return false);
-    av_dump_format(fmtCtx, 0, cpath, 0);
+    RUN(avformat_find_stream_info(_fmtCtx, nullptr), return false);
+    av_dump_format(_fmtCtx, 0, cpath, 0);
     
-    // 寻找解码器
-    AVPixelFormat srcPixelFormat = (AVPixelFormat)AVPixelFormat::AV_PIX_FMT_YUV420P;
-    for (int i = 0; i < fmtCtx->nb_streams; i++) {
-        AVStream *stream = fmtCtx->streams[i];
-        const AVCodec *codec = avcodec_find_decoder(stream->codecpar->codec_id);
-        codecCtx[i] = avcodec_alloc_context3(codec);
-        RUN_INIT(avcodec_parameters_to_context(codecCtx[i], stream->codecpar));
-        RUN_INIT(avcodec_open2(codecCtx[i], codec, nullptr));
+    // 视频解码器
+    int videoStreamId = av_find_best_stream(_fmtCtx, AVMEDIA_TYPE_VIDEO, -1, -1, NULL, 0);
+    if (videoStreamId < 0) {
+        SPLOGE("Find video stream failed");
+    } else {
+        AVStream *stream = _fmtCtx->streams[videoStreamId];
+        const AVCodec *codec = ALLOC(avcodec_find_decoder(stream->codecpar->codec_id), return false);
+        AVCodecContext *codecCtx = ALLOC(avcodec_alloc_context3(codec), return false);
+        RUN_INIT(avcodec_parameters_to_context(codecCtx, stream->codecpar));
+        RUN_INIT(avcodec_open2(codecCtx, codec, nullptr));
         
-        if (codecCtx[i]->codec_type == AVMEDIA_TYPE_VIDEO) {
-            buffer.width = stream->codecpar->width;
-            buffer.height = stream->codecpar->height;
-            srcPixelFormat = (AVPixelFormat)stream->codecpar->format;
-            buffer.pixelFormat = AVPixelFormat::AV_PIX_FMT_RGBA;
-            buffer.data = std::shared_ptr<uint8_t[]>(new uint8_t[buffer.width * buffer.height * 4]);
-        }
+        _codecCtx[0] = codecCtx;// 下标0固定为视频轨
+        
+        _rgbaBuffer.width = stream->codecpar->width;
+        _rgbaBuffer.height = stream->codecpar->height;
+        _rgbaBuffer.pixelFormat = AVPixelFormat::AV_PIX_FMT_RGBA;
+        _rgbaBuffer.data = std::shared_ptr<uint8_t[]>(new uint8_t[_rgbaBuffer.width * _rgbaBuffer.height * 4]);
+        
+        // 颜色空间转换上下文
+        AVPixelFormat srcPixelFormat = (AVPixelFormat)stream->codecpar->format;
+        _swsCtx = sws_getContext(_rgbaBuffer.width, _rgbaBuffer.height, srcPixelFormat, 1920, 1080, AVPixelFormat::AV_PIX_FMT_RGBA, SWS_FAST_BILINEAR, nullptr, nullptr, nullptr);
     }
-    if (codecCtx[0]->codec_type != AVMEDIA_TYPE_VIDEO)
-        std::swap(codecCtx[0], codecCtx[1]);
-    swsCtx = sws_getContext(buffer.width, buffer.height, srcPixelFormat, 1920, 1080, AVPixelFormat::AV_PIX_FMT_RGBA, SWS_FAST_BILINEAR, nullptr, nullptr, nullptr);
+    
+    // TODO: 音频解码
+    
+    
+    // 初始化Packet和Frame
+    _packet = av_packet_alloc();
+    _frame = av_frame_alloc();
     
     return true;
 }
 #undef RUN_INIT
 
-std::optional<Frame> DecoderManager::getNextFrame(bool &eof)
+bool DecoderManager::unInit() {
+    if (_swsCtx != nullptr)
+        sws_freeContext(_swsCtx);
+    _swsCtx = nullptr;
+    
+    if (_frame != nullptr)
+        av_frame_free(&_frame);
+    _frame = nullptr;
+    
+    if (_packet != nullptr)
+        av_packet_free(&_packet);
+    _packet = nullptr;
+    
+    for (auto &ctx : _codecCtx) {
+        if (ctx != nullptr)
+            avcodec_free_context(&ctx);
+        ctx = nullptr;
+    }
+    
+    if (_fmtCtx != nullptr)
+        avformat_free_context(_fmtCtx);
+    _fmtCtx = nullptr;
+    
+    return true;
+}
+
+std::optional<Frame> DecoderManager::getNextFrame()
 {
     std::optional<Frame> result;
-    eof = false;
     
-    if (packet == nullptr) {
-        packet = av_packet_alloc();
-        packet->data = nullptr;
-        packet->size = 0;
+    RUN(av_read_frame(_fmtCtx, _packet), av_packet_unref(_packet);return result;);
+    if (_packet->stream_index != 0) { // 音频轨，退出
+        av_packet_unref(_packet);
+        return result;
     }
-    RUN(av_read_frame(fmtCtx, packet), return result);
-    RUN(avcodec_send_packet(codecCtx[0], packet), return result);
+    result = _decodePacket(MediaType::VIDEO);
+        
+    av_packet_unref(_packet);
     
-    if (frame == nullptr)
-        frame = av_frame_alloc();
+    return result;
+}
+
+std::optional<Frame> DecoderManager::_decodePacket(MediaType mediaType)
+{
+    std::optional<Frame> result;
+    AVCodecContext *codecCtx = _getCodecCtx(mediaType);
+    RUN(avcodec_send_packet(codecCtx, _packet), return result);
+    
     int ret = 0;
     while(ret >= 0) {
         
-        ret = avcodec_receive_frame(codecCtx[0], frame);
+        ret = avcodec_receive_frame(codecCtx, _frame);
         if (ret == AVERROR(EAGAIN)) { // 还需要多解几帧
-            SPLOGE("avcodec_receive_frame error[%d] %s", ret, av_err2str(ret));
+            SPLOGV("Need Decode more", ret, av_err2str(ret));
             break;
         } else if (ret == AVERROR_EOF) { // 文件结束
-            eof = true;
+            SPLOGI("EOF frame", ret, av_err2str(ret));
             break;
         } else if (ret < 0) { // 错误
             SPLOGE("avcodec_receive_frame error[%d] %s", ret, av_err2str(ret));
             break;
         }
         
-        SPLOGD("pts:%d", frame->pts, frame->width, frame->height, frame->format);
+        SPLOGD("pts:%d", _frame->pts);
         
-        uint8_t *dstData[4] = {buffer.data.get()};
-        int dstLineSizes[4] = {frame->width * 4};
+        uint8_t *dstData[4] = {_rgbaBuffer.data.get()};
+        int dstLineSizes[4] = {_frame->width * 4};
         
-        sws_scale(swsCtx, frame->data, frame->linesize, 0, buffer.height, dstData, dstLineSizes);
-        buffer.pixelFormat = AVPixelFormat::AV_PIX_FMT_RGBA;
+        sws_scale(_swsCtx, _frame->data, _frame->linesize, 0, _rgbaBuffer.height, dstData, dstLineSizes);
+        _rgbaBuffer.pixelFormat = AVPixelFormat::AV_PIX_FMT_RGBA;
         static bool isSave = true;
         if (isSave) {
-            writeBMP2File("decode.bmp", buffer.data.get(), frame->width, frame->height, 4);
+            writeBMP2File("decode.bmp", _rgbaBuffer.data.get(), _frame->width, _frame->height, 4);
             isSave = false;
         }
-        result = buffer;
-        av_frame_unref(frame);
+        result = _rgbaBuffer;
+        av_frame_unref(_frame);
     }
-    av_packet_free(&packet);
-    packet = nullptr;
     
     return result;
+}
+
+
+AVCodecContext *DecoderManager::_getCodecCtx(MediaType mediaType) {
+    switch (mediaType) {
+        case MediaType::VIDEO:          return _codecCtx[0];
+        case MediaType::AUDIO:          return _codecCtx[1];
+            
+        default:    return nullptr;
+    }
 }

@@ -20,20 +20,42 @@ struct SwsContext;
 
 namespace sp {
 
+class FrameQueue {
+public:
+    
+};
+
 class DecoderManager {
+public:
+    /// 同AVMediaType
+    enum class MediaType {
+        UNKNOWN = -1,  ///< Usually treated as DATA
+        VIDEO,
+        AUDIO,
+        DATA,          ///< Opaque data information usually continuous
+        SUBTITLE,
+        ATTACHMENT,    ///< Opaque data information usually sparse
+        NB
+    };
+    
 public:
     ~DecoderManager();
     
     bool init(const std::string &path);
-    std::optional<Frame> getNextFrame(bool &eof);
+    bool unInit();
+    std::optional<Frame> getNextFrame();
     
 protected:
-    struct AVFormatContext *fmtCtx = nullptr;
-    struct AVCodecContext *codecCtx[2] = {nullptr};
-    struct AVPacket *packet = nullptr;
-    struct AVFrame *frame = nullptr;
-    struct SwsContext *swsCtx = nullptr;
-    Frame buffer;
+    std::optional<Frame> _decodePacket(MediaType mediaType);
+    AVCodecContext *_getCodecCtx(MediaType mediaType);
+    
+protected:
+    struct AVFormatContext *_fmtCtx = nullptr;
+    struct AVCodecContext *_codecCtx[2] = {nullptr};
+    struct AVPacket *_packet = nullptr;
+    struct AVFrame *_frame = nullptr;
+    struct SwsContext *_swsCtx = nullptr;
+    Frame _rgbaBuffer;
 };
 
 
