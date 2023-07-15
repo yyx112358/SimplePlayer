@@ -16,6 +16,7 @@
 class IPreviewManager {
 public:
     static std::shared_ptr<IPreviewManager> createIPreviewManager();
+    virtual ~IPreviewManager() {}
 public:
     virtual bool setParentViews(void *parents) = 0;
     

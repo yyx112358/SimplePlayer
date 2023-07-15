@@ -11,7 +11,7 @@
 
 class PreviewManager_Mac : public IPreviewManager {
 public:
-//    static std::shared_ptr<IPreviewManager> createIPreviewManager();
+    virtual ~PreviewManager_Mac();
 public:
     bool setParentViews(void *parents) override;
     

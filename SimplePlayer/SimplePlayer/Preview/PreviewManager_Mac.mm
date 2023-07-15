@@ -206,6 +206,13 @@ std::optional<sp::Frame> LoadBufferFromImage(NSImage *image) {
 
 NSMutableArray<Preview_Mac *> *previews;
 
+PreviewManager_Mac::~PreviewManager_Mac() {
+    for (Preview_Mac *preview in previews) {
+        [preview removeFromSuperview];
+    }
+    [previews removeAllObjects];
+}
+
 bool PreviewManager_Mac::setParentViews(void *parents) {
     if (previews == nil)
         previews = [NSMutableArray array];

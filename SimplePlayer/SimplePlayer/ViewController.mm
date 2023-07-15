@@ -37,7 +37,7 @@
 
 - (void)loadVideo {
     
-    NSString *video = [[NSBundle mainBundle] pathForResource:@"Sync" ofType:@"mp4"];
+    NSString *video = [[NSBundle mainBundle] pathForResource:@"1：1" ofType:@"MOV"];
     
     decoder = std::make_shared<sp::DecoderManager>();
     decoder->init(video.UTF8String);
@@ -68,6 +68,7 @@
         } while(--cnt >= 0);
         if (cnt < 0) {
             decoder = nullptr;
+            preview = nullptr;
         }
     }
 
