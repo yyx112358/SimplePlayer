@@ -59,10 +59,14 @@
 
 - (void)refresh:(id)obj {
     if (decoder != nullptr) {
-        bool eof = false;
-        if (auto frame = decoder->getNextFrame(eof); frame.has_value()) {
-            preview->render(frame);
-        } else if (eof == true) {
+        int cnt = 10;
+        do {
+            if (auto frame = decoder->getNextFrame(); frame.has_value()) {
+                preview->render(frame);
+                break;
+            }
+        } while(--cnt >= 0);
+        if (cnt < 0) {
             decoder = nullptr;
         }
     }
