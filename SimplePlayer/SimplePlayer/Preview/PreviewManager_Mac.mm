@@ -93,6 +93,7 @@ std::optional<sp::Frame> LoadBufferFromImage(NSImage *image) {
         }
     }
     CVPixelBufferUnlockBaseAddress(pixelBuf, kCVPixelBufferLock_ReadOnly);
+    CVPixelBufferRelease(pixelBuf);
     
     // 反转R、B通道
     if (format == kCVPixelFormatType_32BGRA) {

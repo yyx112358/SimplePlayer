@@ -15,6 +15,7 @@ void GLFrameBuffer::FRAME_BUFFER_DELETER(GLuint *p)
 {
     SPLOGD("Delete frame buffer %d", *p);
     glDeleteFramebuffers(1, p);
+    delete p;
 }
 
 bool GLFrameBuffer::Activate()

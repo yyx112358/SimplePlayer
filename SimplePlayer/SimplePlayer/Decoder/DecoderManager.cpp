@@ -119,7 +119,7 @@ bool DecoderManager::unInit() {
     }
     
     if (_fmtCtx != nullptr)
-        avformat_free_context(_fmtCtx);
+        avformat_close_input(&_fmtCtx); // 用avformat_free_context会内存泄漏
     _fmtCtx = nullptr;
     
     return true;

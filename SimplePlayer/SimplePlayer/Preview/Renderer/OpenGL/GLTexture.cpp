@@ -14,6 +14,7 @@ void GLTexture::TEXTURE_DELETER(GLuint *p)
 {
     SPLOGD("Delete texture %d", *p);
     glDeleteTextures(1, p);
+    delete p;
 }
    
 void GLTexture::UploadBuffer(Frame buffer)
@@ -23,8 +24,9 @@ void GLTexture::UploadBuffer(Frame buffer)
     _buffer = buffer;
 }
 
-std::optional<Frame> GLTexture::DownloadBuffer(std::optional<GLenum> pixelFormat) const
+std::optional<Frame> GLTexture::DownloadTexture(std::optional<GLenum> pixelFormat) const
 {
+    // OpenGL ES不支持
     std::optional<Frame> buffer;
     if (_textureId == nullptr)
         return buffer;

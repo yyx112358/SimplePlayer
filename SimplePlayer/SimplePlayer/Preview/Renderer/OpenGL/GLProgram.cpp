@@ -21,12 +21,14 @@ void GLProgram::SHADER_DELETER(GLuint *p)
 {
     SPLOGD("Delete shader %d", *p);
     glDeleteShader(*p);
+    delete p;
 }
 
 void GLProgram::PROGRAM_DELETER(GLuint *p)
 {
     SPLOGD("Delete program %d", *p);
     glDeleteProgram(*p);
+    delete p;
 }
 
 bool GLProgram::Activate()

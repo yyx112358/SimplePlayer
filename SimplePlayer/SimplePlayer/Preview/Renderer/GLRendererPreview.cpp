@@ -93,7 +93,7 @@ bool GLRendererPreview::_InternalRender()
     _program->Activate();
     _vertexArray.Activate();
     glActiveTexture(GL_TEXTURE0 + 0); // 激活纹理单元1
-    glBindTexture(GL_TEXTURE_2D, *_textures[0]->id()); // 绑定纹理。根据上下文，这个纹理绑定到了纹理单元1
+    _textures[0]->Activate(); // 绑定纹理。根据上下文，这个纹理绑定到了纹理单元1
     _program->UpdateUniform("screenTexture", 0); // 更新纹理uniform
     
     _UpdateTransform();

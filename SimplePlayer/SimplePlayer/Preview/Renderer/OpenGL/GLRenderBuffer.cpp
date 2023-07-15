@@ -16,6 +16,7 @@ void GLRenderBuffer::RENDER_BUFFER_DELETER(GLuint *p)
 {
     SPLOGD("Delete render buffer %d", *p);
     glDeleteRenderbuffers(1, p);
+    delete p;
 }
 
 bool GLRenderBuffer::Activate()
