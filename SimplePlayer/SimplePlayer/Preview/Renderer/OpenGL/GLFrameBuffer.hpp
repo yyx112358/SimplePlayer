@@ -49,8 +49,8 @@ public:
     
     bool Activate();
     
-    /// 下载Buffer
-    std::optional<Frame> DownloadFrame(std::optional<GLenum> pixelFormat = {}) const;
+    /// 下载FrameBuffer。Render后执行，否则结果未知
+    std::optional<Frame> DownloadFrameBuffer(std::optional<GLenum> pixelFormat = {}) const;
     
 protected:
     const std::shared_ptr<IGLContext> _context;

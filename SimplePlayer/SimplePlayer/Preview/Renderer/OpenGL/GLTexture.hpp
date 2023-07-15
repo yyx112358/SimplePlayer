@@ -34,14 +34,17 @@ public:
     /// 上传Buffer，不阻塞。Activate时才真正上传
     void UploadBuffer(Frame buffer);
     
-    /// 下载Buffer
-    std::optional<Frame> DownloadBuffer(std::optional<GLenum> pixelFormat = {}) const;
+    /// 下载Buffer，OpenGL ES不支持
+    std::optional<Frame> DownloadTexture(std::optional<GLenum> pixelFormat = {}) const;
     
     bool Activate();
     
     std::optional<GLuint> id() const;
     GLsizei width() const { return _buffer ? _buffer->width : -1; }
     GLsizei height() const { return _buffer ? _buffer->height : -1; }
+    
+    
+    std::optional<Frame> getBuffer() const { return _buffer; }
     
 protected:
     virtual bool _UploadBuffer();

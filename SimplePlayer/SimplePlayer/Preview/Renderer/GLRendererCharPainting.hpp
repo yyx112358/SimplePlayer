@@ -85,7 +85,7 @@ public:
         void main()
         {
             FragColor = texture(texture1, vtxTexCoord).rgba * vec4(vtxColor, 1.0);
-            FragColor = vec4(vtxColor, 1.0);
+//            FragColor = vec4(vtxColor, 1.0);
         })";
         UpdateShader({vertexShaderSource}, {fragmentShaderSource});
         
@@ -181,7 +181,7 @@ protected:
         // 存bmp图
         static bool b = true;
         if (b) {
-            if (auto buffer = _frameBuffer->GetOutputTexture()->DownloadBuffer(GL_BGRA))
+            if (auto buffer = _frameBuffer->DownloadFrameBuffer(GL_BGRA))
                 writeBMP2File("output.bmp", buffer->data.get(), buffer->width, buffer->height, 4);
             b = false;
         }
