@@ -18,8 +18,6 @@
 
 这一轮主要以快速实现框架为主，不必太在乎代码质量。后续可以在TT中间页切换时候重写
 
-综合ChatGPT、[CMake 良心教程，教你从入门到入魂](https://zhuanlan.zhihu.com/p/500002865)、[全网最细的CMake教程！(强烈建议收藏)](https://zhuanlan.zhihu.com/p/534439206) 编写cmakelist，构造了基本的工程。cmake入门还是很简单的。
-
 # [日记](./DevelopDiary/SimplePlayer/SimplePlayer.md)
 
 

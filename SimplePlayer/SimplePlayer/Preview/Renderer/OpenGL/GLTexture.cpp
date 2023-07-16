@@ -19,7 +19,7 @@ void GLTexture::TEXTURE_DELETER(GLuint *p)
    
 void GLTexture::UploadBuffer(Frame buffer)
 {
-    _needUpdateAll = _buffer.has_value() == false || _buffer->equalExceptData(buffer);
+    _needUpdateAll = _buffer.has_value() == false || _buffer->equalExceptData(buffer) == false;
     _needUpdate = true;
     _buffer = buffer;
 }

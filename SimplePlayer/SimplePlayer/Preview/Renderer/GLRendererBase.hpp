@@ -43,7 +43,7 @@ public:
         return true;
     }
     
-    bool UpdateTexture(const std::vector<std::shared_ptr<GLTexture>> &textures) {
+    virtual bool UpdateTexture(const std::vector<std::shared_ptr<GLTexture>> &textures) {
         _textures = textures;
         _needUpdate = true;
         return true;

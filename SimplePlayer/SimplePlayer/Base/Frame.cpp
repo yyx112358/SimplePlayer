@@ -12,13 +12,13 @@ using namespace sp;
 
 bool Frame::operator == (const Frame & other) const {
     return width == other.width && height == other.height
-        && type == other.height && pixelFormat == other.pixelFormat
+        && type == other.type && pixelFormat == other.pixelFormat
         && data == other.data;
 }
 
 bool Frame::equalExceptData(const Frame &other) const {
     return width == other.width && height == other.height
-        && type == other.height && pixelFormat == other.pixelFormat;
+        && type == other.type && pixelFormat == other.pixelFormat;
 }
 
 uint32_t sp::Frame::glFormat() const {

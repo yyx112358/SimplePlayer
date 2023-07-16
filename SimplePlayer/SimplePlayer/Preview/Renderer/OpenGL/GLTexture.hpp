@@ -44,7 +44,7 @@ public:
     GLsizei height() const { return _buffer ? _buffer->height : -1; }
     
     
-    std::optional<Frame> getBuffer() const { return _buffer; }
+    std::optional<const Frame> getBuffer() const { return _buffer; }
     
 protected:
     virtual bool _UploadBuffer();

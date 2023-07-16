@@ -92,17 +92,38 @@ public:
     }
     virtual ~GLRendererCharPainting() {}
     
+    bool UpdateTexture(const std::vector<std::shared_ptr<GLTexture>> &textures) override {
+        if (_textures.size() != textures.size())
+            _needUpdate = true;
+        else {
+            for (int i = 0; i < textures.size(); i++) {
+                if (_textures[i] == nullptr || textures[i] == nullptr
+                    || _textures[i]->getBuffer().has_value() == false
+                    || textures[i]->getBuffer().has_value() == false
+                    || textures[i]->getBuffer()->equalExceptData(*_textures[i]->getBuffer()) == false) {
+                    _needUpdateVertex = true;
+                    break;
+                }
+            }
+        }
+        return GLRendererBase::UpdateTexture(textures);
+    }
+    
     void SetCharSize(int width, int height)
     {
         _charWidth = width;
         _charHeight = height;
         _needUpdate = true;
+        _needUpdateVertex = true;
     }
     
 protected:
     
     void _AddVertex()
     {
+        if (_needUpdateVertex == false)
+            return;
+        
         // 将整个画面划分为_charWidth * _charHeight的小矩形
         int texWidth = _textures[0]->width(), texHeight = _textures[0]->height();
         int charWidth = _charWidth, charHeight = _charHeight;
@@ -153,6 +174,7 @@ protected:
         _vertexArray.UpdateVertexBuffer(bufs);
         _vertexArray.UpdateElementBuffer(elems);
         _vertexArray.Activate();
+        _needUpdateVertex = false;
     }
     
     bool _InternalUpdate() override
@@ -190,6 +212,7 @@ protected:
     
 protected:
     int _charWidth = 8, _charHeight = 12;
+    bool _needUpdateVertex = true;
 };
 
 
