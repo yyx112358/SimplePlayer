@@ -62,7 +62,7 @@ bool DecoderManager::init(const std::string &path)
     // 视频解码器
     int videoStreamId = av_find_best_stream(_fmtCtx, AVMEDIA_TYPE_VIDEO, -1, -1, NULL, 0);
     if (videoStreamId < 0) {
-        SPLOGE("Find video stream failed");
+        SPLOGE("Video stream NOT FOUND!");
     } else {
         AVStream *stream = _fmtCtx->streams[videoStreamId];
         const AVCodec *codec = avcodec_find_decoder(stream->codecpar->codec_id);
@@ -91,8 +91,27 @@ bool DecoderManager::init(const std::string &path)
         _swsCtx = sws_getContext(_rgbaBuffer.width, _rgbaBuffer.height, srcPixelFormat, 1920, 1080, AVPixelFormat::AV_PIX_FMT_RGBA, SWS_FAST_BILINEAR, nullptr, nullptr, nullptr);
     }
     
-    // TODO: 音频解码
-    
+
+    if (int audioStreamId = av_find_best_stream(_fmtCtx, AVMEDIA_TYPE_AUDIO, -1, -1, NULL, 0); audioStreamId >= 0) {
+        AVStream *stream = _fmtCtx->streams[audioStreamId];
+        const AVCodec *codec = avcodec_find_decoder(stream->codecpar->codec_id);
+        if (codec == nullptr) {
+            SPLOGE("[ERROR] %s Failed", "avcodec_find_decoder(stream->codecpar->codec_id)");
+            return false;
+        }
+        AVCodecContext *codecCtx = avcodec_alloc_context3(codec);
+        if (codecCtx == nullptr) {
+            SPLOGE("[ERROR] %s Failed", "avcodec_alloc_context3(codec)");
+            return false;
+        }
+        
+        RUN_INIT(avcodec_parameters_to_context(codecCtx, stream->codecpar));
+        RUN_INIT(avcodec_open2(codecCtx, codec, nullptr));
+        
+        _codecCtx[1] = codecCtx;// 下标1固定为音频轨
+    } else {
+        SPLOGE("Audio stream NOT FOUND!");
+    }
     
     // 初始化Packet和Frame
     _packet = av_packet_alloc();
@@ -133,11 +152,12 @@ std::optional<Frame> DecoderManager::getNextFrame()
     std::optional<Frame> result;
     
     RUN(av_read_frame(_fmtCtx, _packet), av_packet_unref(_packet);return result;);
-    if (_packet->stream_index != 0) { // 音频轨，退出
-        av_packet_unref(_packet);
-        return result;
+
+    if (_packet->stream_index == 0) {
+        result = _decodePacket(MediaType::VIDEO);
+    } else if (_packet->stream_index == 1) {
+        result = _decodePacket(MediaType::AUDIO);
     }
-    result = _decodePacket(MediaType::VIDEO);
         
     av_packet_unref(_packet);
     
@@ -170,17 +190,36 @@ std::optional<Frame> DecoderManager::_decodePacket(MediaType mediaType)
         
         SPLOGD("pts:%d", _frame->pts);
         
-        uint8_t *dstData[4] = {_rgbaBuffer.data.get()};
-        int dstLineSizes[4] = {_frame->width * 4};
-        
-        sws_scale(_swsCtx, _frame->data, _frame->linesize, 0, _rgbaBuffer.height, dstData, dstLineSizes);
-        _rgbaBuffer.pixelFormat = AVPixelFormat::AV_PIX_FMT_RGBA;
-        static bool isSave = true;
-        if (isSave) {
-            writeBMP2File("decode.bmp", _rgbaBuffer.data.get(), _frame->width, _frame->height, 4);
-            isSave = false;
+
+        if (mediaType == MediaType::VIDEO) {
+            uint8_t *dstData[4] = {_rgbaBuffer.data.get()};
+            int dstLineSizes[4] = {_frame->width * 4};
+            
+            sws_scale(_swsCtx, _frame->data, _frame->linesize, 0, _rgbaBuffer.height, dstData, dstLineSizes);
+            _rgbaBuffer.pixelFormat = AVPixelFormat::AV_PIX_FMT_RGBA;
+            static bool isSave = true;
+            if (isSave) {
+                writeBMP2File("decode.bmp", _rgbaBuffer.data.get(), _frame->width, _frame->height, 4);
+                isSave = false;
+            }
+            result = _rgbaBuffer;
+        } else if (_packet->stream_index == 1) {
+            AVSampleFormat sampleFmt = (enum AVSampleFormat)_frame->format;
+            size_t num = _frame->nb_samples * av_get_bytes_per_sample(sampleFmt);
+            FILE *f = NULL;
+            static bool first = true;
+            if (first) {
+                f = fopen("audio.pcm", "wb+");
+                first = false;
+            } else {
+                // 本地播放命令行：ffplay -f f32le -ar 44100 -ac 2 -i /Users/yangyixuan/Library/Containers/com.yyx.SimplePlayer/Data/audio.pcm
+                f = fopen("audio.pcm", "ab+");
+            }
+            
+            fwrite(_frame->extended_data[0], 1, num, f);
+            fclose(f);
         }
-        result = _rgbaBuffer;
+
         av_frame_unref(_frame);
     }
     
