@@ -27,9 +27,9 @@ class GLIdHolder {
 public:
     typedef void (*DELETER)(GLuint);
 public:
-    explicit GLIdHolder(DELETER deleter): _id(std::nullopt), _deleter(deleter) { assert(deleter != nullptr); }
-    explicit GLIdHolder(std::optional<GLuint>id, DELETER deleter): _id(id), _deleter(deleter) { assert(deleter != nullptr); }
-    GLIdHolder(GLIdHolder &&other): _id(other._id), _deleter(other._deleter) { reset(other.release()); }
+    explicit GLIdHolder(DELETER deleter): _id(std::nullopt), _deleter(deleter) { assert(_deleter != nullptr); }
+    explicit GLIdHolder(std::optional<GLuint>id, DELETER deleter): _id(id), _deleter(deleter) { assert(_deleter != nullptr); }
+    GLIdHolder(GLIdHolder &&other): _id(other.release()), _deleter(other._deleter) { assert(_deleter != nullptr); }
     GLIdHolder(const GLIdHolder &) = delete;
     GLIdHolder& operator= (GLIdHolder &&other)
     {
