@@ -35,7 +35,7 @@ public:
     void UploadBuffer(Frame buffer);
     
     /// 下载Buffer，OpenGL ES不支持
-    std::optional<Frame> DownloadTexture(std::optional<GLenum> pixelFormat = {}) const;
+    static std::optional<Frame> DownloadTexture(std::shared_ptr<GLTexture>texture, std::optional<GLenum> pixelFormat = {});
     
     bool Activate();
     

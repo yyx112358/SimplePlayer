@@ -8,6 +8,8 @@
 #include "GLTexture.hpp"
 #include "SPLog.h"
 
+#include "GLFrameBuffer.hpp"
+
 using namespace sp;
 
 void GLTexture::TEXTURE_DELETER(GLuint id)
@@ -23,40 +25,35 @@ void GLTexture::UploadBuffer(Frame buffer)
     _buffer = buffer;
 }
 
-std::optional<Frame> GLTexture::DownloadTexture(std::optional<GLenum> pixelFormat) const
+std::optional<Frame> GLTexture::DownloadTexture(std::shared_ptr<GLTexture>texture, std::optional<GLenum> pixelFormat)
 {
-    // OpenGL ES不支持
+//    // OpenGL ES不支持
+//    std::optional<Frame> buffer;
+//    if (_textureId.has_value() == false)
+//        return buffer;
+//
+//    _context->SwitchContext();
+//    buffer = *_buffer;
+//    buffer->data = std::shared_ptr<uint8_t[]>(new uint8_t[buffer->width * buffer->height * 4]);
+//
+//    // 用于从Texture下载数据，OpenGL ES不支持
+//    glGetTexImage(GL_TEXTURE_2D, 0, pixelFormat.has_value() ? *pixelFormat : buffer->glFormat(), GL_UNSIGNED_BYTE, buffer->data.get());
+//    if (GLCheckError())
+//        return std::optional<Frame>();
+//    else
+//        return buffer;
+    
+    // 支持所有OpenGL
     std::optional<Frame> buffer;
-    if (_textureId.has_value() == false)
+    if (texture == nullptr)
         return buffer;
     
-    _context->SwitchContext();
-    buffer = *_buffer;
-    buffer->data = std::shared_ptr<uint8_t[]>(new uint8_t[buffer->width * buffer->height * 4]);
+    GLFrameBuffer fbo(texture->_context);
+    fbo.UpdateAttachTextures({texture});
+    fbo.Activate();
+    buffer = fbo.DownloadFrameBuffer();
     
-    // 用于从Texture下载数据，OpenGL ES不支持
-    glGetTexImage(GL_TEXTURE_2D, 0, pixelFormat.has_value() ? *pixelFormat : buffer->glFormat(), GL_UNSIGNED_BYTE, buffer->data.get());
-    
-//    GLuint fbo;
-//    glGenFramebuffers(1, &fbo);
-//    glBindFramebuffer(GL_FRAMEBUFFER, fbo);
-//    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, target, texture, 0);
-//    uint8_t *buffer = new uint8_t[w * h * 4];
-//    glReadPixels(x, y, w, h, GL_RGBA, GL_UNSIGNED_BYTE, buffer);
-//    int ret = TER_FAIL;
-//    if (resolveFormat) {
-//        ret = TEUtils::writeBMP2File2(pName, buffer, w, h, 4);
-//    } else {
-//        ret = TEUtils::writeBMP2File(pName, buffer, w, h, 4);
-//    }
-//    delete[] buffer;
-//    glDeleteFramebuffers(1, &fbo);
-//    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-    if (GLCheckError())
-        return std::optional<Frame>();
-    else
-        return buffer;
+    return buffer;
 }
 
 bool GLTexture::Activate()
