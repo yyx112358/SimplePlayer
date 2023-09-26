@@ -19,7 +19,7 @@ namespace sp {
 
 class GLFrameBuffer {
 public:
-    static void FRAME_BUFFER_DELETER(GLuint *p);
+    static void FRAME_BUFFER_DELETER(GLuint p);
 
 public:
     GLFrameBuffer(std::shared_ptr<IGLContext> context) :_context(context) {}
@@ -54,7 +54,7 @@ public:
     
 protected:
     const std::shared_ptr<IGLContext> _context;
-    GL_IdHolder _frameBufferId = GL_IdHolder(nullptr, FRAME_BUFFER_DELETER);
+    GLIdHolder _frameBufferId = GLIdHolder(FRAME_BUFFER_DELETER);
     
     std::vector<std::shared_ptr<GLTexture>> _attachTextures;
     std::vector<std::shared_ptr<GLRenderBuffer>> _attachRenderBuffers;

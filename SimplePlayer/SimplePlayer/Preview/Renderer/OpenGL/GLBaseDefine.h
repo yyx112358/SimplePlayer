@@ -19,10 +19,8 @@
 #endif
 
 
-typedef std::unique_ptr<GLuint, void(*)(GLuint *)> GL_IdHolder; // 持有GL ID的unique_ptr，支持自动释放
-
-// unique_ptr替代。
-// 有自带deleter的unique_ptr在XCode调试器无法查看内部的值
+// 持有GL ID，支持自动释放
+// std::unique_ptr<GLuint, void(*)(GLuint *)>在XCode调试器无法查看内部的值
 class GLIdHolder {
 public:
     typedef void (*DELETER)(GLuint);

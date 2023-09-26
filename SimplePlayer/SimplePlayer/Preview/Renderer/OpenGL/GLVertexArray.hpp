@@ -27,8 +27,8 @@ public:
     typedef std::array<GLuint, 3> ElementBuffer;
 
 public:
-    static void VERTEX_ARRAY_DELETER(GLuint *p);
-    static void VERTEX_BUFFER_DELETER(GLuint *p);
+    static void VERTEX_ARRAY_DELETER(GLuint p);
+    static void VERTEX_BUFFER_DELETER(GLuint p);
     
     /// 默认矩形Vertex Buffer
     static const std::vector<VertexBuffer> &DEFAULT_RECT_VERTEX_BUFFER();
@@ -56,16 +56,16 @@ public:
     
 protected:
     const std::shared_ptr<IGLContext> _context;
-    GL_IdHolder _vertexArrayId = GL_IdHolder(nullptr, VERTEX_ARRAY_DELETER);
+    GLIdHolder _vertexArrayId = GLIdHolder(VERTEX_ARRAY_DELETER);
     
     // Vertex Buffer Object(VBO)
     std::vector<VertexBuffer> _vertexBuffer = DEFAULT_RECT_VERTEX_BUFFER();
-    GL_IdHolder _vertexBufferId = GL_IdHolder(nullptr, VERTEX_BUFFER_DELETER);
+    GLIdHolder _vertexBufferId = GLIdHolder(VERTEX_BUFFER_DELETER);
     std::optional<GLuint> _vertexBufferSize;
     
     // Element Buffer Object(EBO)
     std::vector<ElementBuffer> _elementBuffer = DEFAULT_RECT_ELEMENT_BUFFER();
-    GL_IdHolder _elementBufferId = GL_IdHolder(nullptr, VERTEX_BUFFER_DELETER);
+    GLIdHolder _elementBufferId = GLIdHolder(VERTEX_BUFFER_DELETER);
     std::optional<GLuint> _elementBufferSize;
 };
 
