@@ -17,18 +17,16 @@
 using namespace sp;
 
 
-void GLProgram::SHADER_DELETER(GLuint *p)
+void GLProgram::SHADER_DELETER(GLuint p)
 {
-    SPLOGD("Delete shader %d", *p);
-    glDeleteShader(*p);
-    delete p;
+    SPLOGD("Delete shader %d", p);
+    glDeleteShader(p);
 }
 
-void GLProgram::PROGRAM_DELETER(GLuint *p)
+void GLProgram::PROGRAM_DELETER(GLuint p)
 {
-    SPLOGD("Delete program %d", *p);
-    glDeleteProgram(*p);
-    delete p;
+    SPLOGD("Delete program %d", p);
+    glDeleteProgram(p);
 }
 
 bool GLProgram::Activate()
@@ -36,8 +34,8 @@ bool GLProgram::Activate()
     _context->SwitchContext();
     
     _programId = _CompileOrGetProgram();
-    assert(_programId != nullptr);
-    if (_programId != nullptr) {
+    assert(_programId.has_value());
+    if (_programId.has_value()) {
         glUseProgram(*_programId);
         FlushUniform();
     }
@@ -73,9 +71,9 @@ bool GLProgram::FlushUniform()
 }
 
 /// 编译Shader
-GL_IdHolder GLProgram::_CompileShader(GLenum shaderType, const std::string &source) const
+GLIdHolder GLProgram::_CompileShader(GLenum shaderType, const std::string &source) const
 {
-    GL_IdHolder shader(nullptr, SHADER_DELETER);
+    GLIdHolder shader(SHADER_DELETER);
 
     GLuint shaderId;
     shaderId = glCreateShader(shaderType); // 创建并绑定Shader
@@ -92,17 +90,17 @@ GL_IdHolder GLProgram::_CompileShader(GLenum shaderType, const std::string &sour
         SPLOGD("%s", buf);
         assert(0);
     } else {
-        shader.reset(new GLuint(shaderId));
+        shader.reset(shaderId);
         SPLOGD("Create shader %d", *shader);
     }
     return shader;
 }
 
 // 使用shaders编译Program
-GL_IdHolder GLProgram::_CompileProgram(const std::vector<GL_IdHolder> &shaders) const
+GLIdHolder GLProgram::_CompileProgram(const std::vector<GLIdHolder> &shaders) const
 {
     // 链接Shader为Program。和CPU程序很类似，编译.o文件、链接为可执行文件。【耗时非常长】
-    GL_IdHolder programId(nullptr, PROGRAM_DELETER);
+    GLIdHolder programId(PROGRAM_DELETER);
     GLuint shaderProgram;
     shaderProgram = glCreateProgram();
     for (auto &shader : shaders) // 绑定shader
@@ -118,29 +116,29 @@ GL_IdHolder GLProgram::_CompileProgram(const std::vector<GL_IdHolder> &shaders) 
         SPLOGD("%s", buf);
         assert(0);
     } else {
-        programId.reset(new GLuint(shaderProgram));
+        programId.reset(shaderProgram);
         SPLOGD("Create program %d", *programId);
     }
     return programId;
 }
 
 // 使用_vertexShaderSource和_fragmentShaderSource
-GL_IdHolder GLProgram::_CompileOrGetProgram()
+GLIdHolder GLProgram::_CompileOrGetProgram()
 {
-    GL_IdHolder program(nullptr, PROGRAM_DELETER);
+    GLIdHolder program(PROGRAM_DELETER);
     if (_vertexShaderSource.empty() == false || _fragmentShaderSource.empty() == false) {
         // 编译Shader
-        std::vector<GL_IdHolder> shaders;
+        std::vector<GLIdHolder> shaders;
         for (auto &source : _vertexShaderSource) {
-            GL_IdHolder vertexShaderId = _CompileShader(GL_VERTEX_SHADER, source);
-            if (vertexShaderId != nullptr)
+            GLIdHolder vertexShaderId = _CompileShader(GL_VERTEX_SHADER, source);
+            if (vertexShaderId.has_value())
                 shaders.push_back(std::move(vertexShaderId));
             else
                 return program;
         }
         for (auto &source : _fragmentShaderSource) {
-            GL_IdHolder fragmentShaderId = _CompileShader(GL_FRAGMENT_SHADER, source);
-            if (fragmentShaderId != nullptr)
+            GLIdHolder fragmentShaderId = _CompileShader(GL_FRAGMENT_SHADER, source);
+            if (fragmentShaderId.has_value())
                 shaders.push_back(std::move(fragmentShaderId));
             else
                 return program;
@@ -162,8 +160,9 @@ GL_IdHolder GLProgram::_CompileOrGetProgram()
 void GLProgram::_UpdateUniform()
 {
     // 更新Uniform
-    if (_programId == nullptr)
+    if (_programId.has_value() == false)
         return;
+
     glUseProgram(*_programId);
     for (const auto &uniPair : _uniformMap) {
 

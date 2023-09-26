@@ -20,8 +20,8 @@ typedef std::variant<int32_t, uint32_t, float, glm::mat4> GLUniform;
 
 class GLProgram {
 public:
-    static void SHADER_DELETER(GLuint *p);
-    static void PROGRAM_DELETER(GLuint *p);
+    static void SHADER_DELETER(GLuint p);
+    static void PROGRAM_DELETER(GLuint p);
 public:
     GLProgram(std::shared_ptr<IGLContext> context) :_context(context) {}
     
@@ -43,13 +43,13 @@ public:
     
 protected:
     /// 编译Shader
-    virtual GL_IdHolder _CompileShader(GLenum shaderType, const std::string &source) const;
+    virtual GLIdHolder _CompileShader(GLenum shaderType, const std::string &source) const;
     
     // 使用shaders编译Program
-    virtual GL_IdHolder _CompileProgram(const std::vector<GL_IdHolder> &shaders) const ;
+    virtual GLIdHolder _CompileProgram(const std::vector<GLIdHolder> &shaders) const ;
     
     // 使用_vertexShaderSource和_fragmentShaderSource
-    virtual GL_IdHolder _CompileOrGetProgram();
+    virtual GLIdHolder _CompileOrGetProgram();
     
     virtual void _UpdateUniform();
     
@@ -61,7 +61,7 @@ protected:
     std::vector<std::string> _fragmentShaderSource;
     std::unordered_map<std::string, GLUniform> _uniformMap;
     
-    GL_IdHolder _programId = GL_IdHolder(nullptr, PROGRAM_DELETER);
+    GLIdHolder _programId = GLIdHolder(PROGRAM_DELETER);
 };
 
 }
