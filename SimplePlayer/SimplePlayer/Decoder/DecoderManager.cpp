@@ -24,12 +24,6 @@ struct AVFormatContext;
         SPLOGE("[ERROR] %s == %d | %s", #expr, ret, av_err2str(ret));\
         then;\
     }
-#define ALLOC(expr, then) \
-    expr; \
-    if (expr == nullptr) { \
-        SPLOGE("[ERROR] %s Failed", #expr);\
-        then;\
-    }
 
 class AVFormatContextHolder {
 public:
@@ -71,8 +65,17 @@ bool DecoderManager::init(const std::string &path)
         SPLOGE("Find video stream failed");
     } else {
         AVStream *stream = _fmtCtx->streams[videoStreamId];
-        const AVCodec *codec = ALLOC(avcodec_find_decoder(stream->codecpar->codec_id), return false);
-        AVCodecContext *codecCtx = ALLOC(avcodec_alloc_context3(codec), return false);
+        const AVCodec *codec = avcodec_find_decoder(stream->codecpar->codec_id);
+        if (codec == nullptr) {
+            SPLOGE("[ERROR] %s Failed", "avcodec_find_decoder(stream->codecpar->codec_id)");
+            return false;
+        }
+        AVCodecContext *codecCtx = avcodec_alloc_context3(codec);
+        if (codecCtx == nullptr) {
+            SPLOGE("[ERROR] %s Failed", "avcodec_alloc_context3(codec)");
+            return false;
+        }
+        
         RUN_INIT(avcodec_parameters_to_context(codecCtx, stream->codecpar));
         RUN_INIT(avcodec_open2(codecCtx, codec, nullptr));
         
@@ -145,6 +148,9 @@ std::optional<Frame> DecoderManager::_decodePacket(MediaType mediaType)
 {
     std::optional<Frame> result;
     AVCodecContext *codecCtx = _getCodecCtx(mediaType);
+    if (codecCtx == nullptr || _packet == nullptr)
+        return result;
+    
     RUN(avcodec_send_packet(codecCtx, _packet), return result);
     
     int ret = 0;
