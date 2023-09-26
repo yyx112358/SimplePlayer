@@ -555,6 +555,7 @@
 					../thirdParty/glm,
 					../thirdParty/build/FFMpeg/include,
 				);
+				INFOPLIST_FILE = SimplePlayer/Info.plist;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				INFOPLIST_KEY_NSMainStoryboardFile = Main;
 				INFOPLIST_KEY_NSPrincipalClass = NSApplication;
@@ -588,6 +589,7 @@
 					../thirdParty/glm,
 					../thirdParty/build/FFMpeg/include,
 				);
+				INFOPLIST_FILE = SimplePlayer/Info.plist;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				INFOPLIST_KEY_NSMainStoryboardFile = Main;
 				INFOPLIST_KEY_NSPrincipalClass = NSApplication;

@@ -69,6 +69,12 @@
         if (cnt < 0) {
             decoder = nullptr;
             preview = nullptr;
+            [self.view.window.windowController close];
+            __weak ViewController* wself = self;
+            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 500 * NSEC_PER_MSEC), dispatch_get_main_queue(), ^{
+                __strong ViewController *sself = wself;
+                [NSApp terminate:sself];
+            });
         }
     }
 
