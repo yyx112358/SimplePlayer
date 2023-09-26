@@ -54,7 +54,7 @@ public:
     
 protected:
     const std::shared_ptr<IGLContext> _context;
-    GLIdHolder _frameBufferId = GLIdHolder(FRAME_BUFFER_DELETER);
+    GL_IdHolder _frameBufferId = GL_IdHolder(FRAME_BUFFER_DELETER);
     
     std::vector<std::shared_ptr<GLTexture>> _attachTextures;
     std::vector<std::shared_ptr<GLRenderBuffer>> _attachRenderBuffers;

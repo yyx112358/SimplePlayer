@@ -51,7 +51,7 @@ protected:
     
 protected:
     const std::shared_ptr<IGLContext> _context;
-    GLIdHolder _textureId = GLIdHolder(TEXTURE_DELETER);
+    GL_IdHolder _textureId = GL_IdHolder(TEXTURE_DELETER);
     bool _needUpdate = true;        // 需要执行更新
     bool _needUpdateAll = false;    // 需要重建Texture
     

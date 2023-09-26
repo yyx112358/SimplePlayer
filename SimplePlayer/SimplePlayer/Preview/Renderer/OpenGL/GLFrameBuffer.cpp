@@ -25,7 +25,7 @@ bool GLFrameBuffer::Activate()
         // 创建帧缓冲（Frame Buffer Object）
         GLuint frameBufferId;
         glGenFramebuffers(1, &frameBufferId);
-        auto holder = GLIdHolder(frameBufferId, FRAME_BUFFER_DELETER);
+        auto holder = GL_IdHolder(frameBufferId, FRAME_BUFFER_DELETER);
         glBindFramebuffer(GL_FRAMEBUFFER, frameBufferId);
         if (GLCheckError())
             return false;

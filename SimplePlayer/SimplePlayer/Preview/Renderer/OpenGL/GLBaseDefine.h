@@ -21,21 +21,21 @@
 
 // 持有GL ID，支持自动释放
 // std::unique_ptr<GLuint, void(*)(GLuint *)>在XCode调试器无法查看内部的值
-class GLIdHolder {
+class GL_IdHolder {
 public:
     typedef void (*DELETER)(GLuint);
 public:
-    explicit GLIdHolder(DELETER deleter): _id(std::nullopt), _deleter(deleter) { assert(_deleter != nullptr); }
-    explicit GLIdHolder(std::optional<GLuint>id, DELETER deleter): _id(id), _deleter(deleter) { assert(_deleter != nullptr); }
-    GLIdHolder(GLIdHolder &&other): _id(other.release()), _deleter(other._deleter) { assert(_deleter != nullptr); }
-    GLIdHolder(const GLIdHolder &) = delete;
-    GLIdHolder& operator= (GLIdHolder &&other)
+    explicit GL_IdHolder(DELETER deleter): _id(std::nullopt), _deleter(deleter) { assert(_deleter != nullptr); }
+    explicit GL_IdHolder(std::optional<GLuint>id, DELETER deleter): _id(id), _deleter(deleter) { assert(_deleter != nullptr); }
+    GL_IdHolder(GL_IdHolder &&other): _id(other.release()), _deleter(other._deleter) { assert(_deleter != nullptr); }
+    GL_IdHolder(const GL_IdHolder &) = delete;
+    GL_IdHolder& operator= (GL_IdHolder &&other)
     {
         assert(other._deleter == _deleter);
         reset(other.release());
         return *this;
     }
-    ~GLIdHolder() { reset(); }
+    ~GL_IdHolder() { reset(); }
     
     
     bool has_value() const { return _id.has_value(); }

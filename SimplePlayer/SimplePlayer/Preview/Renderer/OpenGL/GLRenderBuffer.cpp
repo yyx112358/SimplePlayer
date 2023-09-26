@@ -28,7 +28,7 @@ bool GLRenderBuffer::Activate()
         
         GLuint renderBufferId;
         glGenRenderbuffers(1, &renderBufferId);
-        auto holder = GLIdHolder(renderBufferId, RENDER_BUFFER_DELETER);
+        auto holder = GL_IdHolder(renderBufferId, RENDER_BUFFER_DELETER);
         SPLOGD("Create render buffer %d", renderBufferId);
         
         glBindRenderbuffer(GL_RENDERBUFFER, renderBufferId);

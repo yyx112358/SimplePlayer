@@ -56,16 +56,16 @@ public:
     
 protected:
     const std::shared_ptr<IGLContext> _context;
-    GLIdHolder _vertexArrayId = GLIdHolder(VERTEX_ARRAY_DELETER);
+    GL_IdHolder _vertexArrayId = GL_IdHolder(VERTEX_ARRAY_DELETER);
     
     // Vertex Buffer Object(VBO)
     std::vector<VertexBuffer> _vertexBuffer = DEFAULT_RECT_VERTEX_BUFFER();
-    GLIdHolder _vertexBufferId = GLIdHolder(VERTEX_BUFFER_DELETER);
+    GL_IdHolder _vertexBufferId = GL_IdHolder(VERTEX_BUFFER_DELETER);
     std::optional<GLuint> _vertexBufferSize;
     
     // Element Buffer Object(EBO)
     std::vector<ElementBuffer> _elementBuffer = DEFAULT_RECT_ELEMENT_BUFFER();
-    GLIdHolder _elementBufferId = GLIdHolder(VERTEX_BUFFER_DELETER);
+    GL_IdHolder _elementBufferId = GL_IdHolder(VERTEX_BUFFER_DELETER);
     std::optional<GLuint> _elementBufferSize;
 };
 

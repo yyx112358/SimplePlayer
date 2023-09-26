@@ -93,7 +93,7 @@ bool GLTexture::_UploadBuffer()
     if (_textureId.has_value() == false) {
         GLuint textureId;
         glGenTextures(1, &textureId);
-        auto holder = GLIdHolder(textureId, TEXTURE_DELETER);
+        auto holder = GL_IdHolder(textureId, TEXTURE_DELETER);
         SPLOGD("Create texture %d", textureId);
         
         glBindTexture(GL_TEXTURE_2D, textureId);

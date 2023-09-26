@@ -39,7 +39,7 @@ public:
     
 protected:
     const std::shared_ptr<IGLContext> _context;
-    GLIdHolder _renderBufferId = GLIdHolder(RENDER_BUFFER_DELETER);
+    GL_IdHolder _renderBufferId = GL_IdHolder(RENDER_BUFFER_DELETER);
     
     std::optional<GLsizei> _width, _height;
 };

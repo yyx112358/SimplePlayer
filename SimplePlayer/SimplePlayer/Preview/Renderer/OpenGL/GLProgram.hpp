@@ -43,13 +43,13 @@ public:
     
 protected:
     /// 编译Shader
-    virtual GLIdHolder _CompileShader(GLenum shaderType, const std::string &source) const;
+    virtual GL_IdHolder _CompileShader(GLenum shaderType, const std::string &source) const;
     
     // 使用shaders编译Program
-    virtual GLIdHolder _CompileProgram(const std::vector<GLIdHolder> &shaders) const ;
+    virtual GL_IdHolder _CompileProgram(const std::vector<GL_IdHolder> &shaders) const ;
     
     // 使用_vertexShaderSource和_fragmentShaderSource
-    virtual GLIdHolder _CompileOrGetProgram();
+    virtual GL_IdHolder _CompileOrGetProgram();
     
     virtual void _UpdateUniform();
     
@@ -61,7 +61,7 @@ protected:
     std::vector<std::string> _fragmentShaderSource;
     std::unordered_map<std::string, GLUniform> _uniformMap;
     
-    GLIdHolder _programId = GLIdHolder(PROGRAM_DELETER);
+    GL_IdHolder _programId = GL_IdHolder(PROGRAM_DELETER);
 };
 
 }

@@ -71,9 +71,9 @@ bool GLProgram::FlushUniform()
 }
 
 /// 编译Shader
-GLIdHolder GLProgram::_CompileShader(GLenum shaderType, const std::string &source) const
+GL_IdHolder GLProgram::_CompileShader(GLenum shaderType, const std::string &source) const
 {
-    GLIdHolder shader(SHADER_DELETER);
+    GL_IdHolder shader(SHADER_DELETER);
 
     GLuint shaderId;
     shaderId = glCreateShader(shaderType); // 创建并绑定Shader
@@ -97,10 +97,10 @@ GLIdHolder GLProgram::_CompileShader(GLenum shaderType, const std::string &sourc
 }
 
 // 使用shaders编译Program
-GLIdHolder GLProgram::_CompileProgram(const std::vector<GLIdHolder> &shaders) const
+GL_IdHolder GLProgram::_CompileProgram(const std::vector<GL_IdHolder> &shaders) const
 {
     // 链接Shader为Program。和CPU程序很类似，编译.o文件、链接为可执行文件。【耗时非常长】
-    GLIdHolder programId(PROGRAM_DELETER);
+    GL_IdHolder programId(PROGRAM_DELETER);
     GLuint shaderProgram;
     shaderProgram = glCreateProgram();
     for (auto &shader : shaders) // 绑定shader
@@ -123,21 +123,21 @@ GLIdHolder GLProgram::_CompileProgram(const std::vector<GLIdHolder> &shaders) co
 }
 
 // 使用_vertexShaderSource和_fragmentShaderSource
-GLIdHolder GLProgram::_CompileOrGetProgram()
+GL_IdHolder GLProgram::_CompileOrGetProgram()
 {
-    GLIdHolder program(PROGRAM_DELETER);
+    GL_IdHolder program(PROGRAM_DELETER);
     if (_vertexShaderSource.empty() == false || _fragmentShaderSource.empty() == false) {
         // 编译Shader
-        std::vector<GLIdHolder> shaders;
+        std::vector<GL_IdHolder> shaders;
         for (auto &source : _vertexShaderSource) {
-            GLIdHolder vertexShaderId = _CompileShader(GL_VERTEX_SHADER, source);
+            GL_IdHolder vertexShaderId = _CompileShader(GL_VERTEX_SHADER, source);
             if (vertexShaderId.has_value())
                 shaders.push_back(std::move(vertexShaderId));
             else
                 return program;
         }
         for (auto &source : _fragmentShaderSource) {
-            GLIdHolder fragmentShaderId = _CompileShader(GL_FRAGMENT_SHADER, source);
+            GL_IdHolder fragmentShaderId = _CompileShader(GL_FRAGMENT_SHADER, source);
             if (fragmentShaderId.has_value())
                 shaders.push_back(std::move(fragmentShaderId));
             else
