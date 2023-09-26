@@ -12,24 +12,23 @@
 using namespace sp;
 
 
-void GLRenderBuffer::RENDER_BUFFER_DELETER(GLuint *p)
+void GLRenderBuffer::RENDER_BUFFER_DELETER(GLuint p)
 {
-    SPLOGD("Delete render buffer %d", *p);
-    glDeleteRenderbuffers(1, p);
-    delete p;
+    SPLOGD("Delete render buffer %d", p);
+    glDeleteRenderbuffers(1, &p);
 }
 
 bool GLRenderBuffer::Activate()
 {
     _context->SwitchContext();
     
-    if (_renderBufferId == nullptr) {
+    if (_renderBufferId.has_value() == false) {
         if (_width.has_value() == false || _height.has_value() == false)
             return false;
         
         GLuint renderBufferId;
         glGenRenderbuffers(1, &renderBufferId);
-        auto holder = GL_IdHolder(new GLuint(renderBufferId), RENDER_BUFFER_DELETER);
+        auto holder = GL_IdHolder(renderBufferId, RENDER_BUFFER_DELETER);
         SPLOGD("Create render buffer %d", renderBufferId);
         
         glBindRenderbuffer(GL_RENDERBUFFER, renderBufferId);

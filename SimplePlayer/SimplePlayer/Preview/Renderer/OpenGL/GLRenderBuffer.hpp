@@ -17,7 +17,7 @@ namespace sp {
 /// 仅可写入的缓冲区，为离屏渲染到FBO优化
 class GLRenderBuffer {
 public:
-    static void RENDER_BUFFER_DELETER(GLuint *p);
+    static void RENDER_BUFFER_DELETER(GLuint p);
     
 public:
     GLRenderBuffer(std::shared_ptr<IGLContext>context) : _context(context) {}
@@ -34,12 +34,12 @@ public:
     bool Activate();
     
     std::optional<GLuint> id() const {
-        return _renderBufferId != nullptr ? std::make_optional<GLuint>(*_renderBufferId) : std::make_optional<GLuint>();
+        return _renderBufferId.id();
     }
     
 protected:
     const std::shared_ptr<IGLContext> _context;
-    GL_IdHolder _renderBufferId = GL_IdHolder(nullptr, RENDER_BUFFER_DELETER);
+    GL_IdHolder _renderBufferId = GL_IdHolder(RENDER_BUFFER_DELETER);
     
     std::optional<GLsizei> _width, _height;
 };

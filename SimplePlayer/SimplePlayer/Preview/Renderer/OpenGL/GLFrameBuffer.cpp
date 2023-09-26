@@ -11,22 +11,21 @@
 using namespace sp;
 
 
-void GLFrameBuffer::FRAME_BUFFER_DELETER(GLuint *p)
+void GLFrameBuffer::FRAME_BUFFER_DELETER(GLuint p)
 {
-    SPLOGD("Delete frame buffer %d", *p);
-    glDeleteFramebuffers(1, p);
-    delete p;
+    SPLOGD("Delete frame buffer %d", p);
+    glDeleteFramebuffers(1, &p);
 }
 
 bool GLFrameBuffer::Activate()
 {
     _context->SwitchContext();
     
-    if (_frameBufferId == nullptr) {
+    if (_frameBufferId.has_value() == false) {
         // 创建帧缓冲（Frame Buffer Object）
         GLuint frameBufferId;
         glGenFramebuffers(1, &frameBufferId);
-        auto holder = GL_IdHolder(new GLuint(frameBufferId), FRAME_BUFFER_DELETER);
+        auto holder = GL_IdHolder(frameBufferId, FRAME_BUFFER_DELETER);
         glBindFramebuffer(GL_FRAMEBUFFER, frameBufferId);
         if (GLCheckError())
             return false;

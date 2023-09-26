@@ -10,17 +10,15 @@
 
 using namespace sp;
 
-void GLVertexArray::VERTEX_ARRAY_DELETER(GLuint *p)
+void GLVertexArray::VERTEX_ARRAY_DELETER(GLuint p)
 {
-    SPLOGD("Delete vertex array %d", *p);
-    glDeleteVertexArrays(1, p);
-    delete p;
+    SPLOGD("Delete vertex array %d", p);
+    glDeleteVertexArrays(1, &p);
 }
 
-void GLVertexArray::VERTEX_BUFFER_DELETER(GLuint *p) {
-    SPLOGD("Delete vertex buffer %d", *p);
-    glDeleteBuffers(1, p);
-    delete p;
+void GLVertexArray::VERTEX_BUFFER_DELETER(GLuint p) {
+    SPLOGD("Delete vertex buffer %d", p);
+    glDeleteBuffers(1, &p);
 }
 
 /// 默认矩形Vertex Buffer
@@ -49,11 +47,11 @@ const std::vector<GLVertexArray::ElementBuffer> &GLVertexArray::DEFAULT_RECT_ELE
 bool GLVertexArray::Activate()
 {
     // 创建Vertex Array Object(VAO)。后续所有顶点操作都会储存到VAO中。OpenGL core模式下VAO必须要有。
-    if (_vertexArrayId == nullptr
+    if (_vertexArrayId.has_value() == false
         || _vertexBuffer.size() > 0 || _elementBuffer.size() > 0) {
         GLuint vertexArrayId;
         glGenVertexArrays(1, &vertexArrayId); // 生成顶点Array对象。【必须在创建Buffer前】
-        _vertexArrayId.reset(new GLuint(vertexArrayId));
+        _vertexArrayId.reset(vertexArrayId);
         SPLOGD("Create vertex array %d", *_vertexArrayId);
     }
     glBindVertexArray(*_vertexArrayId); // 绑定顶点Array
@@ -73,7 +71,7 @@ bool GLVertexArray::Activate()
         
         if (GLCheckError())
             return false;
-        _vertexBufferId.reset(new GLuint(vertexBufId));
+        _vertexBufferId.reset(vertexBufId);
         _vertexBufferSize.emplace(_vertexBuffer.size());
         _vertexBuffer.clear();
     }
@@ -88,7 +86,7 @@ bool GLVertexArray::Activate()
         
         if (GLCheckError())
             return false;
-        _elementBufferId.reset(new GLuint(elementBufId));
+        _elementBufferId.reset(elementBufId);
         _elementBufferSize.emplace(_elementBuffer.size() * _elementBuffer[0].size());
         _elementBuffer.clear();
     }
