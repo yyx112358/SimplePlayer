@@ -17,7 +17,7 @@ namespace sp {
 
 class GLTexture {
 public:
-    static void TEXTURE_DELETER(GLuint *p);
+    static void TEXTURE_DELETER(GLuint id);
     
 public:
     GLTexture(std::shared_ptr<IGLContext>context) : _context(context) {}
@@ -51,7 +51,7 @@ protected:
     
 protected:
     const std::shared_ptr<IGLContext> _context;
-    GL_IdHolder _textureId = GL_IdHolder(nullptr, TEXTURE_DELETER);
+    GLIdHolder _textureId = GLIdHolder(TEXTURE_DELETER);
     bool _needUpdate = true;        // 需要执行更新
     bool _needUpdateAll = false;    // 需要重建Texture
     

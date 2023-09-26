@@ -10,11 +10,10 @@
 
 using namespace sp;
 
-void GLTexture::TEXTURE_DELETER(GLuint *p)
+void GLTexture::TEXTURE_DELETER(GLuint id)
 {
-    SPLOGD("Delete texture %d", *p);
-    glDeleteTextures(1, p);
-    delete p;
+    SPLOGD("Delete texture %d", id);
+    glDeleteTextures(1, &id);
 }
    
 void GLTexture::UploadBuffer(Frame buffer)
@@ -28,7 +27,7 @@ std::optional<Frame> GLTexture::DownloadTexture(std::optional<GLenum> pixelForma
 {
     // OpenGL ES不支持
     std::optional<Frame> buffer;
-    if (_textureId == nullptr)
+    if (_textureId.has_value() == false)
         return buffer;
     
     _context->SwitchContext();
@@ -37,6 +36,22 @@ std::optional<Frame> GLTexture::DownloadTexture(std::optional<GLenum> pixelForma
     
     // 用于从Texture下载数据，OpenGL ES不支持
     glGetTexImage(GL_TEXTURE_2D, 0, pixelFormat.has_value() ? *pixelFormat : buffer->glFormat(), GL_UNSIGNED_BYTE, buffer->data.get());
+    
+//    GLuint fbo;
+//    glGenFramebuffers(1, &fbo);
+//    glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+//    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, target, texture, 0);
+//    uint8_t *buffer = new uint8_t[w * h * 4];
+//    glReadPixels(x, y, w, h, GL_RGBA, GL_UNSIGNED_BYTE, buffer);
+//    int ret = TER_FAIL;
+//    if (resolveFormat) {
+//        ret = TEUtils::writeBMP2File2(pName, buffer, w, h, 4);
+//    } else {
+//        ret = TEUtils::writeBMP2File(pName, buffer, w, h, 4);
+//    }
+//    delete[] buffer;
+//    glDeleteFramebuffers(1, &fbo);
+//    glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
     if (GLCheckError())
         return std::optional<Frame>();
@@ -56,7 +71,7 @@ bool GLTexture::Activate()
 
 std::optional<GLuint> GLTexture::id() const
 {
-    return _textureId != nullptr ? std::make_optional<GLuint>(*_textureId) : std::make_optional<GLuint>();
+    return _textureId.id();
 }
 
 bool GLTexture::_UploadBuffer()
@@ -75,10 +90,10 @@ bool GLTexture::_UploadBuffer()
         _textureId.reset();
     
     // 创建Texture
-    if (_textureId == nullptr) {
+    if (_textureId.has_value() == false) {
         GLuint textureId;
         glGenTextures(1, &textureId);
-        auto holder = GL_IdHolder(new GLuint(textureId), TEXTURE_DELETER);
+        auto holder = GLIdHolder(textureId, TEXTURE_DELETER);
         SPLOGD("Create texture %d", textureId);
         
         glBindTexture(GL_TEXTURE_2D, textureId);
