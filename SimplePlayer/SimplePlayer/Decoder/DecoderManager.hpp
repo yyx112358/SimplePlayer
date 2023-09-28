@@ -10,7 +10,7 @@
 #include <string>
 #include <optional>
 
-#include "Frame.hpp"
+#include "VideoFrameBase.hpp"
 
 struct AVFormatContext;
 struct AVCodecContext;

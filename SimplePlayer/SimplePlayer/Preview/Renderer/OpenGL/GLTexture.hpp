@@ -10,7 +10,7 @@
 #include <optional>
 
 #include "IGLContext.hpp"
-#include "Frame.hpp"
+#include "VideoFrameBase.hpp"
 
 namespace sp {
 

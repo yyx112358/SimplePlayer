@@ -11,7 +11,7 @@
 #include <memory>
 #include <optional>
 
-#include "Frame.hpp"
+#include "VideoFrameBase.hpp"
 
 class IPreviewManager {
 public:

@@ -1,18 +1,18 @@
 //
-//  Frame.cpp
+//  VideoFrameBase.cpp
 //  SimplePlayer
 //
-//  Created by YangYixuan on 2023/7/13.
+//  Created by YangYixuan on 2023/9/28.
 //
 
-#include "Frame.hpp"
+#include "VideoFrameBase.hpp"
+
 #include <OpenGL/gl3.h>
 
 using namespace sp;
 
 bool VideoFrame::equalExceptData(const VideoFrame &other) const {
-    return width == other.width && height == other.height
-        && type == other.type && pixelFormat == other.pixelFormat;
+    return width == other.width && height == other.height && pixelFormat == other.pixelFormat;
 }
 
 uint32_t sp::VideoFrame::glFormat() const {

@@ -1,8 +1,8 @@
 //
-//  Frame.hpp
+//  VideoFrameBase.hpp
 //  SimplePlayer
 //
-//  Created by YangYixuan on 2023/7/13.
+//  Created by YangYixuan on 2023/9/28.
 //
 
 #pragma once
@@ -11,7 +11,6 @@
 
 extern "C" {
 #include "libavutil/pixfmt.h"
-#include "libavutil/samplefmt.h"
 }
 
 namespace sp {
@@ -30,7 +29,5 @@ struct VideoFrame {
     
     uint32_t glFormat() const;
 };
-
-
 
 }
