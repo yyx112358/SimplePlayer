@@ -8,6 +8,7 @@
 #include "DecoderManager.hpp"
 #include "SPLog.h"
 #include "ImageWriterBmp.h"
+
 extern "C" {
 #include "libavformat/avformat.h"
 #include "libavcodec/avcodec.h"
@@ -48,14 +49,14 @@ bool DecoderManager::init(const std::string &path)
     
     // 打开文件
     const char *cpath = path.c_str();
-    av_log_set_level(AV_LOG_DEBUG);
+//    av_log_set_level(AV_LOG_DEBUG);
 //    av_log_set_callback(my_log_callback);
     _fmtCtx = nullptr;
     RUN_INIT(avformat_open_input(&_fmtCtx, cpath, nullptr, nullptr));
     SPLOGI("Open %s Successed!", cpath);
     
     // 探测流信息
-    av_log_set_level(AV_LOG_DEBUG);
+//    av_log_set_level(AV_LOG_DEBUG);
     RUN(avformat_find_stream_info(_fmtCtx, nullptr), return false);
     av_dump_format(_fmtCtx, 0, cpath, 0);
     
@@ -147,9 +148,9 @@ bool DecoderManager::unInit() {
     return true;
 }
 
-std::optional<Frame> DecoderManager::getNextFrame()
+std::optional<VideoFrame> DecoderManager::getNextFrame()
 {
-    std::optional<Frame> result;
+    std::optional<VideoFrame> result;
     
     RUN(av_read_frame(_fmtCtx, _packet), av_packet_unref(_packet);return result;);
 
@@ -164,9 +165,9 @@ std::optional<Frame> DecoderManager::getNextFrame()
     return result;
 }
 
-std::optional<Frame> DecoderManager::_decodePacket(MediaType mediaType)
+std::optional<VideoFrame> DecoderManager::_decodePacket(MediaType mediaType)
 {
-    std::optional<Frame> result;
+    std::optional<VideoFrame> result;
     AVCodecContext *codecCtx = _getCodecCtx(mediaType);
     if (codecCtx == nullptr || _packet == nullptr)
         return result;
@@ -197,13 +198,14 @@ std::optional<Frame> DecoderManager::_decodePacket(MediaType mediaType)
             
             sws_scale(_swsCtx, _frame->data, _frame->linesize, 0, _rgbaBuffer.height, dstData, dstLineSizes);
             _rgbaBuffer.pixelFormat = AVPixelFormat::AV_PIX_FMT_RGBA;
+            _rgbaBuffer.pts = _frame->pts;
             static bool isSave = true;
             if (isSave) {
                 writeBMP2File("decode.bmp", _rgbaBuffer.data.get(), _frame->width, _frame->height, 4);
                 isSave = false;
             }
             result = _rgbaBuffer;
-        } else if (_packet->stream_index == 1) {
+        } else if (mediaType == MediaType::AUDIO) {
             AVSampleFormat sampleFmt = (enum AVSampleFormat)_frame->format;
             size_t num = _frame->nb_samples * av_get_bytes_per_sample(sampleFmt);
             FILE *f = NULL;
@@ -212,7 +214,7 @@ std::optional<Frame> DecoderManager::_decodePacket(MediaType mediaType)
                 f = fopen("audio.pcm", "wb+");
                 first = false;
             } else {
-                // 本地播放命令行：ffplay -f f32le -ar 44100 -ac 2 -i /Users/yangyixuan/Library/Containers/com.yyx.SimplePlayer/Data/audio.pcm
+                // 本地播放命令行：ffplay -f f32le -ar 44100 -ac 1 -i /Users/yangyixuan/Library/Containers/com.yyx.SimplePlayer/Data/audio.pcm
                 f = fopen("audio.pcm", "ab+");
             }
             

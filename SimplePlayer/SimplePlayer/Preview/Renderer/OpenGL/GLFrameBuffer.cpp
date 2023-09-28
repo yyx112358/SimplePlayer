@@ -79,8 +79,8 @@ bool GLFrameBuffer::Activate()
 }
 
 
-std::optional<Frame> GLFrameBuffer::DownloadFrameBuffer(std::optional<GLenum> pixelFormat) const {
-    std::optional<Frame> buffer;
+std::optional<VideoFrame> GLFrameBuffer::DownloadFrameBuffer(std::optional<GLenum> pixelFormat) const {
+    std::optional<VideoFrame> buffer;
     if (_attachTextures.size() == 0 || _attachTextures[0]->id().has_value() == false)
         return buffer;
     _context->SwitchContext();
@@ -92,7 +92,7 @@ std::optional<Frame> GLFrameBuffer::DownloadFrameBuffer(std::optional<GLenum> pi
     glReadPixels(0, 0, (GLsizei)buffer->width, (GLsizei)buffer->height, pixelFormat.has_value() ? *pixelFormat : buffer->glFormat(), GL_UNSIGNED_BYTE, buffer->data.get());
     
     if (GLCheckError())
-        return std::optional<Frame>();
+        return std::optional<VideoFrame>();
     else
         return buffer;
 }

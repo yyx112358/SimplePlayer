@@ -266,6 +266,7 @@
 		7A7D566A2A3045C800F1D701 /* Renderer */ = {
 			isa = PBXGroup;
 			children = (
+				7A8C80992AC306C80051A19F /* Audio */,
 				7AE0CC062A5AE39300F91B29 /* OpenGL */,
 				7A8669422A2F8C33006E8CC6 /* Shaders */,
 				7A6D8B4A2A3359DC00C40E5C /* GLRendererBase.mm */,
@@ -285,6 +286,13 @@
 				7A658A032A35A92F00955DB9 /* BasicFragment.glsl */,
 			);
 			path = Shaders;
+			sourceTree = "<group>";
+		};
+		7A8C80992AC306C80051A19F /* Audio */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = Audio;
 			sourceTree = "<group>";
 		};
 		7AA2BC742A5EBDA600BACC4F /* Decoder */ = {

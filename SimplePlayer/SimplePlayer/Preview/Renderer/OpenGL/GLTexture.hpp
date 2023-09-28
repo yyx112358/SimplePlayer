@@ -21,8 +21,8 @@ public:
     
 public:
     GLTexture(std::shared_ptr<IGLContext>context) : _context(context) {}
-    GLTexture(std::shared_ptr<IGLContext>context, Frame buffer) : _context(context), _buffer(std::move(buffer)) {}
-    GLTexture(std::shared_ptr<IGLContext>context, GLsizei width, GLsizei height) : _context(context), _buffer(Frame{.width = width, .height = height, .pixelFormat = AV_PIX_FMT_RGBA}) {}
+    GLTexture(std::shared_ptr<IGLContext>context, VideoFrame buffer) : _context(context), _buffer(std::move(buffer)) {}
+    GLTexture(std::shared_ptr<IGLContext>context, GLsizei width, GLsizei height) : _context(context), _buffer(VideoFrame{.width = width, .height = height, .pixelFormat = AV_PIX_FMT_RGBA}) {}
     
     virtual ~GLTexture() {
         _context->SwitchContext();
@@ -32,10 +32,10 @@ public:
     }
     
     /// 上传Buffer，不阻塞。Activate时才真正上传
-    void UploadBuffer(Frame buffer);
+    void UploadBuffer(VideoFrame buffer);
     
     /// 下载Buffer，OpenGL ES不支持
-    static std::optional<Frame> DownloadTexture(std::shared_ptr<GLTexture>texture, std::optional<GLenum> pixelFormat = {});
+    static std::optional<VideoFrame> DownloadTexture(std::shared_ptr<GLTexture>texture, std::optional<GLenum> pixelFormat = {});
     
     bool Activate();
     
@@ -44,7 +44,7 @@ public:
     GLsizei height() const { return _buffer ? _buffer->height : -1; }
     
     
-    std::optional<const Frame> getBuffer() const { return _buffer; }
+    std::optional<const VideoFrame> getBuffer() const { return _buffer; }
     
 protected:
     virtual bool _UploadBuffer();
@@ -55,7 +55,7 @@ protected:
     bool _needUpdate = true;        // 需要执行更新
     bool _needUpdateAll = false;    // 需要重建Texture
     
-    std::optional<Frame> _buffer;
+    std::optional<VideoFrame> _buffer;
     GLenum _textureWrapS = GL_CLAMP_TO_EDGE, _textureWrapT = GL_CLAMP_TO_EDGE;
     GLenum _textureMinFilter = GL_NEAREST, _textureMagFilter = GL_LINEAR;
 };

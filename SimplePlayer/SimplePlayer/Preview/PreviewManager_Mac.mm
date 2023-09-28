@@ -23,8 +23,8 @@
 #include "GLRendererPreview.hpp"
 #include "ImageReader.hpp"
 
-std::optional<sp::Frame> LoadBufferFromImage(NSImage *image) {
-    std::optional<sp::Frame> result;
+std::optional<sp::VideoFrame> LoadBufferFromImage(NSImage *image) {
+    std::optional<sp::VideoFrame> result;
     if (image == nil)
         return result;
     // 转CGImage
@@ -60,7 +60,7 @@ std::optional<sp::Frame> LoadBufferFromImage(NSImage *image) {
     CVPixelBufferUnlockBaseAddress(pixelBuf, 0);
     
     // 转data
-    sp::Frame imageBuffer;
+    sp::VideoFrame imageBuffer;
     imageBuffer.width = (GLsizei)width;
     imageBuffer.height = (GLsizei)height;
     imageBuffer.data = std::shared_ptr<uint8_t[]>(new uint8_t[width * height * 4]);
@@ -122,8 +122,8 @@ std::optional<sp::Frame> LoadBufferFromImage(NSImage *image) {
     std::shared_ptr<sp::GLTexture> imageTexture;
     std::shared_ptr<sp::GLTexture> charTexture;
     
-    std::optional<sp::Frame> imageBuffer;
-    std::optional<sp::Frame> charBuffer;
+    std::optional<sp::VideoFrame> imageBuffer;
+    std::optional<sp::VideoFrame> charBuffer;
 }
 
 @end
@@ -180,9 +180,9 @@ std::optional<sp::Frame> LoadBufferFromImage(NSImage *image) {
     pRenderer->UpdateTexture({imageTexture, charTexture});
     
     if (std::shared_ptr<sp::GLTexture> outputTexture = pRenderer->GetOutputTexture(); outputTexture == nullptr) {
-        pRenderer->UpdateOutputTexture(std::make_shared<sp::GLTexture>(pGLContext, sp::Frame{.width = imageTexture->width(), .height = imageTexture->height(), .pixelFormat = AV_PIX_FMT_RGBA}));
+        pRenderer->UpdateOutputTexture(std::make_shared<sp::GLTexture>(pGLContext, sp::VideoFrame{.width = imageTexture->width(), .height = imageTexture->height(), .pixelFormat = AV_PIX_FMT_RGBA}));
     } else if (outputTexture->width() != imageTexture->width() || outputTexture->height() != imageTexture->height()) {
-        outputTexture->UploadBuffer(sp::Frame{.width = imageTexture->width(), .height = imageTexture->height(), .pixelFormat = AV_PIX_FMT_RGBA});
+        outputTexture->UploadBuffer(sp::VideoFrame{.width = imageTexture->width(), .height = imageTexture->height(), .pixelFormat = AV_PIX_FMT_RGBA});
     }
     pRendererPreview->UpdateTexture({pRenderer->GetOutputTexture()});
     
@@ -199,7 +199,7 @@ std::optional<sp::Frame> LoadBufferFromImage(NSImage *image) {
     NSLog(@"耗时：%.2fms", [[NSDate  date] timeIntervalSinceDate:date] * 1000.0f);
 }
 
-- (void) setBuffer:(std::optional<sp::Frame>)frame {
+- (void) setBuffer:(std::optional<sp::VideoFrame>)frame {
     imageBuffer = frame;
 }
 
@@ -226,7 +226,7 @@ bool PreviewManager_Mac::setParentViews(void *parents) {
     return true;
 }
 
-bool PreviewManager_Mac::render(std::optional<sp::Frame> frame) {
+bool PreviewManager_Mac::render(std::optional<sp::VideoFrame> frame) {
     for (Preview_Mac *preview in previews) {
         [preview setBuffer:frame];
     }

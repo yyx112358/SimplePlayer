@@ -43,10 +43,10 @@ public:
     
     bool init(const std::string &path);
     bool unInit();
-    std::optional<Frame> getNextFrame();
+    std::optional<VideoFrame> getNextFrame();
     
 protected:
-    std::optional<Frame> _decodePacket(MediaType mediaType);
+    std::optional<VideoFrame> _decodePacket(MediaType mediaType);
     AVCodecContext *_getCodecCtx(MediaType mediaType);
     
 protected:
@@ -55,7 +55,7 @@ protected:
     struct AVPacket *_packet = nullptr;
     struct AVFrame *_frame = nullptr;
     struct SwsContext *_swsCtx = nullptr;
-    Frame _rgbaBuffer;
+    VideoFrame _rgbaBuffer;
 };
 
 

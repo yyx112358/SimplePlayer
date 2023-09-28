@@ -18,14 +18,14 @@ void GLTexture::TEXTURE_DELETER(GLuint id)
     glDeleteTextures(1, &id);
 }
    
-void GLTexture::UploadBuffer(Frame buffer)
+void GLTexture::UploadBuffer(VideoFrame buffer)
 {
     _needUpdateAll = _buffer.has_value() == false || _buffer->equalExceptData(buffer) == false;
     _needUpdate = true;
     _buffer = buffer;
 }
 
-std::optional<Frame> GLTexture::DownloadTexture(std::shared_ptr<GLTexture>texture, std::optional<GLenum> pixelFormat)
+std::optional<VideoFrame> GLTexture::DownloadTexture(std::shared_ptr<GLTexture>texture, std::optional<GLenum> pixelFormat)
 {
 //    // OpenGL ES不支持
 //    std::optional<Frame> buffer;
@@ -44,7 +44,7 @@ std::optional<Frame> GLTexture::DownloadTexture(std::shared_ptr<GLTexture>textur
 //        return buffer;
     
     // 支持所有OpenGL
-    std::optional<Frame> buffer;
+    std::optional<VideoFrame> buffer;
     if (texture == nullptr)
         return buffer;
     

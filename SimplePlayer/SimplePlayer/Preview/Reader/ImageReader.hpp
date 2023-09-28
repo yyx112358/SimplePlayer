@@ -11,7 +11,9 @@
 #include <string>
 #include <memory>
 
+extern "C" {
 #include "libavutil/pixfmt.h"
+}
 
 namespace sp {
 
