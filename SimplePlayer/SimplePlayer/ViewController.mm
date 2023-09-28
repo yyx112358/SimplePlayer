@@ -61,20 +61,20 @@
     if (decoder != nullptr) {
         int cnt = 10;
         do {
-            if (auto frame = decoder->getNextFrame(); frame.has_value()) {
-                preview->render(frame);
-                break;
+            if (auto pipeline = decoder->getNextFrame()) {
+                if (pipeline->status == sp::Pipeline::EStatus::END_OF_FILE) {
+                    [self exit];
+                    return;
+                }
+                
+                if (preview->render(pipeline) == true)
+                    break;
             }
-        } while(--cnt >= 0);
+        } while(cnt-- >= 0);
+        
         if (cnt < 0) {
-            decoder = nullptr;
-            preview = nullptr;
-            [self.view.window.windowController close];
-            __weak ViewController* wself = self;
-            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 500 * NSEC_PER_MSEC), dispatch_get_main_queue(), ^{
-                __strong ViewController *sself = wself;
-                [NSApp terminate:sself];
-            });
+            [self exit];
+            return;
         }
     }
 
@@ -83,6 +83,17 @@
 //        [subView setFrame:self.view.bounds];
         [subView setNeedsDisplay:YES];
     }
+}
+
+- (void)exit {
+    decoder = nullptr;
+    preview = nullptr;
+    [self.view.window.windowController close];
+    __weak ViewController* wself = self;
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 500 * NSEC_PER_MSEC), dispatch_get_main_queue(), ^{
+        __strong ViewController *sself = wself;
+        [NSApp terminate:sself];
+    });
 }
 
 @end
