@@ -21,6 +21,7 @@ public:
         UNINITILIZED,
         READY,
         END_OF_FILE,
+        ERROR,
     };
     
 public:

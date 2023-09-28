@@ -149,7 +149,10 @@ std::shared_ptr<Pipeline> DecoderManager::getNextFrame()
 {
     std::shared_ptr<Pipeline> pipeline = std::make_shared<Pipeline>();
     
-    RUN(av_read_frame(_fmtCtx, _packet), av_packet_unref(_packet);return pipeline;);
+    int ret = av_read_frame(_fmtCtx, _packet);
+    if (pipeline->status = _checkAVError(ret, "av_read_frame(_fmtCtx, _packet)"); pipeline->status != Pipeline::EStatus::READY) {
+        return pipeline;
+    }
     
     AVStream *stream = _getStream(MediaType::VIDEO);
     AVCodecContext *codecCtx = _getCodecCtx(MediaType::VIDEO);
@@ -188,21 +191,15 @@ bool DecoderManager::_decodePacket(std::shared_ptr<Pipeline> &pipeline, AVCodecC
     if (codecCtx == nullptr || packet == nullptr)
         return false;
     
-    RUN(avcodec_send_packet(codecCtx, packet), return false);
+    int ret = avcodec_send_packet(codecCtx, packet);
+    if (pipeline->status = _checkAVError(ret, "avcodec_send_packet(codecCtx, packet)"); pipeline->status != Pipeline::EStatus::READY) {
+        return false;
+    }
     
-    int ret = 0;
     while(ret >= 0) {
         
         ret = avcodec_receive_frame(codecCtx, frame);
-        if (ret == AVERROR(EAGAIN)) { // 还需要多解几帧
-            SPLOGV("Need Decode more", ret, av_err2str(ret));
-            break;
-        } else if (ret == AVERROR_EOF) { // 文件结束
-            SPLOGI("EOF frame", ret, av_err2str(ret));
-            pipeline->status = Pipeline::EStatus::END_OF_FILE;
-            break;
-        } else if (ret < 0) { // 错误
-            SPLOGE("avcodec_receive_frame error[%d] %s", ret, av_err2str(ret));
+        if (pipeline->status = _checkAVError(ret, "avcodec_receive_frame(codecCtx, frame)"); pipeline->status != Pipeline::EStatus::READY) {
             break;
         }
         pipeline->status = Pipeline::EStatus::READY;
@@ -253,7 +250,7 @@ bool DecoderManager::_decodePacket(std::shared_ptr<Pipeline> &pipeline, AVCodecC
 }
 
 
-AVCodecContext * DecoderManager::_getCodecCtx(MediaType mediaType) {
+AVCodecContext * DecoderManager::_getCodecCtx(MediaType mediaType) const {
     switch (mediaType) {
         case MediaType::VIDEO:          return _codecCtx[0];
         case MediaType::AUDIO:          return _codecCtx[1];
@@ -262,11 +259,30 @@ AVCodecContext * DecoderManager::_getCodecCtx(MediaType mediaType) {
     }
 }
 
-AVStream * DecoderManager::_getStream(MediaType mediaType) {
+AVStream * DecoderManager::_getStream(MediaType mediaType) const {
     switch (mediaType) {
         case MediaType::VIDEO:          return _stream[0];
         case MediaType::AUDIO:          return _stream[1];
             
         default:    return nullptr;
+    }
+}
+
+Pipeline::EStatus DecoderManager::_checkAVError(int code, const char *msg /*= nullptr*/) {
+    if (code == 0) { // 其它
+        return Pipeline::EStatus::READY;
+    } else if (code == AVERROR_EOF) { // 文件结束
+        SPLOGI("%s | [%d] %s", msg ? msg : "", code, av_err2str(code));
+        return Pipeline::EStatus::END_OF_FILE;
+    } else if (code < 0) { // 错误
+        SPLOGE("%s | [%d] %s", msg ? msg : "", code, av_err2str(code));
+        return Pipeline::EStatus::ERROR;
+    } else if (code == AVERROR(EAGAIN)) { // 还需要多解几帧
+        SPLOGV("%s | [%d] %s", msg ? msg : "", code, av_err2str(code));
+        return Pipeline::EStatus::UNINITILIZED;
+    } else { // 其它
+        SPLOGV("%s | [%d] %s", msg ? msg : "", code, av_err2str(code));
+        assert(0);
+        return Pipeline::EStatus::READY;
     }
 }

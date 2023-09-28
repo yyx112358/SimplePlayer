@@ -49,8 +49,11 @@ public:
 protected:
     bool _decodePacket(std::shared_ptr<Pipeline> &pipeline, AVCodecContext * const codecCtx, AVPacket * const packet, AVFrame * const frame) const;
     
-    AVCodecContext *_getCodecCtx(MediaType mediaType);
-    AVStream *_getStream(MediaType mediaType);
+    
+    AVCodecContext *_getCodecCtx(MediaType mediaType) const;
+    AVStream *_getStream(MediaType mediaType) const;
+    
+    static Pipeline::EStatus _checkAVError(int code, const char *msg = nullptr);
     
 protected:
     struct AVFormatContext *_fmtCtx = nullptr;

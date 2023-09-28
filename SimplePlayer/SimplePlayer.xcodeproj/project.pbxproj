@@ -43,7 +43,7 @@
 		7A658A062A35CAFF00955DB9 /* charTexture.bmp in Resources */ = {isa = PBXBuildFile; fileRef = 7A658A052A35CAFF00955DB9 /* charTexture.bmp */; };
 		7A658A0A2A35D4DA00955DB9 /* texture.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 7A658A092A35D4D900955DB9 /* texture.jpg */; };
 		7A6D8B492A33582600C40E5C /* IGLContext.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7A6D8B472A33582600C40E5C /* IGLContext.cpp */; };
-		7A6D8B4C2A3359DC00C40E5C /* GLRendererBase.mm in Sources */ = {isa = PBXBuildFile; fileRef = 7A6D8B4A2A3359DC00C40E5C /* GLRendererBase.mm */; };
+		7A6D8B4C2A3359DC00C40E5C /* GLRendererBase.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7A6D8B4A2A3359DC00C40E5C /* GLRendererBase.cpp */; };
 		7A8669442A2F8C78006E8CC6 /* BasicVertex.glsl in Resources */ = {isa = PBXBuildFile; fileRef = 7A8669432A2F8C78006E8CC6 /* BasicVertex.glsl */; };
 		7AA2BC6B2A5EAD5A00BACC4F /* libpostproc.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 7A31B6A52A5D553D0057E592 /* libpostproc.a */; };
 		7AA2BC6E2A5EAFF300BACC4F /* Sync.mp4 in Resources */ = {isa = PBXBuildFile; fileRef = 7AA2BC6D2A5EAFF300BACC4F /* Sync.mp4 */; };
@@ -112,7 +112,7 @@
 		7A658A092A35D4D900955DB9 /* texture.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = texture.jpg; sourceTree = "<group>"; };
 		7A6D8B472A33582600C40E5C /* IGLContext.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = IGLContext.cpp; sourceTree = "<group>"; };
 		7A6D8B482A33582600C40E5C /* IGLContext.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = IGLContext.hpp; sourceTree = "<group>"; };
-		7A6D8B4A2A3359DC00C40E5C /* GLRendererBase.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = GLRendererBase.mm; sourceTree = "<group>"; };
+		7A6D8B4A2A3359DC00C40E5C /* GLRendererBase.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = GLRendererBase.cpp; sourceTree = "<group>"; };
 		7A6D8B4B2A3359DC00C40E5C /* GLRendererBase.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = GLRendererBase.hpp; sourceTree = "<group>"; };
 		7A8669432A2F8C78006E8CC6 /* BasicVertex.glsl */ = {isa = PBXFileReference; lastKnownFileType = text; path = BasicVertex.glsl; sourceTree = "<group>"; };
 		7AA2BC6D2A5EAFF300BACC4F /* Sync.mp4 */ = {isa = PBXFileReference; lastKnownFileType = file; name = Sync.mp4; path = ../../DevelopDiary/SimplePlayer/Videos/Sync.mp4; sourceTree = "<group>"; };
@@ -274,7 +274,7 @@
 				7A8C80992AC306C80051A19F /* Audio */,
 				7AE0CC062A5AE39300F91B29 /* OpenGL */,
 				7A8669422A2F8C33006E8CC6 /* Shaders */,
-				7A6D8B4A2A3359DC00C40E5C /* GLRendererBase.mm */,
+				7A6D8B4A2A3359DC00C40E5C /* GLRendererBase.cpp */,
 				7A6D8B4B2A3359DC00C40E5C /* GLRendererBase.hpp */,
 				7A191B592A5B006C0016692E /* GLRendererPreview.cpp */,
 				7A191B5A2A5B006C0016692E /* GLRendererPreview.hpp */,
@@ -426,7 +426,7 @@
 				7A191B5E2A5B025B0016692E /* GLRendererCharPainting.cpp in Sources */,
 				7A2699A32A2B7E00009C722B /* ViewController.mm in Sources */,
 				7A191B532A5AEFCF0016692E /* GLFrameBuffer.cpp in Sources */,
-				7A6D8B4C2A3359DC00C40E5C /* GLRendererBase.mm in Sources */,
+				7A6D8B4C2A3359DC00C40E5C /* GLRendererBase.cpp in Sources */,
 				7AA2BC772A5EBDD400BACC4F /* DecoderManager.cpp in Sources */,
 				7A191B4D2A5AEFB40016692E /* GLRenderBuffer.cpp in Sources */,
 				7A6D8B492A33582600C40E5C /* IGLContext.cpp in Sources */,
