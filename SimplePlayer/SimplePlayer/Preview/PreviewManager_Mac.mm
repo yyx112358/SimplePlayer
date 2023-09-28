@@ -6,11 +6,15 @@
 //
 
 #import <Foundation/Foundation.h>
+#import <AudioToolbox/AudioToolbox.h>
+#import <AVFAudio/AVFAudio.h>
 #import <AppKit/NSImage.h>
 #include "PreviewManager_Mac.h"
 #include <string>
 #include <optional>
 #include <array>
+#include <queue>
+#include <mutex>
 #include <any>
 
 
@@ -196,7 +200,7 @@ std::optional<sp::VideoFrame> LoadBufferFromImage(NSImage *image) {
     pGLContext->Flush();
 //    glFinish(); // 添加glFinish()以阻塞等待GPU执行完成
 
-    NSLog(@"耗时：%.2fms", [[NSDate  date] timeIntervalSinceDate:date] * 1000.0f);
+//    NSLog(@"耗时：%.2fms", [[NSDate  date] timeIntervalSinceDate:date] * 1000.0f);
 }
 
 - (void) setBuffer:(std::shared_ptr<sp::VideoFrame>)frame {
@@ -205,7 +209,134 @@ std::optional<sp::VideoFrame> LoadBufferFromImage(NSImage *image) {
 
 @end
 
+void audioQueueOutputCallback(void *inUserData, AudioQueueRef inAQ, AudioQueueBufferRef inBuffer);
+
+@interface AudioSpeaker_Mac : NSObject
+{
+    AudioQueueRef audioQueue;          // 音频队列
+//    AudioQueueBufferRef audioBuffer;   // 音频缓冲区
+    std::queue<AudioQueueBufferRef> audioBufferQueue;
+    std::mutex audioBufferLock;
+    
+    bool isRunning;
+}
+
+
+- (instancetype)init;
+- (void)enqueue;
+- (void)enqueue:(std::shared_ptr<sp::AudioFrame>)audioFrame;
+
+
+
+@end
+
+
+@implementation AudioSpeaker_Mac
+
+- (instancetype)init {
+    if (self = [super init]) {
+        
+        // 创建音频队列
+        AudioStreamBasicDescription audioFormat;
+        audioFormat.mSampleRate = 44100.0;
+        audioFormat.mFormatID = kAudioFormatLinearPCM;
+        audioFormat.mFormatFlags = kAudioFormatFlagIsFloat | kAudioFormatFlagIsPacked;
+        audioFormat.mFramesPerPacket = 1;
+        audioFormat.mChannelsPerFrame = 1;
+        audioFormat.mBitsPerChannel = 32;
+        audioFormat.mBytesPerPacket = audioFormat.mBytesPerFrame = (audioFormat.mBitsPerChannel / 8) * audioFormat.mChannelsPerFrame;
+        
+        OSStatus status = AudioQueueNewOutput(&audioFormat, audioQueueOutputCallback, (__bridge void *)(self), NULL, NULL, 0, &audioQueue);
+        
+        // 创建音频缓冲区
+//        status = AudioQueueAllocateBuffer(audioQueue, 4096, &audioBuffer);
+        
+        // 填充音频数据到缓冲区
+        // memcpy(audioBuffer->mAudioData, pcmData, pcmDataSize);
+        // audioBuffer->mAudioDataByteSize = pcmDataSize;
+        
+        // 将缓冲区添加到音频队列中
+//        AudioQueueEnqueueBuffer(audioQueue, audioBuffer, 0, NULL);
+        
+        // 开始播放音频队列
+//        status = AudioQueueStart(audioQueue, NULL);
+        isRunning = false;
+    }
+    return self;
+}
+
+- (void)dealloc {
+    // 等待音频播放完成
+    AudioQueueFlush(audioQueue);
+    AudioQueueStop(audioQueue, true);
+    
+    // 销毁音频队列和缓冲区
+    AudioQueueDispose(audioQueue, true);
+    while (audioBufferQueue.size() > 0) {
+        audioBufferLock.lock();
+        AudioQueueBufferRef buffer = audioBufferQueue.front();
+        audioBufferQueue.pop();
+        audioBufferLock.unlock();
+        
+        AudioQueueFreeBuffer(audioQueue, buffer);
+    }
+}
+
+- (void)play {
+    if (isRunning == false && audioBufferQueue.size() > 0) {
+        AudioQueueEnqueueBuffer(audioQueue, [self deque], 0, 0);
+        AudioQueueStart(audioQueue, NULL);
+    }
+}
+
+- (void)enqueue:(std::shared_ptr<sp::AudioFrame>)audioFrame {
+    if (audioFrame == nullptr || audioFrame->data == nullptr)
+        return;
+    
+    OSStatus status = 0;
+    AudioQueueBufferRef audioBuffer = nullptr;
+    status = AudioQueueAllocateBuffer(audioQueue, (UInt32)audioFrame->dataSize, &audioBuffer);
+    memcpy(audioBuffer->mAudioData, audioFrame->data.get(), audioFrame->dataSize);
+    audioBuffer->mAudioDataByteSize = (UInt32)audioFrame->dataSize;
+    
+    // TODO: 支持队列上限
+    audioBufferLock.lock();
+    audioBufferQueue.push(audioBuffer);
+    audioBufferLock.unlock();
+}
+
+- (AudioQueueBufferRef)deque {
+    if (audioBufferQueue.empty())
+        return nullptr;
+    
+    audioBufferLock.lock();
+    AudioQueueBufferRef buffer = audioBufferQueue.front();
+    audioBufferQueue.pop();
+    audioBufferLock.unlock();
+
+    return buffer;
+}
+
+@end
+
+// 音频数据回调函数
+void audioQueueOutputCallback(void *inUserData, AudioQueueRef inAQ, AudioQueueBufferRef inBuffer) {
+    // 在回调函数中填充音频数据到缓冲区
+    // inBuffer->mAudioData 是缓冲区的数据指针
+    // inBuffer->mAudioDataByteSize 是缓冲区的大小
+    AudioSpeaker_Mac *speaker = (__bridge AudioSpeaker_Mac *)inUserData;
+    
+    // TODO: 支持队列上限
+    AudioQueueBufferRef audioBuffer = [speaker deque];
+    
+    
+    // 重新将缓冲区添加到音频队列中
+    AudioQueueEnqueueBuffer(inAQ, inBuffer, 0, NULL);
+    AudioQueueFreeBuffer(inAQ, inBuffer);// TODO: 支持回收
+}
+
 NSMutableArray<Preview_Mac *> *previews;
+NSMutableArray<AudioSpeaker_Mac *> *speakers;
 
 PreviewManager_Mac::~PreviewManager_Mac() {
     for (Preview_Mac *preview in previews) {
@@ -223,15 +354,27 @@ bool PreviewManager_Mac::setParentViews(void *parents) {
     [superView addSubview:preview];
     [previews addObject:preview];
     
+    if (speakers == nil)
+        speakers = [NSMutableArray array];
+    
+    AudioSpeaker_Mac * speaker = [AudioSpeaker_Mac new];
+    [speakers addObject:speaker];
+    
     return true;
 }
 
 bool PreviewManager_Mac::render(std::shared_ptr<sp::Pipeline> pipeline) {
-    if (pipeline->videoFrame == nullptr)
-        return false;
+    if (pipeline->videoFrame != nullptr) {
+        for (Preview_Mac *preview in previews) {
+            [preview setBuffer:pipeline->videoFrame];
+        }
+    }
     
-    for (Preview_Mac *preview in previews) {
-        [preview setBuffer:pipeline->videoFrame];
+    if (pipeline->audioFrame != nullptr) {
+        AudioSpeaker_Mac *speaker = speakers.firstObject;
+        [speaker enqueue:pipeline->audioFrame];
+        
+        [speakers.firstObject play];
     }
     
     return true;

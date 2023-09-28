@@ -226,7 +226,8 @@ bool DecoderManager::_decodePacket(std::shared_ptr<Pipeline> &pipeline, AVCodecC
         if (auto audioFrame = pipeline->audioFrame) {
 
             AVSampleFormat sampleFmt = (enum AVSampleFormat)frame->format;
-            size_t num = frame->nb_samples * av_get_bytes_per_sample(sampleFmt);
+            audioFrame->dataSize = frame->nb_samples * av_get_bytes_per_sample(sampleFmt);
+            audioFrame->data = std::shared_ptr<uint8_t[]>(new uint8_t[audioFrame->dataSize]);
             FILE *f = NULL;
             static bool first = true;
             if (first) {
@@ -237,7 +238,7 @@ bool DecoderManager::_decodePacket(std::shared_ptr<Pipeline> &pipeline, AVCodecC
                 f = fopen("audio.pcm", "ab+");
             }
             
-            fwrite(frame->extended_data[0], 1, num, f);
+            fwrite(frame->extended_data[0], 1, audioFrame->dataSize, f);
             fclose(f);
         }
 
@@ -274,12 +275,12 @@ Pipeline::EStatus DecoderManager::_checkAVError(int code, const char *msg /*= nu
     } else if (code == AVERROR_EOF) { // 文件结束
         SPLOGI("%s | [%d] %s", msg ? msg : "", code, av_err2str(code));
         return Pipeline::EStatus::END_OF_FILE;
+    }  else if (code == AVERROR(EAGAIN)) { // 还需要多解几帧
+        SPLOGV("%s | [%d] %s", msg ? msg : "", code, av_err2str(code));
+        return Pipeline::EStatus::UNINITILIZED;
     } else if (code < 0) { // 错误
         SPLOGE("%s | [%d] %s", msg ? msg : "", code, av_err2str(code));
         return Pipeline::EStatus::ERROR;
-    } else if (code == AVERROR(EAGAIN)) { // 还需要多解几帧
-        SPLOGV("%s | [%d] %s", msg ? msg : "", code, av_err2str(code));
-        return Pipeline::EStatus::UNINITILIZED;
     } else { // 其它
         SPLOGV("%s | [%d] %s", msg ? msg : "", code, av_err2str(code));
         assert(0);
