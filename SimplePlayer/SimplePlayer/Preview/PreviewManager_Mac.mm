@@ -122,7 +122,7 @@ std::optional<sp::VideoFrame> LoadBufferFromImage(NSImage *image) {
     std::shared_ptr<sp::GLTexture> imageTexture;
     std::shared_ptr<sp::GLTexture> charTexture;
     
-    std::optional<sp::VideoFrame> imageBuffer;
+    std::shared_ptr<sp::VideoFrame> imageBuffer;
     std::optional<sp::VideoFrame> charBuffer;
 }
 
@@ -166,7 +166,7 @@ std::optional<sp::VideoFrame> LoadBufferFromImage(NSImage *image) {
 - (void)drawRect:(NSRect)dirtyRect {
     NSDate *date = [NSDate date];
     [super drawRect:dirtyRect];
-    if (imageBuffer.has_value() == false || charBuffer.has_value() == false)
+    if (imageBuffer == nullptr || charBuffer.has_value() == false)
         return;
     NSLog(@"%@", NSStringFromRect(dirtyRect));
     
@@ -199,7 +199,7 @@ std::optional<sp::VideoFrame> LoadBufferFromImage(NSImage *image) {
     NSLog(@"耗时：%.2fms", [[NSDate  date] timeIntervalSinceDate:date] * 1000.0f);
 }
 
-- (void) setBuffer:(std::optional<sp::VideoFrame>)frame {
+- (void) setBuffer:(std::shared_ptr<sp::VideoFrame>)frame {
     imageBuffer = frame;
 }
 
@@ -226,9 +226,12 @@ bool PreviewManager_Mac::setParentViews(void *parents) {
     return true;
 }
 
-bool PreviewManager_Mac::render(std::optional<sp::VideoFrame> frame) {
+bool PreviewManager_Mac::render(std::shared_ptr<sp::Pipeline> pipeline) {
+    if (pipeline->videoFrame == nullptr)
+        return false;
+    
     for (Preview_Mac *preview in previews) {
-        [preview setBuffer:frame];
+        [preview setBuffer:pipeline->videoFrame];
     }
     
     return true;

@@ -10,10 +10,11 @@
 #include <string>
 #include <optional>
 
-#include "VideoFrameBase.hpp"
+#include "Pipeline.hpp"
 
 struct AVFormatContext;
 struct AVCodecContext;
+struct AVStream;
 struct AVPacket;
 struct AVFrame;
 struct SwsContext;
@@ -43,19 +44,21 @@ public:
     
     bool init(const std::string &path);
     bool unInit();
-    std::optional<VideoFrame> getNextFrame();
+    std::shared_ptr<Pipeline> getNextFrame();
     
 protected:
-    std::optional<VideoFrame> _decodePacket(MediaType mediaType);
+    bool _decodePacket(std::shared_ptr<Pipeline> &pipeline, AVCodecContext * const codecCtx, AVPacket * const packet, AVFrame * const frame) const;
+    
     AVCodecContext *_getCodecCtx(MediaType mediaType);
+    AVStream *_getStream(MediaType mediaType);
     
 protected:
     struct AVFormatContext *_fmtCtx = nullptr;
     struct AVCodecContext *_codecCtx[2] = {nullptr};
+    struct AVStream *_stream[2] = {nullptr};
     struct AVPacket *_packet = nullptr;
     struct AVFrame *_frame = nullptr;
     struct SwsContext *_swsCtx = nullptr;
-    VideoFrame _rgbaBuffer;
 };
 
 

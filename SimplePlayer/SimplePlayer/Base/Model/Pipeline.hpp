@@ -27,8 +27,8 @@ public:
     
     
 public:
-    std::shared_ptr<VideoFrame> videoFrames;
-    std::shared_ptr<AudioFrame> audioFrames;
+    std::shared_ptr<VideoFrame> videoFrame;
+    std::shared_ptr<AudioFrame> audioFrame;
     EStatus status = EStatus::UNINITILIZED;
 };
 

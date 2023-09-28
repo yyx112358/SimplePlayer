@@ -81,15 +81,11 @@ bool DecoderManager::init(const std::string &path)
         RUN_INIT(avcodec_open2(codecCtx, codec, nullptr));
         
         _codecCtx[0] = codecCtx;// 下标0固定为视频轨
-        
-        _rgbaBuffer.width = stream->codecpar->width;
-        _rgbaBuffer.height = stream->codecpar->height;
-        _rgbaBuffer.pixelFormat = AVPixelFormat::AV_PIX_FMT_RGBA;
-        _rgbaBuffer.data = std::shared_ptr<uint8_t[]>(new uint8_t[_rgbaBuffer.width * _rgbaBuffer.height * 4]);
+        _stream[0] = stream;
         
         // 颜色空间转换上下文
         AVPixelFormat srcPixelFormat = (AVPixelFormat)stream->codecpar->format;
-        _swsCtx = sws_getContext(_rgbaBuffer.width, _rgbaBuffer.height, srcPixelFormat, 1920, 1080, AVPixelFormat::AV_PIX_FMT_RGBA, SWS_FAST_BILINEAR, nullptr, nullptr, nullptr);
+        _swsCtx = sws_getContext(stream->codecpar->width, stream->codecpar->height, srcPixelFormat, 1920, 1080, AVPixelFormat::AV_PIX_FMT_RGBA, SWS_FAST_BILINEAR, nullptr, nullptr, nullptr);
     }
     
 
@@ -110,6 +106,7 @@ bool DecoderManager::init(const std::string &path)
         RUN_INIT(avcodec_open2(codecCtx, codec, nullptr));
         
         _codecCtx[1] = codecCtx;// 下标1固定为音频轨
+        _stream[1] = stream;
     } else {
         SPLOGE("Audio stream NOT FOUND!");
     }
@@ -148,66 +145,91 @@ bool DecoderManager::unInit() {
     return true;
 }
 
-std::optional<VideoFrame> DecoderManager::getNextFrame()
+std::shared_ptr<Pipeline> DecoderManager::getNextFrame()
 {
-    std::optional<VideoFrame> result;
+    std::shared_ptr<Pipeline> pipeline = std::make_shared<Pipeline>();
     
-    RUN(av_read_frame(_fmtCtx, _packet), av_packet_unref(_packet);return result;);
-
+    RUN(av_read_frame(_fmtCtx, _packet), av_packet_unref(_packet);return pipeline;);
+    
+    AVStream *stream = _getStream(MediaType::VIDEO);
+    AVCodecContext *codecCtx = _getCodecCtx(MediaType::VIDEO);
     if (_packet->stream_index == 0) {
-        result = _decodePacket(MediaType::VIDEO);
-    } else if (_packet->stream_index == 1) {
-        result = _decodePacket(MediaType::AUDIO);
-    }
         
-    av_packet_unref(_packet);
+        auto videoFrame = std::make_shared<VideoFrame>();
+        videoFrame->width = stream->codecpar->width;
+        videoFrame->height = stream->codecpar->height;
+        videoFrame->pixelFormat = static_cast<AVPixelFormat>(stream->codecpar->format);
+        
+        pipeline->videoFrame = videoFrame;
+    } else if (_packet->stream_index == 1) {
+
+        stream = _getStream(MediaType::AUDIO);
+        codecCtx = _getCodecCtx(MediaType::AUDIO);
+        auto audioFrame = std::make_shared<AudioFrame>();
+        
+        audioFrame->sampleRate = stream->codecpar->sample_rate;
+        audioFrame->sampleFormat = static_cast<AVSampleFormat>(stream->codecpar->format);
+        
+        pipeline->audioFrame = audioFrame;
+    }
     
-    return result;
+    bool suc = _decodePacket(pipeline, codecCtx, _packet, _frame);
+//    assert(suc);
+    if (suc == false) {
+        pipeline->videoFrame = nullptr;
+        pipeline->audioFrame = nullptr;
+    }
+    
+    return pipeline;
 }
 
-std::optional<VideoFrame> DecoderManager::_decodePacket(MediaType mediaType)
+bool DecoderManager::_decodePacket(std::shared_ptr<Pipeline> &pipeline, AVCodecContext * const codecCtx, AVPacket * const packet, AVFrame * const frame) const
 {
-    std::optional<VideoFrame> result;
-    AVCodecContext *codecCtx = _getCodecCtx(mediaType);
-    if (codecCtx == nullptr || _packet == nullptr)
-        return result;
+    if (codecCtx == nullptr || packet == nullptr)
+        return false;
     
-    RUN(avcodec_send_packet(codecCtx, _packet), return result);
+    RUN(avcodec_send_packet(codecCtx, packet), return false);
     
     int ret = 0;
     while(ret >= 0) {
         
-        ret = avcodec_receive_frame(codecCtx, _frame);
+        ret = avcodec_receive_frame(codecCtx, frame);
         if (ret == AVERROR(EAGAIN)) { // 还需要多解几帧
             SPLOGV("Need Decode more", ret, av_err2str(ret));
             break;
         } else if (ret == AVERROR_EOF) { // 文件结束
             SPLOGI("EOF frame", ret, av_err2str(ret));
+            pipeline->status = Pipeline::EStatus::END_OF_FILE;
             break;
         } else if (ret < 0) { // 错误
             SPLOGE("avcodec_receive_frame error[%d] %s", ret, av_err2str(ret));
             break;
         }
+        pipeline->status = Pipeline::EStatus::READY;
         
-        SPLOGD("pts:%d", _frame->pts);
-        
+        SPLOGD("pts:%d", frame->pts);
 
-        if (mediaType == MediaType::VIDEO) {
-            uint8_t *dstData[4] = {_rgbaBuffer.data.get()};
-            int dstLineSizes[4] = {_frame->width * 4};
+        if (auto videoFrame = pipeline->videoFrame) {
+
+            videoFrame->data = std::shared_ptr<uint8_t[]>(new uint8_t[videoFrame->width * videoFrame->height * 4]);
+            uint8_t *dstData[4] = {videoFrame->data.get()};
+            int dstLineSizes[4] = {frame->width * 4};
             
-            sws_scale(_swsCtx, _frame->data, _frame->linesize, 0, _rgbaBuffer.height, dstData, dstLineSizes);
-            _rgbaBuffer.pixelFormat = AVPixelFormat::AV_PIX_FMT_RGBA;
-            _rgbaBuffer.pts = _frame->pts;
+            sws_scale(_swsCtx, frame->data, frame->linesize, 0, videoFrame->height, dstData, dstLineSizes);
+            videoFrame->pixelFormat = AVPixelFormat::AV_PIX_FMT_RGBA;
+            videoFrame->pts = frame->pts;
+            
             static bool isSave = true;
             if (isSave) {
-                writeBMP2File("decode.bmp", _rgbaBuffer.data.get(), _frame->width, _frame->height, 4);
+                writeBMP2File("decode.bmp", videoFrame->data.get(), frame->width, frame->height, 4);
                 isSave = false;
             }
-            result = _rgbaBuffer;
-        } else if (mediaType == MediaType::AUDIO) {
-            AVSampleFormat sampleFmt = (enum AVSampleFormat)_frame->format;
-            size_t num = _frame->nb_samples * av_get_bytes_per_sample(sampleFmt);
+        }
+        
+        if (auto audioFrame = pipeline->audioFrame) {
+
+            AVSampleFormat sampleFmt = (enum AVSampleFormat)frame->format;
+            size_t num = frame->nb_samples * av_get_bytes_per_sample(sampleFmt);
             FILE *f = NULL;
             static bool first = true;
             if (first) {
@@ -218,21 +240,32 @@ std::optional<VideoFrame> DecoderManager::_decodePacket(MediaType mediaType)
                 f = fopen("audio.pcm", "ab+");
             }
             
-            fwrite(_frame->extended_data[0], 1, num, f);
+            fwrite(frame->extended_data[0], 1, num, f);
             fclose(f);
         }
 
-        av_frame_unref(_frame);
+        av_frame_unref(frame);
     }
     
-    return result;
+    av_packet_unref(packet);
+    
+    return true;
 }
 
 
-AVCodecContext *DecoderManager::_getCodecCtx(MediaType mediaType) {
+AVCodecContext * DecoderManager::_getCodecCtx(MediaType mediaType) {
     switch (mediaType) {
         case MediaType::VIDEO:          return _codecCtx[0];
         case MediaType::AUDIO:          return _codecCtx[1];
+            
+        default:    return nullptr;
+    }
+}
+
+AVStream * DecoderManager::_getStream(MediaType mediaType) {
+    switch (mediaType) {
+        case MediaType::VIDEO:          return _stream[0];
+        case MediaType::AUDIO:          return _stream[1];
             
         default:    return nullptr;
     }

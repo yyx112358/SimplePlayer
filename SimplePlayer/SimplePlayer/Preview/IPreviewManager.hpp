@@ -11,7 +11,7 @@
 #include <memory>
 #include <optional>
 
-#include "VideoFrameBase.hpp"
+#include "Pipeline.hpp"
 
 class IPreviewManager {
 public:
@@ -20,7 +20,7 @@ public:
 public:
     virtual bool setParentViews(void *parents) = 0;
     
-    virtual bool render(std::optional<sp::VideoFrame> frame) = 0;
+    virtual bool render(std::shared_ptr<sp::Pipeline> pipeline) = 0;
 };
 
 #endif /* IPreviewManager_hpp */
