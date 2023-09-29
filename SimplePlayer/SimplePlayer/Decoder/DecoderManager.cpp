@@ -149,6 +149,7 @@ std::shared_ptr<Pipeline> DecoderManager::getNextFrame()
 {
     std::shared_ptr<Pipeline> pipeline = std::make_shared<Pipeline>();
     
+    // TODO: getNextFrame应能进行重试以确保输出一帧
     int ret = av_read_frame(_fmtCtx, _packet);
     if (pipeline->status = _checkAVError(ret, "av_read_frame(_fmtCtx, _packet)"); pipeline->status != Pipeline::EStatus::READY) {
         return pipeline;
@@ -177,7 +178,7 @@ std::shared_ptr<Pipeline> DecoderManager::getNextFrame()
     }
     
     bool suc = _decodePacket(pipeline, codecCtx, _packet, _frame);
-//    assert(suc);
+    
     if (suc == false) {
         pipeline->videoFrame = nullptr;
         pipeline->audioFrame = nullptr;
@@ -196,10 +197,11 @@ bool DecoderManager::_decodePacket(std::shared_ptr<Pipeline> &pipeline, AVCodecC
         return false;
     }
     
-    while(ret >= 0) {
+    do {
         
         ret = avcodec_receive_frame(codecCtx, frame);
         if (pipeline->status = _checkAVError(ret, "avcodec_receive_frame(codecCtx, frame)"); pipeline->status != Pipeline::EStatus::READY) {
+            av_frame_unref(frame);
             break;
         }
         pipeline->status = Pipeline::EStatus::READY;
@@ -244,11 +246,11 @@ bool DecoderManager::_decodePacket(std::shared_ptr<Pipeline> &pipeline, AVCodecC
         }
 
         av_frame_unref(frame);
-    }
+    } while(ret > 0);
     
     av_packet_unref(packet);
     
-    return true;
+    return pipeline->status == Pipeline::EStatus::READY;
 }
 
 
@@ -277,8 +279,8 @@ Pipeline::EStatus DecoderManager::_checkAVError(int code, const char *msg /*= nu
         SPLOGI("%s | [%d] %s", msg ? msg : "", code, av_err2str(code));
         return Pipeline::EStatus::END_OF_FILE;
     }  else if (code == AVERROR(EAGAIN)) { // 还需要多解几帧
-        SPLOGV("%s | [%d] %s", msg ? msg : "", code, av_err2str(code));
-        return Pipeline::EStatus::UNINITILIZED;
+        SPLOGI("%s | [%d] %s", msg ? msg : "", code, av_err2str(code));
+        return Pipeline::EStatus::TEMPORARILY_UNAVALIABLE;
     } else if (code < 0) { // 错误
         SPLOGE("%s | [%d] %s", msg ? msg : "", code, av_err2str(code));
         return Pipeline::EStatus::ERROR;

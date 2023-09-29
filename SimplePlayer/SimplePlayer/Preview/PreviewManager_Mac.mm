@@ -204,6 +204,9 @@ std::optional<sp::VideoFrame> LoadBufferFromImage(NSImage *image) {
 }
 
 - (void) setBuffer:(std::shared_ptr<sp::VideoFrame>)frame {
+    if (frame != nullptr && frame->data != nullptr) {
+        assert(frame->pixelFormat == AV_PIX_FMT_RGBA);
+    }
     imageBuffer = frame;
 }
 
@@ -248,18 +251,6 @@ void audioQueueOutputCallback(void *inUserData, AudioQueueRef inAQ, AudioQueueBu
         
         OSStatus status = AudioQueueNewOutput(&audioFormat, audioQueueOutputCallback, (__bridge void *)(self), NULL, NULL, 0, &audioQueue);
         
-        // 创建音频缓冲区
-//        status = AudioQueueAllocateBuffer(audioQueue, 4096, &audioBuffer);
-        
-        // 填充音频数据到缓冲区
-        // memcpy(audioBuffer->mAudioData, pcmData, pcmDataSize);
-        // audioBuffer->mAudioDataByteSize = pcmDataSize;
-        
-        // 将缓冲区添加到音频队列中
-//        AudioQueueEnqueueBuffer(audioQueue, audioBuffer, 0, NULL);
-        
-        // 开始播放音频队列
-//        status = AudioQueueStart(audioQueue, NULL);
         isRunning = false;
     }
     return self;
@@ -364,7 +355,7 @@ bool PreviewManager_Mac::setParentViews(void *parents) {
 }
 
 bool PreviewManager_Mac::render(std::shared_ptr<sp::Pipeline> pipeline) {
-    if (pipeline->videoFrame != nullptr) {
+    if (pipeline->videoFrame != nullptr && pipeline->videoFrame->data != nullptr) {
         for (Preview_Mac *preview in previews) {
             [preview setBuffer:pipeline->videoFrame];
         }
