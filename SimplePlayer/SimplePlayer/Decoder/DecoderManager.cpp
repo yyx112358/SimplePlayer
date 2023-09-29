@@ -225,9 +225,11 @@ bool DecoderManager::_decodePacket(std::shared_ptr<Pipeline> &pipeline, AVCodecC
         
         if (auto audioFrame = pipeline->audioFrame) {
 
-            AVSampleFormat sampleFmt = (enum AVSampleFormat)frame->format;
-            audioFrame->dataSize = frame->nb_samples * av_get_bytes_per_sample(sampleFmt);
+            audioFrame->sampleFormat = (enum AVSampleFormat)frame->format;
+            audioFrame->dataSize = frame->nb_samples * av_get_bytes_per_sample(audioFrame->sampleFormat);
             audioFrame->data = std::shared_ptr<uint8_t[]>(new uint8_t[audioFrame->dataSize]);
+            memcpy(audioFrame->data.get(), frame->extended_data[0], audioFrame->dataSize);
+            
             FILE *f = NULL;
             static bool first = true;
             if (first) {
@@ -237,7 +239,6 @@ bool DecoderManager::_decodePacket(std::shared_ptr<Pipeline> &pipeline, AVCodecC
                 // 本地播放命令行：ffplay -f f32le -ar 44100 -ac 1 -i /Users/yangyixuan/Library/Containers/com.yyx.SimplePlayer/Data/audio.pcm
                 f = fopen("audio.pcm", "ab+");
             }
-            
             fwrite(frame->extended_data[0], 1, audioFrame->dataSize, f);
             fclose(f);
         }
