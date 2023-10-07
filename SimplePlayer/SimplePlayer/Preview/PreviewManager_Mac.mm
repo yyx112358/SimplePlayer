@@ -277,6 +277,7 @@ void audioQueueOutputCallback(void *inUserData, AudioQueueRef inAQ, AudioQueueBu
     if (isRunning == false && audioBufferQueue.size() > 0) {
         AudioQueueEnqueueBuffer(audioQueue, [self deque], 0, 0);
         AudioQueueStart(audioQueue, NULL);
+        isRunning = true;
     }
 }
 
@@ -319,11 +320,15 @@ void audioQueueOutputCallback(void *inUserData, AudioQueueRef inAQ, AudioQueueBu
     
     // TODO: 支持队列上限
     AudioQueueBufferRef audioBuffer = [speaker deque];
-    
+    if (audioBuffer == nil) {
+        AudioQueueEnqueueBuffer(inAQ, inBuffer, 0, NULL);
+        return;
+    }
+    memcpy(inBuffer->mAudioData, audioBuffer->mAudioData, audioBuffer->mAudioDataByteSize);
     
     // 重新将缓冲区添加到音频队列中
     AudioQueueEnqueueBuffer(inAQ, inBuffer, 0, NULL);
-    AudioQueueFreeBuffer(inAQ, inBuffer);// TODO: 支持回收
+    AudioQueueFreeBuffer(inAQ, audioBuffer);// TODO: 支持回收
 }
 
 NSMutableArray<Preview_Mac *> *previews;

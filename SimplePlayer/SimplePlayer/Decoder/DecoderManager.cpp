@@ -231,6 +231,9 @@ bool DecoderManager::_decodePacket(std::shared_ptr<Pipeline> &pipeline, AVCodecC
             audioFrame->dataSize = frame->nb_samples * av_get_bytes_per_sample(audioFrame->sampleFormat);
             audioFrame->data = std::shared_ptr<uint8_t[]>(new uint8_t[audioFrame->dataSize]);
             memcpy(audioFrame->data.get(), frame->extended_data[0], audioFrame->dataSize);
+#if DEBUG
+            memcpy(audioFrame->debugData, frame->extended_data[0], audioFrame->dataSize);
+#endif
             
             FILE *f = NULL;
             static bool first = true;

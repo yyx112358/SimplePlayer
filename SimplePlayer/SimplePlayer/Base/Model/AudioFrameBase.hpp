@@ -23,6 +23,9 @@ struct AudioFrame {
     enum AVSampleFormat sampleFormat = AV_SAMPLE_FMT_NONE;
     
     std::shared_ptr<uint8_t[]> data = nullptr;
+#if DEBUG
+    float debugData[4096] = {0};
+#endif
 };
 
 
