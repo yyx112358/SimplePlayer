@@ -214,22 +214,24 @@ std::optional<sp::VideoFrame> LoadBufferFromImage(NSImage *image) {
 
 @end
 
+/// 音频回调函数
 void audioQueueOutputCallback(void *inUserData, AudioQueueRef inAQ, AudioQueueBufferRef inBuffer);
+
+/// 音频帧等待时长，超时将停止音频播放
+constexpr int AUDIO_SPEAKER_WAIT_BUFFER_DURATION = 50;
 
 @interface AudioSpeaker_Mac : NSObject
 {
+    AudioStreamBasicDescription audioFormat;
     AudioQueueRef audioQueue;          // 音频队列
     sp::RingQueue<std::shared_ptr<sp::AudioFrame>, 3> audioBufferQueue;
-    
-    bool isRunning;
 }
 
+@property (nonatomic, readonly) BOOL isRunning;
 
 - (instancetype)init;
 - (void)enqueue;
 - (void)enqueue:(std::shared_ptr<sp::AudioFrame>)audioFrame;
-
-
 
 @end
 
@@ -240,7 +242,6 @@ void audioQueueOutputCallback(void *inUserData, AudioQueueRef inAQ, AudioQueueBu
     if (self = [super init]) {
         
         // 创建音频队列
-        AudioStreamBasicDescription audioFormat;
         audioFormat.mSampleRate = 44100.0;
         audioFormat.mFormatID = kAudioFormatLinearPCM;
         audioFormat.mFormatFlags = kAudioFormatFlagIsFloat | kAudioFormatFlagIsPacked;
@@ -254,7 +255,6 @@ void audioQueueOutputCallback(void *inUserData, AudioQueueRef inAQ, AudioQueueBu
             SPLOGE("AudioQueueNewOutput Failed: %d", status);
         }
         
-        isRunning = false;
     }
     return self;
 }
@@ -268,22 +268,37 @@ void audioQueueOutputCallback(void *inUserData, AudioQueueRef inAQ, AudioQueueBu
     AudioQueueDispose(audioQueue, true);
 }
 
+- (BOOL)isRunning {
+    UInt32 outData = 0, ioDataSize = sizeof(outData);
+    AudioQueueGetProperty(audioQueue, kAudioQueueProperty_IsRunning, &outData, &ioDataSize);
+    return outData != 0;
+}
+
+- (AudioStreamBasicDescription)getAudioFormat {
+    return audioFormat;
+}
+
 - (void)play {
-    if (isRunning == false && audioBufferQueue.empty() == false) {
-        AudioQueueBufferRef audioBuffer = nil;
-        auto audioFrame = [self deque];
-        [self frameToBuffer:audioFrame audioBuffer:&audioBuffer];
-        AudioQueueEnqueueBuffer(audioQueue, audioBuffer, 0, 0);
-        
+    if (self.isRunning == false) {
+        if (audioBufferQueue.empty() == false) {
+            AudioQueueBufferRef audioBuffer = nil;
+            auto audioFrame = [self deque];
+            [self frameToBuffer:audioFrame audioBuffer:&audioBuffer];
+            AudioQueueEnqueueBuffer(audioQueue, audioBuffer, 0, 0);
+        }
         AudioQueueStart(audioQueue, NULL);
-        isRunning = true;
     }
 }
 
 - (void)stop {
-    if (isRunning == true) {
-        
+    if (self.isRunning == true) {
+        AudioQueueFlush(audioQueue);
+        AudioQueueStop(audioQueue, true);
     }
+}
+
+- (void)pause {
+    AudioQueuePause(audioQueue);
 }
 
 - (void)enqueue:(std::shared_ptr<sp::AudioFrame>)audioFrame {
@@ -326,25 +341,31 @@ void audioQueueOutputCallback(void *inUserData, AudioQueueRef inAQ, AudioQueueBu
 
 // 音频数据回调函数
 void audioQueueOutputCallback(void *inUserData, AudioQueueRef inAQ, AudioQueueBufferRef inBuffer) {
-    // 在回调函数中填充音频数据到缓冲区
-    // inBuffer->mAudioData 是缓冲区的数据指针
-    // inBuffer->mAudioDataByteSize 是缓冲区的大小
     AudioSpeaker_Mac *speaker = (__bridge AudioSpeaker_Mac *)inUserData;
-    
-    std::shared_ptr<sp::AudioFrame> audioFrame = [speaker deque];
-    if (audioFrame == nullptr) {
-        // 如果长期未能收到数据，AudioQueue将无法正常播放。
-        // FIXME: 暂时采用重新添加旧Buffer的方式，待解码器移入独立线程后再处理
-        OSStatus status = AudioQueueEnqueueBuffer(inAQ, inBuffer, 0, NULL);
+  
+    // 循环等待下一段音频数据
+    std::shared_ptr<sp::AudioFrame> audioFrame;
+    int repeat = AUDIO_SPEAKER_WAIT_BUFFER_DURATION; // TODO: 根据sampleRate动态调整
+    do {
+        audioFrame = [speaker deque];
+        [NSThread sleepForTimeInterval:0.001];
+        
+        if (speaker.isRunning == false)
+            return;
+    } while (audioFrame == nullptr && --repeat > 0);
+
+    // 长时间等待无效果，则终止音频播放。可能出现爆音、卡顿
+    if (repeat <= 0) {
+        SPLOGE("AudioQueueEnqueueBuffer failed");
+        [speaker stop];
         return;
     }
-    [speaker frameToBuffer:audioFrame audioBuffer:&inBuffer];
     
     // 重新将缓冲区添加到音频队列中
+    [speaker frameToBuffer:audioFrame audioBuffer:&inBuffer];
     OSStatus status = AudioQueueEnqueueBuffer(inAQ, inBuffer, 0, NULL);
-    SPLOGE("AudioQueueEnqueueBuffer");
     if (status != 0) {
-//        speaker->isRunning = NO;
+        [speaker stop];
     }
 }
 
