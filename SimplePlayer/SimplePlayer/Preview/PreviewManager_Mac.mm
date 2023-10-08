@@ -218,7 +218,7 @@ std::optional<sp::VideoFrame> LoadBufferFromImage(NSImage *image) {
 void audioQueueOutputCallback(void *inUserData, AudioQueueRef inAQ, AudioQueueBufferRef inBuffer);
 
 /// 音频帧等待时长，超时将停止音频播放
-constexpr int AUDIO_SPEAKER_WAIT_BUFFER_DURATION = 50;
+constexpr int AUDIO_SPEAKER_WAIT_BUFFER_DURATION = 15;
 
 @interface AudioSpeaker_Mac : NSObject
 {
@@ -242,7 +242,7 @@ constexpr int AUDIO_SPEAKER_WAIT_BUFFER_DURATION = 50;
     if (self = [super init]) {
         
         // 创建音频队列
-        audioFormat.mSampleRate = 44100.0;
+        audioFormat.mSampleRate = 48000;
         audioFormat.mFormatID = kAudioFormatLinearPCM;
         audioFormat.mFormatFlags = kAudioFormatFlagIsFloat | kAudioFormatFlagIsPacked;
         audioFormat.mFramesPerPacket = 1;
@@ -282,7 +282,7 @@ constexpr int AUDIO_SPEAKER_WAIT_BUFFER_DURATION = 50;
     if (self.isRunning == false) {
         if (audioBufferQueue.empty() == false) {
             AudioQueueBufferRef audioBuffer = nil;
-            auto audioFrame = [self deque];
+            auto audioFrame = [self dequeue];
             [self frameToBuffer:audioFrame audioBuffer:&audioBuffer];
             AudioQueueEnqueueBuffer(audioQueue, audioBuffer, 0, 0);
         }
@@ -308,7 +308,7 @@ constexpr int AUDIO_SPEAKER_WAIT_BUFFER_DURATION = 50;
     audioBufferQueue.enqueue(audioFrame);
 }
 
-- (std::shared_ptr<sp::AudioFrame>)deque {
+- (std::shared_ptr<sp::AudioFrame>)dequeue {
     if (audioBufferQueue.empty())
         return nullptr;
     else
@@ -332,6 +332,9 @@ constexpr int AUDIO_SPEAKER_WAIT_BUFFER_DURATION = 50;
     
     AudioQueueBufferRef audioBuffer = *pAudioBuffer;
     assert(audioFrame->dataSize <= audioBuffer->mAudioDataBytesCapacity);
+    assert(audioFrame->sampleFormat == AV_SAMPLE_FMT_FLTP);
+    assert(audioFrame->sampleRate == audioFormat.mSampleRate);
+//    assert(audioFrame->channels == audioFormat.mChannelsPerFrame);
     memcpy(audioBuffer->mAudioData, audioFrame->data.get(), audioFrame->dataSize);
     audioBuffer->mAudioDataByteSize = (UInt32)audioFrame->dataSize;
     
@@ -345,20 +348,20 @@ void audioQueueOutputCallback(void *inUserData, AudioQueueRef inAQ, AudioQueueBu
   
     // 循环等待下一段音频数据
     std::shared_ptr<sp::AudioFrame> audioFrame;
-    int repeat = AUDIO_SPEAKER_WAIT_BUFFER_DURATION; // TODO: 根据sampleRate动态调整
+    int repeat = 10; // TODO: 根据sampleRate动态调整。目前实验等待15ms是可以恢复播放的，保留一定余量，超时定为10ms
     do {
-        audioFrame = [speaker deque];
+        audioFrame = [speaker dequeue];
         [NSThread sleepForTimeInterval:0.001];
         
         if (speaker.isRunning == false)
             return;
     } while (audioFrame == nullptr && --repeat > 0);
 
-    // 长时间等待无效果，则终止音频播放。可能出现爆音、卡顿
+    // 长时间等待无效果，则填充静音帧。可能出现爆音、卡顿
+    // TODO: 填充静音帧而不是stop，可能会导致收到新buffer时延迟10~20ms才能收到，是否有必要优化呢？
     if (repeat <= 0) {
-        SPLOGE("AudioQueueEnqueueBuffer failed");
-        [speaker stop];
-        return;
+        SPLOGE("dequeue audio buffer failed");
+        memset(inBuffer->mAudioData, 0, inBuffer->mAudioDataByteSize);
     }
     
     // 重新将缓冲区添加到音频队列中
