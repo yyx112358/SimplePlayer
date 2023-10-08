@@ -22,10 +22,12 @@
 #import <Cocoa/Cocoa.h>
 #import <OpenGL/gl3.h>
 
+#include "SPLog.h"
 #include "GLContextMac.hpp"
 #include "GLRendererCharPainting.hpp"
 #include "GLRendererPreview.hpp"
 #include "ImageReader.hpp"
+#include "RingQueue.hpp"
 
 std::optional<sp::VideoFrame> LoadBufferFromImage(NSImage *image) {
     std::optional<sp::VideoFrame> result;
@@ -172,7 +174,7 @@ std::optional<sp::VideoFrame> LoadBufferFromImage(NSImage *image) {
     [super drawRect:dirtyRect];
     if (imageBuffer == nullptr || charBuffer.has_value() == false)
         return;
-    NSLog(@"%@", NSStringFromRect(dirtyRect));
+//    NSLog(@"%@", NSStringFromRect(dirtyRect));
     
     pGLContext->SwitchContext();
     
@@ -217,9 +219,7 @@ void audioQueueOutputCallback(void *inUserData, AudioQueueRef inAQ, AudioQueueBu
 @interface AudioSpeaker_Mac : NSObject
 {
     AudioQueueRef audioQueue;          // 音频队列
-//    AudioQueueBufferRef audioBuffer;   // 音频缓冲区
-    std::queue<AudioQueueBufferRef> audioBufferQueue;
-    std::mutex audioBufferLock;
+    sp::RingQueue<std::shared_ptr<sp::AudioFrame>, 3> audioBufferQueue;
     
     bool isRunning;
 }
@@ -250,6 +250,9 @@ void audioQueueOutputCallback(void *inUserData, AudioQueueRef inAQ, AudioQueueBu
         audioFormat.mBytesPerPacket = audioFormat.mBytesPerFrame = (audioFormat.mBitsPerChannel / 8) * audioFormat.mChannelsPerFrame;
         
         OSStatus status = AudioQueueNewOutput(&audioFormat, audioQueueOutputCallback, (__bridge void *)(self), NULL, NULL, 0, &audioQueue);
+        if (status != 0) {
+            SPLOGE("AudioQueueNewOutput Failed: %d", status);
+        }
         
         isRunning = false;
     }
@@ -263,21 +266,23 @@ void audioQueueOutputCallback(void *inUserData, AudioQueueRef inAQ, AudioQueueBu
     
     // 销毁音频队列和缓冲区
     AudioQueueDispose(audioQueue, true);
-    while (audioBufferQueue.size() > 0) {
-        audioBufferLock.lock();
-        AudioQueueBufferRef buffer = audioBufferQueue.front();
-        audioBufferQueue.pop();
-        audioBufferLock.unlock();
-        
-        AudioQueueFreeBuffer(audioQueue, buffer);
-    }
 }
 
 - (void)play {
-    if (isRunning == false && audioBufferQueue.size() > 0) {
-        AudioQueueEnqueueBuffer(audioQueue, [self deque], 0, 0);
+    if (isRunning == false && audioBufferQueue.empty() == false) {
+        AudioQueueBufferRef audioBuffer = nil;
+        auto audioFrame = [self deque];
+        [self frameToBuffer:audioFrame audioBuffer:&audioBuffer];
+        AudioQueueEnqueueBuffer(audioQueue, audioBuffer, 0, 0);
+        
         AudioQueueStart(audioQueue, NULL);
         isRunning = true;
+    }
+}
+
+- (void)stop {
+    if (isRunning == true) {
+        
     }
 }
 
@@ -285,28 +290,36 @@ void audioQueueOutputCallback(void *inUserData, AudioQueueRef inAQ, AudioQueueBu
     if (audioFrame == nullptr || audioFrame->data == nullptr)
         return;
     
-    OSStatus status = 0;
-    AudioQueueBufferRef audioBuffer = nullptr;
-    status = AudioQueueAllocateBuffer(audioQueue, (UInt32)audioFrame->dataSize, &audioBuffer);
+    audioBufferQueue.enqueue(audioFrame);
+}
+
+- (std::shared_ptr<sp::AudioFrame>)deque {
+    if (audioBufferQueue.empty())
+        return nullptr;
+    else
+        return audioBufferQueue.deque();
+}
+
+- (void)frameToBuffer:(std::shared_ptr<sp::AudioFrame>)audioFrame audioBuffer:(AudioQueueBufferRef *)pAudioBuffer {
+    
+    if (audioFrame == nullptr)
+        return;
+    
+    if (*pAudioBuffer == nullptr) {
+        OSStatus status = 0;
+        status = AudioQueueAllocateBuffer(audioQueue, (UInt32)audioFrame->dataSize, pAudioBuffer);
+        NSAssert(status == 0, @"AudioQueueAllocateBuffer Failed: %d", status);
+        if (status != 0) {
+            SPLOGE("AudioQueueAllocateBuffer Failed: %d", status);
+            return;
+        }
+    }
+    
+    AudioQueueBufferRef audioBuffer = *pAudioBuffer;
+    assert(audioFrame->dataSize <= audioBuffer->mAudioDataBytesCapacity);
     memcpy(audioBuffer->mAudioData, audioFrame->data.get(), audioFrame->dataSize);
     audioBuffer->mAudioDataByteSize = (UInt32)audioFrame->dataSize;
     
-    // TODO: 支持队列上限
-    audioBufferLock.lock();
-    audioBufferQueue.push(audioBuffer);
-    audioBufferLock.unlock();
-}
-
-- (AudioQueueBufferRef)deque {
-    if (audioBufferQueue.empty())
-        return nullptr;
-    
-    audioBufferLock.lock();
-    AudioQueueBufferRef buffer = audioBufferQueue.front();
-    audioBufferQueue.pop();
-    audioBufferLock.unlock();
-
-    return buffer;
 }
 
 @end
@@ -318,17 +331,21 @@ void audioQueueOutputCallback(void *inUserData, AudioQueueRef inAQ, AudioQueueBu
     // inBuffer->mAudioDataByteSize 是缓冲区的大小
     AudioSpeaker_Mac *speaker = (__bridge AudioSpeaker_Mac *)inUserData;
     
-    // TODO: 支持队列上限
-    AudioQueueBufferRef audioBuffer = [speaker deque];
-    if (audioBuffer == nil) {
-        AudioQueueEnqueueBuffer(inAQ, inBuffer, 0, NULL);
+    std::shared_ptr<sp::AudioFrame> audioFrame = [speaker deque];
+    if (audioFrame == nullptr) {
+        // 如果长期未能收到数据，AudioQueue将无法正常播放。
+        // FIXME: 暂时采用重新添加旧Buffer的方式，待解码器移入独立线程后再处理
+        OSStatus status = AudioQueueEnqueueBuffer(inAQ, inBuffer, 0, NULL);
         return;
     }
-    memcpy(inBuffer->mAudioData, audioBuffer->mAudioData, audioBuffer->mAudioDataByteSize);
+    [speaker frameToBuffer:audioFrame audioBuffer:&inBuffer];
     
     // 重新将缓冲区添加到音频队列中
-    AudioQueueEnqueueBuffer(inAQ, inBuffer, 0, NULL);
-    AudioQueueFreeBuffer(inAQ, audioBuffer);// TODO: 支持回收
+    OSStatus status = AudioQueueEnqueueBuffer(inAQ, inBuffer, 0, NULL);
+    SPLOGE("AudioQueueEnqueueBuffer");
+    if (status != 0) {
+//        speaker->isRunning = NO;
+    }
 }
 
 NSMutableArray<Preview_Mac *> *previews;
@@ -338,6 +355,7 @@ PreviewManager_Mac::~PreviewManager_Mac() {
     for (Preview_Mac *preview in previews) {
         [preview removeFromSuperview];
     }
+    speakers = nil;
     [previews removeAllObjects];
 }
 

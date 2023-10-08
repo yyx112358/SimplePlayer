@@ -24,7 +24,7 @@ struct AudioFrame {
     
     std::shared_ptr<uint8_t[]> data = nullptr;
 #if DEBUG
-    float debugData[4096] = {0};
+    float debugData[1024] = {0};
 #endif
 };
 
