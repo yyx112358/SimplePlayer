@@ -222,9 +222,9 @@ constexpr int AUDIO_SPEAKER_WAIT_BUFFER_DURATION = 15;
 
 @interface AudioSpeaker_Mac : NSObject
 {
-    AudioStreamBasicDescription audioFormat;
-    AudioQueueRef audioQueue;          // 音频队列
-    sp::RingQueue<std::shared_ptr<sp::AudioFrame>, 3> audioBufferQueue;
+    AudioStreamBasicDescription _audioFormat;
+    AudioQueueRef _audioQueue;          // 音频队列
+    sp::RingQueue<std::shared_ptr<sp::AudioFrame>, 3> _audioBufferQueue;
 }
 
 @property (nonatomic, readonly) BOOL isRunning;
@@ -242,15 +242,15 @@ constexpr int AUDIO_SPEAKER_WAIT_BUFFER_DURATION = 15;
     if (self = [super init]) {
         
         // 创建音频队列
-        audioFormat.mSampleRate = 48000;
-        audioFormat.mFormatID = kAudioFormatLinearPCM;
-        audioFormat.mFormatFlags = kAudioFormatFlagIsFloat | kAudioFormatFlagIsPacked;
-        audioFormat.mFramesPerPacket = 1;
-        audioFormat.mChannelsPerFrame = 1;
-        audioFormat.mBitsPerChannel = 32;
-        audioFormat.mBytesPerPacket = audioFormat.mBytesPerFrame = (audioFormat.mBitsPerChannel / 8) * audioFormat.mChannelsPerFrame;
+        _audioFormat.mSampleRate = 48000;
+        _audioFormat.mFormatID = kAudioFormatLinearPCM;
+        _audioFormat.mFormatFlags = kAudioFormatFlagIsFloat | kAudioFormatFlagIsPacked;
+        _audioFormat.mFramesPerPacket = 1;
+        _audioFormat.mChannelsPerFrame = 1;
+        _audioFormat.mBitsPerChannel = 32;
+        _audioFormat.mBytesPerPacket = _audioFormat.mBytesPerFrame = (_audioFormat.mBitsPerChannel / 8) * _audioFormat.mChannelsPerFrame;
         
-        OSStatus status = AudioQueueNewOutput(&audioFormat, audioQueueOutputCallback, (__bridge void *)(self), NULL, NULL, 0, &audioQueue);
+        OSStatus status = AudioQueueNewOutput(&_audioFormat, audioQueueOutputCallback, (__bridge void *)(self), NULL, NULL, 0, &_audioQueue);
         if (status != 0) {
             SPLOGE("AudioQueueNewOutput Failed: %d", status);
         }
@@ -261,58 +261,58 @@ constexpr int AUDIO_SPEAKER_WAIT_BUFFER_DURATION = 15;
 
 - (void)dealloc {
     // 等待音频播放完成
-    AudioQueueFlush(audioQueue);
-    AudioQueueStop(audioQueue, true);
+    AudioQueueFlush(_audioQueue);
+    AudioQueueStop(_audioQueue, true);
     
     // 销毁音频队列和缓冲区
-    AudioQueueDispose(audioQueue, true);
+    AudioQueueDispose(_audioQueue, true);
 }
 
 - (BOOL)isRunning {
     UInt32 outData = 0, ioDataSize = sizeof(outData);
-    AudioQueueGetProperty(audioQueue, kAudioQueueProperty_IsRunning, &outData, &ioDataSize);
+    AudioQueueGetProperty(_audioQueue, kAudioQueueProperty_IsRunning, &outData, &ioDataSize);
     return outData != 0;
 }
 
 - (AudioStreamBasicDescription)getAudioFormat {
-    return audioFormat;
+    return _audioFormat;
 }
 
 - (void)play {
     if (self.isRunning == false) {
-        if (audioBufferQueue.empty() == false) {
+        if (_audioBufferQueue.empty() == false) {
             AudioQueueBufferRef audioBuffer = nil;
             auto audioFrame = [self dequeue];
             [self frameToBuffer:audioFrame audioBuffer:&audioBuffer];
-            AudioQueueEnqueueBuffer(audioQueue, audioBuffer, 0, 0);
+            AudioQueueEnqueueBuffer(_audioQueue, audioBuffer, 0, 0);
         }
-        AudioQueueStart(audioQueue, NULL);
+        AudioQueueStart(_audioQueue, NULL);
     }
 }
 
 - (void)stop {
     if (self.isRunning == true) {
-        AudioQueueFlush(audioQueue);
-        AudioQueueStop(audioQueue, true);
+        AudioQueueFlush(_audioQueue);
+        AudioQueueStop(_audioQueue, true);
     }
 }
 
 - (void)pause {
-    AudioQueuePause(audioQueue);
+    AudioQueuePause(_audioQueue);
 }
 
 - (void)enqueue:(std::shared_ptr<sp::AudioFrame>)audioFrame {
     if (audioFrame == nullptr || audioFrame->data == nullptr)
         return;
     
-    audioBufferQueue.enqueue(audioFrame);
+    _audioBufferQueue.enqueue(audioFrame);
 }
 
 - (std::shared_ptr<sp::AudioFrame>)dequeue {
-    if (audioBufferQueue.empty())
+    if (_audioBufferQueue.empty())
         return nullptr;
     else
-        return audioBufferQueue.deque();
+        return _audioBufferQueue.deque();
 }
 
 - (void)frameToBuffer:(std::shared_ptr<sp::AudioFrame>)audioFrame audioBuffer:(AudioQueueBufferRef *)pAudioBuffer {
@@ -322,7 +322,7 @@ constexpr int AUDIO_SPEAKER_WAIT_BUFFER_DURATION = 15;
     
     if (*pAudioBuffer == nullptr) {
         OSStatus status = 0;
-        status = AudioQueueAllocateBuffer(audioQueue, (UInt32)audioFrame->dataSize, pAudioBuffer);
+        status = AudioQueueAllocateBuffer(_audioQueue, (UInt32)audioFrame->dataSize, pAudioBuffer);
         NSAssert(status == 0, @"AudioQueueAllocateBuffer Failed: %d", status);
         if (status != 0) {
             SPLOGE("AudioQueueAllocateBuffer Failed: %d", status);
@@ -333,7 +333,7 @@ constexpr int AUDIO_SPEAKER_WAIT_BUFFER_DURATION = 15;
     AudioQueueBufferRef audioBuffer = *pAudioBuffer;
     assert(audioFrame->dataSize <= audioBuffer->mAudioDataBytesCapacity);
     assert(audioFrame->sampleFormat == AV_SAMPLE_FMT_FLTP);
-    assert(audioFrame->sampleRate == audioFormat.mSampleRate);
+    assert(audioFrame->sampleRate == _audioFormat.mSampleRate);
 //    assert(audioFrame->channels == audioFormat.mChannelsPerFrame);
     memcpy(audioBuffer->mAudioData, audioFrame->data.get(), audioFrame->dataSize);
     audioBuffer->mAudioDataByteSize = (UInt32)audioFrame->dataSize;
