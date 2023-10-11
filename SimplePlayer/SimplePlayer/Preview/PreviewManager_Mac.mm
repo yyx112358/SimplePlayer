@@ -217,8 +217,6 @@ std::optional<sp::VideoFrame> LoadBufferFromImage(NSImage *image) {
 /// 音频回调函数
 void audioQueueOutputCallback(void *inUserData, AudioQueueRef inAQ, AudioQueueBufferRef inBuffer);
 
-/// 音频帧等待时长，超时将停止音频播放
-constexpr int AUDIO_SPEAKER_WAIT_BUFFER_DURATION = 15;
 
 @interface AudioSpeaker_Mac : NSObject
 {
@@ -238,18 +236,27 @@ constexpr int AUDIO_SPEAKER_WAIT_BUFFER_DURATION = 15;
 
 @implementation AudioSpeaker_Mac
 
+/// 使用默认配置初始化
 - (instancetype)init {
+
+    AudioStreamBasicDescription audioFormat;
+    audioFormat.mSampleRate = 44100;
+    audioFormat.mFormatID = kAudioFormatLinearPCM;
+    audioFormat.mFormatFlags = kAudioFormatFlagIsFloat | kAudioFormatFlagIsPacked;
+    audioFormat.mFramesPerPacket = 1;
+    audioFormat.mChannelsPerFrame = 1;
+    audioFormat.mBitsPerChannel = 32;
+    audioFormat.mBytesPerPacket = audioFormat.mBytesPerFrame = (audioFormat.mBitsPerChannel / 8) * audioFormat.mChannelsPerFrame;
+    
+    return [self initWithAudioFormat:audioFormat];
+}
+
+/// 使用给定audioFormat初始化
+- (instancetype)initWithAudioFormat:(AudioStreamBasicDescription)audioFormat {
+    
     if (self = [super init]) {
-        
         // 创建音频队列
-        _audioFormat.mSampleRate = 48000;
-        _audioFormat.mFormatID = kAudioFormatLinearPCM;
-        _audioFormat.mFormatFlags = kAudioFormatFlagIsFloat | kAudioFormatFlagIsPacked;
-        _audioFormat.mFramesPerPacket = 1;
-        _audioFormat.mChannelsPerFrame = 1;
-        _audioFormat.mBitsPerChannel = 32;
-        _audioFormat.mBytesPerPacket = _audioFormat.mBytesPerFrame = (_audioFormat.mBitsPerChannel / 8) * _audioFormat.mChannelsPerFrame;
-        
+        _audioFormat = audioFormat;
         OSStatus status = AudioQueueNewOutput(&_audioFormat, audioQueueOutputCallback, (__bridge void *)(self), NULL, NULL, 0, &_audioQueue);
         if (status != 0) {
             SPLOGE("AudioQueueNewOutput Failed: %d", status);
@@ -348,7 +355,7 @@ void audioQueueOutputCallback(void *inUserData, AudioQueueRef inAQ, AudioQueueBu
   
     // 循环等待下一段音频数据
     std::shared_ptr<sp::AudioFrame> audioFrame;
-    int repeat = 10; // TODO: 根据sampleRate动态调整。目前实验等待15ms是可以恢复播放的，保留一定余量，超时定为10ms
+    int repeat = 10; // 音频帧等待时长，超时将停止音频播放 TODO: 根据sampleRate动态调整。目前实验等待15ms是可以恢复播放的，保留一定余量，超时定为10ms
     do {
         audioFrame = [speaker dequeue];
         [NSThread sleepForTimeInterval:0.001];
@@ -392,12 +399,6 @@ bool PreviewManager_Mac::setParentViews(void *parents) {
     [superView addSubview:preview];
     [previews addObject:preview];
     
-    if (speakers == nil)
-        speakers = [NSMutableArray array];
-    
-    AudioSpeaker_Mac * speaker = [AudioSpeaker_Mac new];
-    [speakers addObject:speaker];
-    
     return true;
 }
 
@@ -409,6 +410,54 @@ bool PreviewManager_Mac::render(std::shared_ptr<sp::Pipeline> pipeline) {
     }
     
     if (pipeline->audioFrame != nullptr) {
+        
+        // TODO: 应该有一个专门的解析流程，将Preview、Speaker的创建和配置集中起来
+        // TODO: 不支持更改音频配置。如果存在采样率等参数不一致，应加入一个converter过程做音频重采样
+        if (speakers == nil) {
+            speakers = [NSMutableArray array];
+            
+            std::shared_ptr<sp::AudioFrame> audioFrame = pipeline->audioFrame;
+            AudioStreamBasicDescription audioFormat;
+            
+            // 因为FFMpeg已经解码为PCM数据，因此mFormatID固定为PCM，mFramesPerPacket固定为1。
+            audioFormat.mFormatID = kAudioFormatLinearPCM;
+            audioFormat.mFramesPerPacket = 1;
+            switch (audioFrame->sampleFormat) {
+                case AV_SAMPLE_FMT_FLTP:
+                    audioFormat.mFormatFlags = kAudioFormatFlagIsFloat;
+                    audioFormat.mBitsPerChannel = 8 * sizeof(float);
+                    break;
+                    
+                default:
+                    SPASSERT_NOT_IMPL;
+            }
+            audioFormat.mSampleRate = audioFrame->sampleRate;
+            audioFormat.mChannelsPerFrame = audioFrame->channels;
+            audioFormat.mBytesPerFrame = audioFormat.mBytesPerPacket = (audioFormat.mBitsPerChannel / 8) * audioFormat.mChannelsPerFrame;
+            
+            /* 使用系统AudioFileStream解析的代码
+            NSURL *audioFileURL = [NSURL fileURLWithPath:"audio.mp3"];
+            AudioFileID audioFile;
+            OSStatus status = AudioFileOpenURL((__bridge CFURLRef)audioFileURL, kAudioFileReadPermission, 0, &audioFile);
+            if (status != noErr) {
+                // 处理打开音频文件失败的情况
+                return;
+            }
+            AudioStreamBasicDescription audioStreamDesc;
+            UInt32 size = sizeof(audioStreamDesc);
+            status = AudioFileGetProperty(audioFile, kAudioFilePropertyDataFormat, &size, &audioStreamDesc);
+            if (status != noErr) {
+                // 处理获取音频流描述信息失败的情况
+                AudioFileClose(audioFile);
+                return;
+            }
+            AudioFileClose(audioFile);
+            */
+
+            AudioSpeaker_Mac * speaker = [[AudioSpeaker_Mac alloc] initWithAudioFormat:audioFormat];
+            [speakers addObject:speaker];
+        }
+        
         AudioSpeaker_Mac *speaker = speakers.firstObject;
         [speaker enqueue:pipeline->audioFrame];
         

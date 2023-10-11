@@ -230,11 +230,31 @@ bool DecoderManager::_decodePacket(std::shared_ptr<Pipeline> &pipeline, AVCodecC
             audioFrame->channels = frame->ch_layout.nb_channels;
             audioFrame->pts = frame->pts;
             audioFrame->sampleFormat = (enum AVSampleFormat)frame->format;
-            audioFrame->dataSize = frame->nb_samples * av_get_bytes_per_sample(audioFrame->sampleFormat);
+            audioFrame->dataSize = frame->nb_samples * av_get_bytes_per_sample(audioFrame->sampleFormat) * frame->ch_layout.nb_channels;
             audioFrame->data = std::shared_ptr<uint8_t[]>(new uint8_t[audioFrame->dataSize]);
-            memcpy(audioFrame->data.get(), frame->extended_data[0], audioFrame->dataSize);
+            
+            if (av_sample_fmt_is_planar(audioFrame->sampleFormat)) { // 非交错
+                // 转换为交错数据。LLL  RRR -> LRLRLR
+                const int sampleSize = av_get_bytes_per_sample(audioFrame->sampleFormat);
+                const int srcStride = sampleSize;
+                const int dstStride = frame->ch_layout.nb_channels * sampleSize;
+
+                for (int channel = 0; channel < frame->ch_layout.nb_channels; channel++) {
+                    uint8_t *psrc = frame->data[channel];
+                    uint8_t *pdst = audioFrame->data.get() + sampleSize * channel;
+                    for (int i = 0; i < frame->nb_samples; i++) {
+                        memcpy(pdst, psrc, sampleSize);
+                        psrc += srcStride;
+                        pdst += dstStride;
+                    }
+                }
+            } else { // 交错
+                memcpy(audioFrame->data.get(), frame->extended_data[0], audioFrame->dataSize);
+            }
+            
 #if DEBUG
-            memcpy(audioFrame->debugData, frame->extended_data[0], audioFrame->dataSize);
+            SPASSERTEX(audioFrame->dataSize <= sizeof(audioFrame->debugData), "Size error. Modify AudioFrame::debugData[] length");
+            memcpy(audioFrame->debugData, audioFrame->data.get(), audioFrame->dataSize);
 
             FILE *f = NULL;
             static bool first = true;
@@ -245,7 +265,7 @@ bool DecoderManager::_decodePacket(std::shared_ptr<Pipeline> &pipeline, AVCodecC
                 // 本地播放命令行：ffplay -f f32le -ar 44100 -ac 1 -i /Users/yangyixuan/Library/Containers/com.yyx.SimplePlayer/Data/audio.pcm
                 f = fopen("audio.pcm", "ab+");
             }
-            fwrite(frame->extended_data[0], 1, audioFrame->dataSize, f);
+            fwrite(audioFrame->data.get(), 1, audioFrame->dataSize, f);
             fclose(f);
 #endif
         }

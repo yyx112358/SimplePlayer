@@ -22,10 +22,10 @@ struct AudioFrame {
     int channels = 2;
     enum AVSampleFormat sampleFormat = AV_SAMPLE_FMT_NONE;
     
-    int64_t dataSize = -1;
+    int64_t dataSize = -1;  /// 所有声道音频帧总大小，单位：Byte
     std::shared_ptr<uint8_t[]> data = nullptr;
 #if DEBUG
-    float debugData[1024] = {0};
+    float debugData[2048] = {0};
 #endif
 };
 
