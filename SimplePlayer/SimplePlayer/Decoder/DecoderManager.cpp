@@ -291,7 +291,7 @@ Pipeline::EStatus DecoderManager::_checkAVError(int code, const char *msg /*= nu
         return Pipeline::EStatus::ERROR;
     } else { // 其它
         SPLOGV("%s | [%d] %s", msg ? msg : "", code, av_err2str(code));
-        assert(0);
+        SPASSERT(0);
         return Pipeline::EStatus::READY;
     }
 }

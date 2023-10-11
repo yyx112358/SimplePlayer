@@ -49,6 +49,15 @@ void SPLog(const ESPLogLevel level, const char *fuction, int line, const char *f
 #endif
 
 
+extern void SP_Assert(bool condition, const char *conditionDesc, const char *function, const char *file, int line, const char *description, ...);
+
+#define SPASSERT0(condition) SP_Assert(condition, #condition, __PRETTY_FUNCTION__, __FILE_NAME__, __LINE__, NULL)
+#define SPASSERT1(condition, desc, ...) SP_Assert(condition, #condition, __PRETTY_FUNCTION__, __FILE_NAME__, __LINE__, desc, ##__VA_ARGS__)
+
+#define SPASSERT            SPASSERT0
+#define SPASSERTEX          SPASSERT1
+#define SPASSERT_NOT_IMPL   SPASSERT(0)
+
 #ifdef __cplusplus
 }
 #endif

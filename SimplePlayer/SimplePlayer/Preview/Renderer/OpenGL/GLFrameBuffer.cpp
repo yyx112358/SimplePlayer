@@ -30,8 +30,8 @@ bool GLFrameBuffer::Activate()
         if (GLCheckError())
             return false;
         
-        assert(_attachTextures.size() > 0 || _attachRenderBuffers.size() > 0);
-        assert(_attachTextures.size() + _attachRenderBuffers.size() <= 16);
+        SPASSERT(_attachTextures.size() > 0 || _attachRenderBuffers.size() > 0);
+        SPASSERT(_attachTextures.size() + _attachRenderBuffers.size() <= 16);
         
         GLenum attachId = GL_COLOR_ATTACHMENT0;
         // Texture附着到FBO

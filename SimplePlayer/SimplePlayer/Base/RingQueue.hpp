@@ -13,6 +13,8 @@
 #include <atomic>
 #include <functional>
 
+#include "SPLog.h"
+
 
 namespace sp {
 
@@ -95,12 +97,12 @@ public:
     }
     
     Tp& front() {
-        assert(empty() == false);
+        SPASSERT(empty() == false);
         return _buffer[(_head - 1) % Capacity];
     }
     
     Tp& back() {
-        assert(empty() == false);
+        SPASSERT(empty() == false);
         return _buffer[_tail % Capacity];
     }
     

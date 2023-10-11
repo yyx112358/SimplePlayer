@@ -86,7 +86,7 @@ bool GLRendererPreview::_InternalRender()
     glClearColor(1, 1, 1, 1);
     glClear(GL_COLOR_BUFFER_BIT);
     
-    assert(_textures.size() > 0);
+    SPASSERT(_textures.size() > 0);
     if (_textures.size() == 0)
         return false;
     

@@ -55,7 +55,7 @@ bool GLRendererBase::_InternalRender()
     
     _vertexArray.Activate();
     for (int i = 0; i < _textures.size(); i++) {
-        assert(_textures[i]->id().has_value());
+        SPASSERT(_textures[i]->id().has_value());
         
         glActiveTexture(GL_TEXTURE0 + i); // 激活纹理单元1
         _textures[i]->Activate(); // 绑定纹理。根据上下文，这个纹理绑定到了纹理单元1

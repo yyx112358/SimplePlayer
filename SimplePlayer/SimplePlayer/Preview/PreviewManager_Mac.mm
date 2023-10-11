@@ -207,7 +207,7 @@ std::optional<sp::VideoFrame> LoadBufferFromImage(NSImage *image) {
 
 - (void) setBuffer:(std::shared_ptr<sp::VideoFrame>)frame {
     if (frame != nullptr && frame->data != nullptr) {
-        assert(frame->pixelFormat == AV_PIX_FMT_RGBA);
+        SPASSERT(frame->pixelFormat == AV_PIX_FMT_RGBA);
     }
     imageBuffer = frame;
 }
@@ -323,7 +323,7 @@ constexpr int AUDIO_SPEAKER_WAIT_BUFFER_DURATION = 15;
     if (*pAudioBuffer == nullptr) {
         OSStatus status = 0;
         status = AudioQueueAllocateBuffer(_audioQueue, (UInt32)audioFrame->dataSize, pAudioBuffer);
-        NSAssert(status == 0, @"AudioQueueAllocateBuffer Failed: %d", status);
+        SPASSERTEX(status == 0, "AudioQueueAllocateBuffer Failed: %d", status);
         if (status != 0) {
             SPLOGE("AudioQueueAllocateBuffer Failed: %d", status);
             return;
@@ -331,10 +331,10 @@ constexpr int AUDIO_SPEAKER_WAIT_BUFFER_DURATION = 15;
     }
     
     AudioQueueBufferRef audioBuffer = *pAudioBuffer;
-    assert(audioFrame->dataSize <= audioBuffer->mAudioDataBytesCapacity);
-    assert(audioFrame->sampleFormat == AV_SAMPLE_FMT_FLTP);
-    assert(audioFrame->sampleRate == _audioFormat.mSampleRate);
-//    assert(audioFrame->channels == audioFormat.mChannelsPerFrame);
+    SPASSERT(audioFrame->dataSize <= audioBuffer->mAudioDataBytesCapacity);
+    SPASSERT(audioFrame->sampleFormat == AV_SAMPLE_FMT_FLTP);
+    SPASSERT(audioFrame->sampleRate == _audioFormat.mSampleRate);
+//    SPASSERT(audioFrame->channels == audioFormat.mChannelsPerFrame);
     memcpy(audioBuffer->mAudioData, audioFrame->data.get(), audioFrame->dataSize);
     audioBuffer->mAudioDataByteSize = (UInt32)audioFrame->dataSize;
     

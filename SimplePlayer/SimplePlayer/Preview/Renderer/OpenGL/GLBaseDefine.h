@@ -12,11 +12,11 @@
 #include <optional>
 
 #if __APPLE__
-
 #define GL_SILENCE_DEPRECATION
 #import <OpenGL/gl3.h>
-
 #endif
+
+#include "SPLog.h"
 
 
 // 持有GL ID，支持自动释放
@@ -25,13 +25,13 @@ class GL_IdHolder {
 public:
     typedef void (*DELETER)(GLuint);
 public:
-    explicit GL_IdHolder(DELETER deleter): _id(std::nullopt), _deleter(deleter) { assert(_deleter != nullptr); }
+    explicit GL_IdHolder(DELETER deleter): _id(std::nullopt), _deleter(deleter) { SPASSERT(_deleter != nullptr); }
     explicit GL_IdHolder(std::optional<GLuint>id, DELETER deleter): _id(id), _deleter(deleter) { assert(_deleter != nullptr); }
-    GL_IdHolder(GL_IdHolder &&other): _id(other.release()), _deleter(other._deleter) { assert(_deleter != nullptr); }
+    GL_IdHolder(GL_IdHolder &&other): _id(other.release()), _deleter(other._deleter) { SPASSERT(_deleter != nullptr); }
     GL_IdHolder(const GL_IdHolder &) = delete;
     GL_IdHolder& operator= (GL_IdHolder &&other)
     {
-        assert(other._deleter == _deleter);
+        SPASSERT(other._deleter == _deleter);
         reset(other.release());
         return *this;
     }

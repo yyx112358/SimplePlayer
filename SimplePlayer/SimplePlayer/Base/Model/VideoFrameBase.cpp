@@ -6,6 +6,7 @@
 //
 
 #include "VideoFrameBase.hpp"
+#include "SPLog.h"
 
 #include <OpenGL/gl3.h>
 
@@ -18,6 +19,6 @@ bool VideoFrame::equalExceptData(const VideoFrame &other) const {
 uint32_t sp::VideoFrame::glFormat() const {
     switch (this->pixelFormat) {
         case AV_PIX_FMT_RGBA: return GL_RGBA;
-        default: assert(0); return GL_RGBA;
+        default: SPASSERT_NOT_IMPL; return GL_RGBA;
     }
 }

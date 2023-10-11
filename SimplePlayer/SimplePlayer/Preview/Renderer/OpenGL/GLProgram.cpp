@@ -34,7 +34,7 @@ bool GLProgram::Activate()
     _context->SwitchContext();
     
     _programId = _CompileOrGetProgram();
-    assert(_programId.has_value());
+    SPASSERT(_programId.has_value());
     if (_programId.has_value()) {
         glUseProgram(*_programId);
         FlushUniform();
@@ -87,8 +87,7 @@ GL_IdHolder GLProgram::_CompileShader(GLenum shaderType, const std::string &sour
     if (!success) {
         char buf[512];
         glGetShaderInfoLog(shaderId, sizeof(buf), NULL, buf);
-        SPLOGD("%s", buf);
-        assert(0);
+        SPASSERTEX(0, "%s", buf);
     } else {
         shader.reset(shaderId);
         SPLOGD("Create shader %d", *shader);
@@ -113,8 +112,7 @@ GL_IdHolder GLProgram::_CompileProgram(const std::vector<GL_IdHolder> &shaders) 
     if (!success) {
         char buf[512];
         glGetProgramInfoLog(shaderProgram, sizeof(buf), NULL, buf);
-        SPLOGD("%s", buf);
-        assert(0);
+        SPASSERTEX(0, "%s", buf);
     } else {
         programId.reset(shaderProgram);
         SPLOGD("Create program %d", *programId);
@@ -170,7 +168,7 @@ void GLProgram::_UpdateUniform()
         
         // 查找对应location
         GLint location = glGetUniformLocation(*_programId, uniPair.first.c_str());
-        assert(location >= 0);
+        SPASSERTEX(location >= 0, "Unable to find uniform %s in shader", uniPair.first.c_str());
         
         // 根据type调用对应的glUniformx()
         if (std::holds_alternative<int>(value))
@@ -180,7 +178,7 @@ void GLProgram::_UpdateUniform()
         else if (std::holds_alternative<glm::mat4>(value))
             glUniformMatrix4fv(location, 1, GL_FALSE, glm::value_ptr(std::get<glm::mat4>(value)));
         else
-            assert(0);
+            SPASSERTEX(0, "Unsupport uniform type");
     }
     _uniformMap.clear();
 }

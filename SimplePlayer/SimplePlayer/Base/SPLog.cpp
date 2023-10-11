@@ -6,6 +6,7 @@
 //
 
 #include "SPLog.h"
+#include <stdlib.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <chrono>
@@ -40,5 +41,36 @@ void SPLog(const ESPLogLevel level, const char *fuction, int line, const char *f
     putchar('\n');
     
     va_end(args);
+}
+
+
+void SP_Assert(bool condition, const char *conditionDesc, const char *function, const char *file, int line, const char *description, ...) {
+    if (condition == true)
+        return;
+    if (description == NULL)
+        description = "";
+    
+    printf("\n=====[ASSERT FAILED]=====\n"
+           "Assert Failed:(%s)\n"
+           "Function:%s\n"
+           "File:%s\n"
+           "Line:%d\n"
+           "Info:",
+           conditionDesc, function, file, line);
+    
+    va_list args;
+    va_start(args, description);
+
+    vprintf(description, args);
+    putchar('\n');
+    
+    va_end(args);
+    
+#if defined(_WIN32) && defined(_DEBUG) && defined(_MSC_VER)
+    __debugbreak();
+#elif defined(DEBUG)
+    abort();
+#else
+#endif
 }
 
