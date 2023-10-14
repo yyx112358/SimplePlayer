@@ -16,7 +16,9 @@
     std::shared_ptr<IPreviewManager> preview;
     std::shared_ptr<sp::DecoderManager> decoder;
 }
-@property (weak) IBOutlet NSView *PlayerView;
+
+@property (weak) IBOutlet NSView *playerView;
+
 
 @property (nonatomic, strong) NSTimer *timer;
 @end
@@ -29,7 +31,7 @@
     [super viewDidLoad];
 
     preview = IPreviewManager::createIPreviewManager();
-    preview->setParentViews((__bridge_retained void *)self.view);
+    preview->setParentViews((__bridge_retained void *)self.playerView);
     
     // FIXME: 这种写法会引入循环引用
     self.timer = [NSTimer scheduledTimerWithTimeInterval:1.0 / 60 target:self selector:@selector(refresh:) userInfo:self repeats:YES];
@@ -52,9 +54,9 @@
 }
 
 - (void)viewDidLayout {
-    for(NSView *subView in self.PlayerView.subviews) {
-        [subView setFrame:self.PlayerView.bounds];
-//        [subView setNeedsDisplay:YES];
+    for(NSView *subView in self.playerView.subviews) {
+        [subView setFrame:self.playerView.bounds];
+        [subView setNeedsDisplay:YES];
     }
 }
 
@@ -80,8 +82,8 @@
     }
 
     
-    for(NSView *subView in self.PlayerView.subviews) {
-//        [subView setFrame:self.PlayerView.bounds];
+    for(NSView *subView in self.playerView.subviews) {
+        [subView setFrame:self.playerView.bounds];
         [subView setNeedsDisplay:YES];
     }
 }

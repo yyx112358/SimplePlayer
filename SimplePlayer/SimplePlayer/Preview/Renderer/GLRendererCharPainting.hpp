@@ -85,7 +85,7 @@ public:
         void main()
         {
             FragColor = texture(texture1, vtxTexCoord).rgba * vec4(vtxColor, 1.0);
-//            FragColor = vec4(vtxColor, 1.0);
+            FragColor = vec4(vtxColor, 1.0);
         })";
         UpdateShader({vertexShaderSource}, {fragmentShaderSource});
         
