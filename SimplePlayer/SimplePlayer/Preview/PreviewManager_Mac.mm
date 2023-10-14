@@ -433,7 +433,8 @@ bool PreviewManager_Mac::render(std::shared_ptr<sp::Pipeline> pipeline) {
             }
             audioFormat.mSampleRate = audioFrame->sampleRate;
             audioFormat.mChannelsPerFrame = audioFrame->channels;
-            audioFormat.mBytesPerFrame = audioFormat.mBytesPerPacket = (audioFormat.mBitsPerChannel / 8) * audioFormat.mChannelsPerFrame;
+            audioFormat.mBytesPerFrame = (audioFormat.mBitsPerChannel / 8) * audioFormat.mChannelsPerFrame;
+            audioFormat.mBytesPerPacket = audioFormat.mFramesPerPacket * audioFormat.mBytesPerFrame;
             
             /* 使用系统AudioFileStream解析的代码
             NSURL *audioFileURL = [NSURL fileURLWithPath:"audio.mp3"];

@@ -47,7 +47,7 @@ public:
     std::shared_ptr<Pipeline> getNextFrame();
     
 protected:
-    bool _decodePacket(std::shared_ptr<Pipeline> &pipeline, AVCodecContext * const codecCtx, AVPacket * const packet, AVFrame * const frame) const;
+    bool _decodePacket(std::shared_ptr<Pipeline> &pipeline, AVCodecContext * const codecCtx, AVPacket * const packet, AVFrame * const avFrame) const;
     
     
     AVCodecContext *_getCodecCtx(MediaType mediaType) const;
@@ -59,8 +59,8 @@ protected:
     struct AVFormatContext *_fmtCtx = nullptr;
     struct AVCodecContext *_codecCtx[2] = {nullptr};
     struct AVStream *_stream[2] = {nullptr};
-    struct AVPacket *_packet = nullptr;
-    struct AVFrame *_frame = nullptr;
+    struct AVPacket *_avPacket = nullptr;
+    struct AVFrame *_avFrame = nullptr;
     struct SwsContext *_swsCtx = nullptr;
 };
 

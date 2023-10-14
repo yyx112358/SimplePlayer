@@ -112,8 +112,8 @@ bool DecoderManager::init(const std::string &path)
     }
     
     // 初始化Packet和Frame
-    _packet = av_packet_alloc();
-    _frame = av_frame_alloc();
+    _avPacket = av_packet_alloc();
+    _avFrame = av_frame_alloc();
     
     return true;
 }
@@ -124,13 +124,13 @@ bool DecoderManager::unInit() {
         sws_freeContext(_swsCtx);
     _swsCtx = nullptr;
     
-    if (_frame != nullptr)
-        av_frame_free(&_frame);
-    _frame = nullptr;
+    if (_avFrame != nullptr)
+        av_frame_free(&_avFrame);
+    _avFrame = nullptr;
     
-    if (_packet != nullptr)
-        av_packet_free(&_packet);
-    _packet = nullptr;
+    if (_avPacket != nullptr)
+        av_packet_free(&_avPacket);
+    _avPacket = nullptr;
     
     for (auto &ctx : _codecCtx) {
         if (ctx != nullptr)
@@ -150,14 +150,14 @@ std::shared_ptr<Pipeline> DecoderManager::getNextFrame()
     std::shared_ptr<Pipeline> pipeline = std::make_shared<Pipeline>();
     
     // TODO: getNextFrame应能进行重试以确保输出一帧
-    int ret = av_read_frame(_fmtCtx, _packet);
+    int ret = av_read_frame(_fmtCtx, _avPacket);
     if (pipeline->status = _checkAVError(ret, "av_read_frame(_fmtCtx, _packet)"); pipeline->status != Pipeline::EStatus::READY) {
         return pipeline;
     }
     
     AVStream *stream = _getStream(MediaType::VIDEO);
     AVCodecContext *codecCtx = _getCodecCtx(MediaType::VIDEO);
-    if (_packet->stream_index == 0) {
+    if (_avPacket->stream_index == 0) {
         
         auto videoFrame = std::make_shared<VideoFrame>();
         videoFrame->width = stream->codecpar->width;
@@ -165,7 +165,7 @@ std::shared_ptr<Pipeline> DecoderManager::getNextFrame()
         videoFrame->pixelFormat = static_cast<AVPixelFormat>(stream->codecpar->format);
         
         pipeline->videoFrame = videoFrame;
-    } else if (_packet->stream_index == 1) {
+    } else if (_avPacket->stream_index == 1) {
 
         stream = _getStream(MediaType::AUDIO);
         codecCtx = _getCodecCtx(MediaType::AUDIO);
@@ -177,7 +177,7 @@ std::shared_ptr<Pipeline> DecoderManager::getNextFrame()
         pipeline->audioFrame = audioFrame;
     }
     
-    bool suc = _decodePacket(pipeline, codecCtx, _packet, _frame);
+    bool suc = _decodePacket(pipeline, codecCtx, _avPacket, _avFrame);
     
     if (suc == false) {
         pipeline->videoFrame = nullptr;
@@ -187,7 +187,7 @@ std::shared_ptr<Pipeline> DecoderManager::getNextFrame()
     return pipeline;
 }
 
-bool DecoderManager::_decodePacket(std::shared_ptr<Pipeline> &pipeline, AVCodecContext * const codecCtx, AVPacket * const packet, AVFrame * const frame) const
+bool DecoderManager::_decodePacket(std::shared_ptr<Pipeline> &pipeline, AVCodecContext * const codecCtx, AVPacket * const packet, AVFrame * const avFrame) const
 {
     if (codecCtx == nullptr || packet == nullptr)
         return false;
@@ -199,57 +199,59 @@ bool DecoderManager::_decodePacket(std::shared_ptr<Pipeline> &pipeline, AVCodecC
     
     do {
         
-        ret = avcodec_receive_frame(codecCtx, frame);
+        ret = avcodec_receive_frame(codecCtx, avFrame);
         if (pipeline->status = _checkAVError(ret, "avcodec_receive_frame(codecCtx, frame)"); pipeline->status != Pipeline::EStatus::READY) {
-            av_frame_unref(frame);
+            av_frame_unref(avFrame);
             break;
         }
         pipeline->status = Pipeline::EStatus::READY;
         
-        SPLOGD("pts:%d", frame->pts);
+        SPLOGD("pts:%d", avFrame->pts);
 
         if (auto videoFrame = pipeline->videoFrame) {
 
             videoFrame->data = std::shared_ptr<uint8_t[]>(new uint8_t[videoFrame->width * videoFrame->height * 4]);
             uint8_t *dstData[4] = {videoFrame->data.get()};
-            int dstLineSizes[4] = {frame->width * 4};
+            int dstLineSizes[4] = {avFrame->width * 4};
             
-            sws_scale(_swsCtx, frame->data, frame->linesize, 0, videoFrame->height, dstData, dstLineSizes);
+            sws_scale(_swsCtx, avFrame->data, avFrame->linesize, 0, videoFrame->height, dstData, dstLineSizes);
             videoFrame->pixelFormat = AVPixelFormat::AV_PIX_FMT_RGBA;
-            videoFrame->pts = frame->pts;
+            videoFrame->pts = avFrame->pts;
             
             static bool isSave = true;
             if (isSave) {
-                writeBMP2File("decode.bmp", videoFrame->data.get(), frame->width, frame->height, 4);
+                writeBMP2File("decode.bmp", videoFrame->data.get(), avFrame->width, avFrame->height, 4);
                 isSave = false;
             }
         }
         
         if (auto audioFrame = pipeline->audioFrame) {
 
-            audioFrame->channels = frame->ch_layout.nb_channels;
-            audioFrame->pts = frame->pts;
-            audioFrame->sampleFormat = (enum AVSampleFormat)frame->format;
-            audioFrame->dataSize = frame->nb_samples * av_get_bytes_per_sample(audioFrame->sampleFormat) * frame->ch_layout.nb_channels;
-            audioFrame->data = std::shared_ptr<uint8_t[]>(new uint8_t[audioFrame->dataSize]);
+            audioFrame->channels = avFrame->ch_layout.nb_channels;
+            audioFrame->pts = avFrame->pts;
+            audioFrame->sampleFormat = (enum AVSampleFormat)avFrame->format;
+            audioFrame->dataSize = avFrame->nb_samples * av_get_bytes_per_sample(audioFrame->sampleFormat) * avFrame->ch_layout.nb_channels;
+            audioFrame->data = std::shared_ptr<std::byte[]>(new std::byte[audioFrame->dataSize]);
             
+            SPASSERTEX(audioFrame->sampleFormat == AV_SAMPLE_FMT_FLTP, "Only support AV_SAMPLE_FMT_FLTP now. Need write new convert code.");
             if (av_sample_fmt_is_planar(audioFrame->sampleFormat)) { // 非交错
                 // 转换为交错数据。LLL  RRR -> LRLRLR
+                const int sampleCnt = avFrame->nb_samples;
                 const int sampleSize = av_get_bytes_per_sample(audioFrame->sampleFormat);
-                const int srcStride = sampleSize;
-                const int dstStride = frame->ch_layout.nb_channels * sampleSize;
+                const int srcStride = 1 * sampleSize;
+                const int dstStride = avFrame->ch_layout.nb_channels * sampleSize;
 
-                for (int channel = 0; channel < frame->ch_layout.nb_channels; channel++) {
-                    uint8_t *psrc = frame->data[channel];
-                    uint8_t *pdst = audioFrame->data.get() + sampleSize * channel;
-                    for (int i = 0; i < frame->nb_samples; i++) {
-                        memcpy(pdst, psrc, sampleSize);
+                for (int channel = 0; channel < avFrame->ch_layout.nb_channels; channel++) {
+                    uint8_t *psrc = avFrame->data[channel];
+                    std::byte *pdst = audioFrame->data.get() + sampleSize * channel;
+                    for (int i = 0; i < sampleCnt; i++) {
+                        memcpy(pdst, psrc, sampleSize); // memcpy效率理应高于手写for循环
                         psrc += srcStride;
                         pdst += dstStride;
                     }
                 }
             } else { // 交错
-                memcpy(audioFrame->data.get(), frame->extended_data[0], audioFrame->dataSize);
+                memcpy(audioFrame->data.get(), avFrame->extended_data[0], audioFrame->dataSize);
             }
             
 #if DEBUG
@@ -270,7 +272,7 @@ bool DecoderManager::_decodePacket(std::shared_ptr<Pipeline> &pipeline, AVCodecC
 #endif
         }
 
-        av_frame_unref(frame);
+        av_frame_unref(avFrame);
     } while(ret > 0);
     
     av_packet_unref(packet);
