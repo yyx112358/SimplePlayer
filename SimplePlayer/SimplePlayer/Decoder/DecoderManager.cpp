@@ -119,7 +119,13 @@ bool DecoderManager::init(const std::string &path)
 }
 #undef RUN_INIT
 
-bool DecoderManager::unInit() {
+bool DecoderManager::unInit()
+{
+    if (_processThread.joinable()) {
+        stop(true);
+    }
+    _status = Status::UNINITAILIZED;
+
     if (_swsCtx != nullptr)
         sws_freeContext(_swsCtx);
     _swsCtx = nullptr;
@@ -145,46 +151,194 @@ bool DecoderManager::unInit() {
     return true;
 }
 
-std::shared_ptr<Pipeline> DecoderManager::getNextFrame()
+std::shared_ptr<Pipeline> DecoderManager::getNextFrame(MediaType mediaType)
 {
-    std::shared_ptr<Pipeline> pipeline = std::make_shared<Pipeline>();
-    
-    // TODO: getNextFrame应能进行重试以确保输出一帧
-    int ret = av_read_frame(_fmtCtx, _avPacket);
-    if (pipeline->status = _checkAVError(ret, "av_read_frame(_fmtCtx, _packet)"); pipeline->status != Pipeline::EStatus::READY) {
-        return pipeline;
-    }
-    
-    AVStream *stream = _getStream(MediaType::VIDEO);
-    AVCodecContext *codecCtx = _getCodecCtx(MediaType::VIDEO);
-    if (_avPacket->stream_index == 0) {
-        
-        auto videoFrame = std::make_shared<VideoFrame>();
-        videoFrame->width = stream->codecpar->width;
-        videoFrame->height = stream->codecpar->height;
-        videoFrame->pixelFormat = static_cast<AVPixelFormat>(stream->codecpar->format);
-        
-        pipeline->videoFrame = videoFrame;
-    } else if (_avPacket->stream_index == 1) {
+    std::shared_ptr<Pipeline> pipeline = nullptr;
+    if (mediaType == MediaType::VIDEO && _videoQueue.empty() == false)
+        pipeline = _videoQueue.deque();
+    else if (mediaType == MediaType::AUDIO && _audioQueue.empty() == false)
+        pipeline = _audioQueue.deque();
 
-        stream = _getStream(MediaType::AUDIO);
-        codecCtx = _getCodecCtx(MediaType::AUDIO);
-        auto audioFrame = std::make_shared<AudioFrame>();
-        
-        audioFrame->sampleRate = stream->codecpar->sample_rate;
-        audioFrame->sampleFormat = static_cast<AVSampleFormat>(stream->codecpar->format);
-        
-        pipeline->audioFrame = audioFrame;
-    }
-    
-    bool suc = _decodePacket(pipeline, codecCtx, _avPacket, _avFrame);
-    
-    if (suc == false) {
-        pipeline->videoFrame = nullptr;
-        pipeline->audioFrame = nullptr;
-    }
-    
     return pipeline;
+}
+
+std::future<bool> DecoderManager::start(bool isSync)
+{
+    DecodeCommand cmd {.type = DecodeCommand::Type::start};
+    cmd.type = DecodeCommand::Type::start;
+    std::future<bool> f = cmd.result.get_future();
+    
+    if (_processThread.joinable() == false) {
+        _processThread = std::thread([this]{_loop();});
+    }
+    _pushNextCommand(std::move(cmd));
+    
+    if (isSync)
+        f.wait();
+    return f;
+}
+
+
+std::future<bool> DecoderManager::stop(bool isSync) {
+    DecodeCommand cmd {.type = DecodeCommand::Type::start};
+    cmd.type = DecodeCommand::Type::stop;
+    std::future<bool> f = cmd.result.get_future();
+    
+    if (_processThread.joinable() == false) { // 已经停止了
+        cmd.result.set_value(true);
+        return f;
+    }
+    _pushNextCommand(std::move(cmd));
+    
+    if (isSync) {
+        // 释放所有的pipeline，避免解码线程因_videoQueue满而阻塞
+        while (_videoQueue.empty() == false) {
+            _videoQueue.deque();
+        }
+        while (_audioQueue.empty() == false) {
+            _audioQueue.deque();
+        }
+        // 等待stop命令执行完毕
+        f.wait();
+        // 清空命令队列
+        if (_cmdQueue.empty() == false) {
+            std::unique_lock<std::shared_mutex> lock(_cmdLock);
+            _cmdQueue.clear();
+        }
+        // 调用join以等待彻底结束
+        if (_processThread.joinable())
+            _processThread.join();
+    }
+    return f;
+}
+
+//std::future<bool> DecoderManager::startseek(bool isSync);
+//std::future<bool> DecoderManager::startpause(bool isSync);
+//std::future<bool> DecoderManager::startflush(bool isSync);
+
+void DecoderManager::_loop()
+{
+    SPLOGD("Decode thread start");
+    while(1) {
+        // 获取下一个命令，调整状态
+        if (auto nextCommand = _popNextCommand()) {
+            if (nextCommand->type == DecodeCommand::Type::pause) {
+                std::this_thread::sleep_for(std::chrono::milliseconds(1));
+                _finishCommand(nextCommand);
+                continue;
+            } else if (nextCommand->type == DecodeCommand::Type::stop) {
+                SPLOGD("Decode thread end");
+                _finishCommand(nextCommand);
+                return;
+            } else if (nextCommand->type == DecodeCommand::Type::seek) {
+                // TODO: 调整参数
+                int ret = av_seek_frame(_fmtCtx, -1, nextCommand->seekPts, 0);
+                _checkAVError(ret);
+                // TODO: Flush缓冲区
+                nextCommand->result.set_value(true);
+                _finishCommand(nextCommand);
+            } else {
+                _finishCommand(nextCommand);
+            }
+        }
+        
+        std::shared_ptr<Pipeline> pipeline = std::make_shared<Pipeline>();
+        
+        // TODO: getNextFrame应能进行重试以确保输出一帧
+        int ret = av_read_frame(_fmtCtx, _avPacket);
+        if (pipeline->status = _checkAVError(ret, "av_read_frame(_fmtCtx, _packet)"); pipeline->status != Pipeline::EStatus::READY) {
+            continue;
+        }
+        
+        AVStream *stream = _getStream(MediaType::VIDEO);
+        AVCodecContext *codecCtx = _getCodecCtx(MediaType::VIDEO);
+        if (_avPacket->stream_index == 0) {
+            
+            auto videoFrame = std::make_shared<VideoFrame>();
+            videoFrame->width = stream->codecpar->width;
+            videoFrame->height = stream->codecpar->height;
+            videoFrame->pixelFormat = static_cast<AVPixelFormat>(stream->codecpar->format);
+            
+            pipeline->videoFrame = videoFrame;
+        } else if (_avPacket->stream_index == 1) {
+
+            stream = _getStream(MediaType::AUDIO);
+            codecCtx = _getCodecCtx(MediaType::AUDIO);
+            auto audioFrame = std::make_shared<AudioFrame>();
+            
+            audioFrame->sampleRate = stream->codecpar->sample_rate;
+            audioFrame->sampleFormat = static_cast<AVSampleFormat>(stream->codecpar->format);
+            
+            pipeline->audioFrame = audioFrame;
+        }
+        
+        bool suc = _decodePacket(pipeline, codecCtx, _avPacket, _avFrame);
+        
+        if (suc == false) {
+            pipeline->videoFrame = nullptr;
+            pipeline->audioFrame = nullptr;
+        }
+        if (_avPacket->stream_index == 0)
+            _videoQueue.enqueue(pipeline);
+        else if (_avPacket->stream_index == 1)
+            _audioQueue.enqueue(pipeline);
+    }
+}
+
+
+bool DecoderManager::_pushNextCommand(DecodeCommand cmd)
+{
+    // TODO: 优化，例如stop会清空_cmdQueue，seek会调整到最近的seek时间点
+    std::unique_lock<std::shared_mutex> lock(_cmdLock);
+    _cmdQueue.push_back(std::move(cmd));
+    return true;
+}
+
+std::optional<DecodeCommand> DecoderManager::_popNextCommand()
+{
+    std::unique_lock<std::shared_mutex> lock(_cmdLock);
+
+    if (_cmdQueue.empty())
+        return std::nullopt;
+    else {
+        std::optional<DecodeCommand> cmd = std::move(_cmdQueue.front());
+        _cmdQueue.pop_front();
+        return cmd;
+    }
+}
+
+void DecoderManager::_finishCommand(std::optional<DecodeCommand> &cmd)
+{
+    if (cmd.has_value() == false)
+        return;
+    
+    switch (cmd->type) {
+        case DecodeCommand::Type::stop:
+            _setStatus(Status::STOP);
+            break;
+            
+        case DecodeCommand::Type::pause:
+            _setStatus(Status::PAUSE);
+            break;
+            
+        case DecodeCommand::Type::start:
+        case DecodeCommand::Type::seek:
+        default:
+            _setStatus(Status::RUN);
+            break;
+    }
+    
+    // TODO: 失败情况下返回false
+    cmd->result.set_value(true);
+}
+
+sp::DecoderManager::Status DecoderManager::_getStatus() const {
+    std::shared_lock<std::shared_mutex> lock(_cmdLock);
+    return _status;
+}
+void DecoderManager::_setStatus(Status newStatus) {
+    std::unique_lock<std::shared_mutex> lock(_cmdLock);
+    _status = newStatus;
 }
 
 bool DecoderManager::_decodePacket(std::shared_ptr<Pipeline> &pipeline, AVCodecContext * const codecCtx, AVPacket * const packet, AVFrame * const avFrame) const

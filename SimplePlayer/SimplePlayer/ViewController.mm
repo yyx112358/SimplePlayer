@@ -39,11 +39,12 @@
 }
 
 - (void)loadVideo {
-     NSString *video = [[NSBundle mainBundle] pathForResource:@"Sync" ofType:@"mp4"];
-//    NSString *video = [[NSBundle mainBundle] pathForResource:@"1：1" ofType:@"MOV"];
+//     NSString *video = [[NSBundle mainBundle] pathForResource:@"Sync" ofType:@"mp4"];
+    NSString *video = [[NSBundle mainBundle] pathForResource:@"1：1" ofType:@"MOV"];
     
     decoder = std::make_shared<sp::DecoderManager>();
     decoder->init(video.UTF8String);
+    decoder->start(true);
 }
 
 
@@ -64,7 +65,17 @@
     if (decoder != nullptr) {
         int cnt = 10;
         do {
-            if (auto pipeline = decoder->getNextFrame()) {
+            
+            if (auto pipeline = decoder->getNextFrame(sp::DecoderManager::MediaType::AUDIO)) {
+                if (pipeline->status == sp::Pipeline::EStatus::END_OF_FILE) {
+                    [self exit];
+                    return;
+                }
+                
+                preview->render(pipeline);
+            }
+            
+            if (auto pipeline = decoder->getNextFrame(sp::DecoderManager::MediaType::VIDEO)) {
                 if (pipeline->status == sp::Pipeline::EStatus::END_OF_FILE) {
                     [self exit];
                     return;

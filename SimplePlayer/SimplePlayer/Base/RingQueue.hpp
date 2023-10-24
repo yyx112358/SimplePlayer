@@ -12,6 +12,7 @@
 #include <semaphore.h>
 #include <atomic>
 #include <functional>
+#include <array>
 
 #include "SPLog.h"
 

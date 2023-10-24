@@ -9,8 +9,14 @@
 
 #include <string>
 #include <optional>
+#include <memory>
+#include <deque>
+#include <shared_mutex>
+#include <thread>
+#include <future>
 
 #include "Pipeline.hpp"
+#include "RingQueue.hpp"
 
 struct AVFormatContext;
 struct AVCodecContext;
@@ -21,9 +27,16 @@ struct SwsContext;
 
 namespace sp {
 
-class FrameQueue {
-public:
+struct DecodeCommand {
+    enum class Type {
+        start,
+        stop,
+        seek,
+        pause,
+    } type;
     
+    int64_t seekPts;
+    std::promise<bool> result;
 };
 
 class DecoderManager {
@@ -39,14 +52,38 @@ public:
         NB
     };
     
+    enum class Status {
+        UNINITAILIZED,
+        RUN,
+        STOP,
+        PAUSE,
+    };
+    
 public:
     ~DecoderManager();
     
     bool init(const std::string &path);
     bool unInit();
-    std::shared_ptr<Pipeline> getNextFrame();
+    
+    // 获取下一帧。无可用帧时返回nullptr
+    std::shared_ptr<Pipeline> getNextFrame(MediaType mediaType);
+    
+    std::future<bool> start(bool isSync);
+    std::future<bool> stop(bool isSync);
+//    std::future<bool> seek(bool isSync);
+//    std::future<bool> pause(bool isSync);
+//    std::future<bool> flush(bool isSync);
     
 protected:
+    void _loop();
+    
+    bool _pushNextCommand(DecodeCommand cmd);
+    std::optional<DecodeCommand> _popNextCommand();
+    void _finishCommand(std::optional<DecodeCommand> &cmd);
+    
+    Status _getStatus() const;
+    void _setStatus(Status newStatus);
+    
     bool _decodePacket(std::shared_ptr<Pipeline> &pipeline, AVCodecContext * const codecCtx, AVPacket * const packet, AVFrame * const avFrame) const;
     
     
@@ -62,6 +99,15 @@ protected:
     struct AVPacket *_avPacket = nullptr;
     struct AVFrame *_avFrame = nullptr;
     struct SwsContext *_swsCtx = nullptr;
+    
+    std::thread _processThread;
+    
+    Status _status = Status::UNINITAILIZED;
+    std::deque<DecodeCommand> _cmdQueue;
+    mutable std::shared_mutex _cmdLock;
+    
+    RingQueue<std::shared_ptr<Pipeline>, 8> _videoQueue;
+    RingQueue<std::shared_ptr<Pipeline>, 3> _audioQueue;
 };
 
 
