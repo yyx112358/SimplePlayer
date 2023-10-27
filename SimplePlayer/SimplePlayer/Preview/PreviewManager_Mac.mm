@@ -228,7 +228,6 @@ void audioQueueOutputCallback(void *inUserData, AudioQueueRef inAQ, AudioQueueBu
 @property (nonatomic, readonly) BOOL isRunning;
 
 - (instancetype)init;
-- (void)enqueue;
 - (void)enqueue:(std::shared_ptr<sp::AudioFrame>)audioFrame;
 
 @end
@@ -279,6 +278,16 @@ void audioQueueOutputCallback(void *inUserData, AudioQueueRef inAQ, AudioQueueBu
     UInt32 outData = 0, ioDataSize = sizeof(outData);
     AudioQueueGetProperty(_audioQueue, kAudioQueueProperty_IsRunning, &outData, &ioDataSize);
     return outData != 0;
+}
+
+/// 当前音频时间戳
+- (double)currentPts {
+    AudioTimeStamp outTimeStamp;
+    Boolean outTimelineDiscontinuity;
+    if (OSStatus status = AudioQueueGetCurrentTime(_audioQueue, nil, &outTimeStamp, &outTimelineDiscontinuity); status == 0) {
+        return outTimeStamp.mSampleTime;
+    } else
+        return -1;
 }
 
 - (AudioStreamBasicDescription)getAudioFormat {
@@ -369,6 +378,9 @@ void audioQueueOutputCallback(void *inUserData, AudioQueueRef inAQ, AudioQueueBu
     if (repeat <= 0) {
         SPLOGE("dequeue audio buffer failed");
         memset(inBuffer->mAudioData, 0, inBuffer->mAudioDataByteSize);
+//        // 另一种思路，直接stop/pause
+//        [speaker pause];
+//        return;
     }
     
     // 重新将缓冲区添加到音频队列中
