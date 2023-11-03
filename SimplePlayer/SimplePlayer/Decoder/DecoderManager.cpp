@@ -124,6 +124,12 @@ bool DecoderManager::unInit()
     if (_processThread.joinable()) {
         stop(true);
     }
+    while (_videoQueue->empty() == false)
+        _videoQueue->deque();
+    while (_audioQueue->empty() == false)
+        _audioQueue->deque();
+    _cmdQueue.clear();
+    _processThread = std::thread();
     _status = Status::UNINITAILIZED;
 
     if (_swsCtx != nullptr)
@@ -154,10 +160,10 @@ bool DecoderManager::unInit()
 std::shared_ptr<Pipeline> DecoderManager::getNextFrame(MediaType mediaType)
 {
     std::shared_ptr<Pipeline> pipeline = nullptr;
-    if (mediaType == MediaType::VIDEO && _videoQueue.empty() == false)
-        pipeline = _videoQueue.deque();
-    else if (mediaType == MediaType::AUDIO && _audioQueue.empty() == false)
-        pipeline = _audioQueue.deque();
+    if (mediaType == MediaType::VIDEO && _videoQueue->empty() == false)
+        pipeline = _videoQueue->deque();
+    else if (mediaType == MediaType::AUDIO && _audioQueue->empty() == false)
+        pipeline = _audioQueue->deque();
 
     return pipeline;
 }
@@ -192,11 +198,11 @@ std::future<bool> DecoderManager::stop(bool isSync) {
     
     if (isSync) {
         // 释放所有的pipeline，避免解码线程因_videoQueue满而阻塞
-        while (_videoQueue.empty() == false) {
-            _videoQueue.deque();
+        while (_videoQueue->empty() == false) {
+            _videoQueue->deque();
         }
-        while (_audioQueue.empty() == false) {
-            _audioQueue.deque();
+        while (_audioQueue->empty() == false) {
+            _audioQueue->deque();
         }
         // 等待stop命令执行完毕
         f.wait();
@@ -242,6 +248,7 @@ void DecoderManager::_loop()
             }
         }
         
+        // 读取一帧
         std::shared_ptr<Pipeline> pipeline = std::make_shared<Pipeline>();
         
         // TODO: getNextFrame应能进行重试以确保输出一帧
@@ -250,6 +257,7 @@ void DecoderManager::_loop()
             continue;
         }
         
+        // 配置pipeline
         AVStream *stream = _getStream(MediaType::VIDEO);
         AVCodecContext *codecCtx = _getCodecCtx(MediaType::VIDEO);
         if (_avPacket->stream_index == 0) {
@@ -272,16 +280,20 @@ void DecoderManager::_loop()
             pipeline->audioFrame = audioFrame;
         }
         
+        // 解码一帧
         bool suc = _decodePacket(pipeline, codecCtx, _avPacket, _avFrame);
         
         if (suc == false) {
             pipeline->videoFrame = nullptr;
             pipeline->audioFrame = nullptr;
         }
+        
+        // 送入生产者-消费者队列。
+        // !!!此处有锁!!!
         if (_avPacket->stream_index == 0)
-            _videoQueue.enqueue(pipeline);
+            _videoQueue->enqueue(pipeline);
         else if (_avPacket->stream_index == 1)
-            _audioQueue.enqueue(pipeline);
+            _audioQueue->enqueue(pipeline);
     }
 }
 

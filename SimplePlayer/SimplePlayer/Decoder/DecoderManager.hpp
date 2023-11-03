@@ -106,8 +106,8 @@ protected:
     std::deque<DecodeCommand> _cmdQueue;
     mutable std::shared_mutex _cmdLock;
     
-    RingQueue<std::shared_ptr<Pipeline>, 8> _videoQueue;
-    RingQueue<std::shared_ptr<Pipeline>, 3> _audioQueue;
+    const std::shared_ptr<sp::SPPipelineQueue> _videoQueue = std::make_shared<sp::SPPipelineQueue>(8);
+    const std::shared_ptr<sp::SPPipelineQueue> _audioQueue = std::make_shared<sp::SPPipelineQueue>(3);
 };
 
 

@@ -48,6 +48,8 @@
 		7AA2BC6B2A5EAD5A00BACC4F /* libpostproc.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 7A31B6A52A5D553D0057E592 /* libpostproc.a */; };
 		7AA2BC6E2A5EAFF300BACC4F /* Sync.mp4 in Resources */ = {isa = PBXBuildFile; fileRef = 7AA2BC6D2A5EAFF300BACC4F /* Sync.mp4 */; };
 		7AA2BC772A5EBDD400BACC4F /* DecoderManager.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7AA2BC752A5EBDD400BACC4F /* DecoderManager.cpp */; };
+		7AAAD7052AEBD0E300746DA1 /* ISPUnit.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7AAAD7032AEBD0E300746DA1 /* ISPUnit.cpp */; };
+		7AAAD7082AEBD1E200746DA1 /* SPParam.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7AAAD7062AEBD1E200746DA1 /* SPParam.cpp */; };
 		7AE0D6B72AC5593900972D44 /* VideoFrameBase.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7AE0D6B52AC5593900972D44 /* VideoFrameBase.cpp */; };
 		7AE0D6BA2AC559A300972D44 /* AudioFrameBase.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7AE0D6B82AC559A300972D44 /* AudioFrameBase.cpp */; };
 		7AE0D6BD2AC55A8100972D44 /* Pipeline.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7AE0D6BB2AC55A8100972D44 /* Pipeline.cpp */; };
@@ -119,12 +121,17 @@
 		7AA2BC6D2A5EAFF300BACC4F /* Sync.mp4 */ = {isa = PBXFileReference; lastKnownFileType = file; name = Sync.mp4; path = ../../DevelopDiary/SimplePlayer/Videos/Sync.mp4; sourceTree = "<group>"; };
 		7AA2BC752A5EBDD400BACC4F /* DecoderManager.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = DecoderManager.cpp; sourceTree = "<group>"; };
 		7AA2BC762A5EBDD400BACC4F /* DecoderManager.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = DecoderManager.hpp; sourceTree = "<group>"; };
+		7AAAD7032AEBD0E300746DA1 /* ISPUnit.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = ISPUnit.cpp; sourceTree = "<group>"; };
+		7AAAD7042AEBD0E300746DA1 /* ISPUnit.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = ISPUnit.hpp; sourceTree = "<group>"; };
+		7AAAD7062AEBD1E200746DA1 /* SPParam.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = SPParam.cpp; sourceTree = "<group>"; };
+		7AAAD7072AEBD1E200746DA1 /* SPParam.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = SPParam.hpp; sourceTree = "<group>"; };
 		7AE0D6B52AC5593900972D44 /* VideoFrameBase.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = VideoFrameBase.cpp; sourceTree = "<group>"; };
 		7AE0D6B62AC5593900972D44 /* VideoFrameBase.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = VideoFrameBase.hpp; sourceTree = "<group>"; };
 		7AE0D6B82AC559A300972D44 /* AudioFrameBase.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = AudioFrameBase.cpp; sourceTree = "<group>"; };
 		7AE0D6B92AC559A300972D44 /* AudioFrameBase.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = AudioFrameBase.hpp; sourceTree = "<group>"; };
 		7AE0D6BB2AC55A8100972D44 /* Pipeline.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = Pipeline.cpp; sourceTree = "<group>"; };
 		7AE0D6BC2AC55A8100972D44 /* Pipeline.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = Pipeline.hpp; sourceTree = "<group>"; };
+		7AE896A72AF3D28E0099A279 /* SPSemaphore.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = SPSemaphore.hpp; sourceTree = "<group>"; };
 		7AF6C80D2A602057009EBFB8 /* HDR.MOV */ = {isa = PBXFileReference; lastKnownFileType = video.quicktime; name = HDR.MOV; path = ../../DevelopDiary/SimplePlayer/Videos/HDR.MOV; sourceTree = "<group>"; };
 		7AF6C8102A6020B8009EBFB8 /* 1：1.MOV */ = {isa = PBXFileReference; lastKnownFileType = video.quicktime; name = "1：1.MOV"; path = "../../DevelopDiary/SimplePlayer/Videos/1：1.MOV"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -159,10 +166,11 @@
 		7A191B412A5AE5D20016692E /* Base */ = {
 			isa = PBXGroup;
 			children = (
+				7AE896A62AF3D1000099A279 /* PureCpp */,
+				7A45740F2AE51DED002CF4C0 /* Engine */,
 				7AE0D6B42AC5590C00972D44 /* Model */,
 				7A191B452A5AE6270016692E /* SPLog.cpp */,
 				7A191B462A5AE6270016692E /* SPLog.h */,
-				7A2A50CF2AC6F60700E00734 /* RingQueue.hpp */,
 			);
 			path = Base;
 			sourceTree = "<group>";
@@ -205,6 +213,7 @@
 		7A26999D2A2B7E00009C722B /* SimplePlayer */ = {
 			isa = PBXGroup;
 			children = (
+				7AAAD7022AEBB0AE00746DA1 /* Engine */,
 				7AA2BC742A5EBDA600BACC4F /* Decoder */,
 				7A191B412A5AE5D20016692E /* Base */,
 				7A2699B82A2B81E9009C722B /* Preview */,
@@ -262,6 +271,15 @@
 			name = Frameworks;
 			sourceTree = "<group>";
 		};
+		7A45740F2AE51DED002CF4C0 /* Engine */ = {
+			isa = PBXGroup;
+			children = (
+				7AAAD7032AEBD0E300746DA1 /* ISPUnit.cpp */,
+				7AAAD7042AEBD0E300746DA1 /* ISPUnit.hpp */,
+			);
+			path = Engine;
+			sourceTree = "<group>";
+		};
 		7A658A072A35CF8000955DB9 /* Reader */ = {
 			isa = PBXGroup;
 			children = (
@@ -311,6 +329,13 @@
 			path = Decoder;
 			sourceTree = "<group>";
 		};
+		7AAAD7022AEBB0AE00746DA1 /* Engine */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = Engine;
+			sourceTree = "<group>";
+		};
 		7AE0CC062A5AE39300F91B29 /* OpenGL */ = {
 			isa = PBXGroup;
 			children = (
@@ -343,6 +368,17 @@
 				7AE0D6BC2AC55A8100972D44 /* Pipeline.hpp */,
 			);
 			path = Model;
+			sourceTree = "<group>";
+		};
+		7AE896A62AF3D1000099A279 /* PureCpp */ = {
+			isa = PBXGroup;
+			children = (
+				7A2A50CF2AC6F60700E00734 /* RingQueue.hpp */,
+				7AE896A72AF3D28E0099A279 /* SPSemaphore.hpp */,
+				7AAAD7062AEBD1E200746DA1 /* SPParam.cpp */,
+				7AAAD7072AEBD1E200746DA1 /* SPParam.hpp */,
+			);
+			path = PureCpp;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -427,10 +463,12 @@
 				7A2699A62A2B7E00009C722B /* SimplePlayer.xcdatamodeld in Sources */,
 				7A191B5E2A5B025B0016692E /* GLRendererCharPainting.cpp in Sources */,
 				7A2699A32A2B7E00009C722B /* ViewController.mm in Sources */,
+				7AAAD7082AEBD1E200746DA1 /* SPParam.cpp in Sources */,
 				7A191B532A5AEFCF0016692E /* GLFrameBuffer.cpp in Sources */,
 				7A6D8B4C2A3359DC00C40E5C /* GLRendererBase.cpp in Sources */,
 				7AA2BC772A5EBDD400BACC4F /* DecoderManager.cpp in Sources */,
 				7A191B4D2A5AEFB40016692E /* GLRenderBuffer.cpp in Sources */,
+				7AAAD7052AEBD0E300746DA1 /* ISPUnit.cpp in Sources */,
 				7A6D8B492A33582600C40E5C /* IGLContext.cpp in Sources */,
 				7AE0D6B72AC5593900972D44 /* VideoFrameBase.cpp in Sources */,
 				7A2699AD2A2B7E01009C722B /* main.m in Sources */,

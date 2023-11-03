@@ -36,6 +36,9 @@
     // FIXME: 这种写法会引入循环引用
     self.timer = [NSTimer scheduledTimerWithTimeInterval:1.0 / 60 target:self selector:@selector(refresh:) userInfo:self repeats:YES];
     [self loadVideo];
+    
+    decoder->start(false);
+    preview->start(false);
 }
 
 - (void)loadVideo {
@@ -71,8 +74,7 @@
                     [self exit];
                     return;
                 }
-                
-                preview->render(pipeline);
+                preview->addPipeline(pipeline);
             }
             
             if (auto pipeline = decoder->getNextFrame(sp::DecoderManager::MediaType::VIDEO)) {
@@ -81,7 +83,7 @@
                     return;
                 }
                 
-                if (preview->render(pipeline) == true)
+                if (preview->addPipeline(pipeline) == true)
                     break;
             }
         } while(cnt-- >= 0);

@@ -395,6 +395,8 @@ NSMutableArray<Preview_Mac *> *previews;
 NSMutableArray<AudioSpeaker_Mac *> *speakers;
 
 PreviewManager_Mac::~PreviewManager_Mac() {
+    stop(true);
+    
     for (Preview_Mac *preview in previews) {
         [preview removeFromSuperview];
     }
@@ -414,7 +416,35 @@ bool PreviewManager_Mac::setParentViews(void *parents) {
     return true;
 }
 
-bool PreviewManager_Mac::render(std::shared_ptr<sp::Pipeline> pipeline) {
+bool PreviewManager_Mac::start(bool isSync) {
+    
+    if (_displayLink == NULL) {
+        CVDisplayLinkCreateWithActiveCGDisplays(&_displayLink);
+        CVDisplayLinkSetOutputCallback(_displayLink, &PreviewManager_Mac::_displayLinkCallback, this); // TODO: 使用weak_ptr
+    }
+    CVDisplayLinkStart(_displayLink);
+    
+    return true;
+}
+
+bool PreviewManager_Mac::stop(bool isSync) {
+    
+    if (_displayLink != NULL) {
+        CVDisplayLinkStop(_displayLink);
+        _displayLink = NULL;
+    }
+    
+    return true;
+}
+
+CVReturn PreviewManager_Mac::_displayLinkCallback(CVDisplayLinkRef displayLink, const CVTimeStamp *now, const CVTimeStamp *outputTime, CVOptionFlags flagsIn, CVOptionFlags *flagsOut, void *displayLinkContext) {
+    PreviewManager_Mac *preview = static_cast<PreviewManager_Mac *>(displayLinkContext);
+    
+    
+    return kCVReturnSuccess;
+}
+
+bool PreviewManager_Mac::addPipeline(std::shared_ptr<sp::Pipeline> pipeline) {
     if (pipeline->videoFrame != nullptr && pipeline->videoFrame->data != nullptr) {
         for (Preview_Mac *preview in previews) {
             [preview setBuffer:pipeline->videoFrame];
