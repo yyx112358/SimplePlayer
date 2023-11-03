@@ -50,15 +50,13 @@
     
     preview = IPreviewManager::createIPreviewManager();
     preview->setParentViews((__bridge_retained void *)self.playerView);
-    preview->setPipelineQueue(decoder->_videoQueue, audioRenderer->getOutputQueue());
+    preview->setPipelineQueue(decoder->_videoQueue);
     
     decoder->start(false);
     audioRenderer->start(false);
     audioOutput->start(false);
     preview->start(false);
     
-    // FIXME: 这种写法会引入循环引用
-//    self.timer = [NSTimer scheduledTimerWithTimeInterval:1.0 / 60 target:self selector:@selector(refresh:) userInfo:self repeats:YES];
 }
 
 
@@ -69,43 +67,6 @@
 }
 
 - (void)viewDidLayout {
-    for(NSView *subView in self.playerView.subviews) {
-        [subView setFrame:self.playerView.bounds];
-        [subView setNeedsDisplay:YES];
-    }
-}
-
-- (void)refresh:(id)obj {
-    if (decoder != nullptr) {
-        int cnt = 10;
-        do {
-            
-            if (auto pipeline = decoder->getNextFrame(sp::DecoderManager::MediaType::AUDIO)) {
-                if (pipeline->status == sp::Pipeline::EStatus::END_OF_FILE) {
-                    [self exit];
-                    return;
-                }
-                preview->addPipeline(pipeline);
-            }
-            
-            if (auto pipeline = decoder->getNextFrame(sp::DecoderManager::MediaType::VIDEO)) {
-                if (pipeline->status == sp::Pipeline::EStatus::END_OF_FILE) {
-                    [self exit];
-                    return;
-                }
-                
-                if (preview->addPipeline(pipeline) == true)
-                    break;
-            }
-        } while(cnt-- >= 0);
-        
-        if (cnt < 0) {
-            [self exit];
-            return;
-        }
-    }
-
-    
     for(NSView *subView in self.playerView.subviews) {
         [subView setFrame:self.playerView.bounds];
         [subView setNeedsDisplay:YES];

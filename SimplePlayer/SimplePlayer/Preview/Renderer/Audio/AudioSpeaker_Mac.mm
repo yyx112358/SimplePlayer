@@ -229,3 +229,10 @@ bool AudioSpeaker_Mac::enqueue(std::shared_ptr<sp::AudioFrame> frame) {
     return true;
 }
 
+std::optional<double> AudioSpeaker_Mac::getAudioClock() {
+    if (_impl->obj != nullptr)
+        return [_impl->obj currentPts];
+    else
+        return std::nullopt;
+}
+

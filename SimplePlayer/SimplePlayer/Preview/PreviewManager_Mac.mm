@@ -236,6 +236,13 @@ bool PreviewManager_Mac::setParentViews(void *parents) {
     return true;
 }
 
+bool PreviewManager_Mac::notifyParentViewsChanged() {
+    for (Preview_Mac *preview in previews) {
+        [preview setNeedsLayout:YES];
+    }
+    return true;
+}
+
 bool PreviewManager_Mac::start(bool isSync) {
     
     if (_videoDisplayLink == NULL) {
@@ -261,20 +268,24 @@ CVReturn PreviewManager_Mac::_displayLinkCallback(CVDisplayLinkRef displayLink, 
     PreviewManager_Mac *preview = static_cast<PreviewManager_Mac *>(displayLinkContext);
     
     if (preview->_videoQueue->size() > 0) {
-        preview->_videoQueue->deque();
-    }
-    
-    return kCVReturnSuccess;
-}
-
-bool PreviewManager_Mac::addPipeline(std::shared_ptr<sp::Pipeline> pipeline) {
-    if (pipeline->videoFrame != nullptr && pipeline->videoFrame->data != nullptr) {
-        for (Preview_Mac *preview in previews) {
-            [preview setBuffer:pipeline->videoFrame];
+        auto pipeline = preview->_videoQueue->deque();
+        // TODO: 等待音频同步
+        // 感谢FFMpeg，都不用做啥等待操作就已经很同步很流畅了~~
+        if (pipeline->videoFrame != nullptr && pipeline->videoFrame->data != nullptr) {
+            for (Preview_Mac *preview in previews) {
+                [preview setBuffer:pipeline->videoFrame];
+            }
+            dispatch_async(dispatch_get_main_queue(), ^{
+                for (Preview_Mac *preview in previews) {
+                    [preview setFrame:preview.frame];
+                    [preview setNeedsDisplay:YES];
+                    [preview setNeedsLayout:YES];
+                }
+            });
         }
     }
     
-    return true;
+    return kCVReturnSuccess;
 }
 
 std::shared_ptr<IPreviewManager> IPreviewManager::createIPreviewManager() {

@@ -25,7 +25,7 @@ public:
 public:
     bool enqueue(std::shared_ptr<sp::AudioFrame>);
     
-    bool getAudioClock();
+    std::optional<double> getAudioClock();
 private:
     const std::unique_ptr<AudioSpeaker_Mac_Opaque> _impl;
 };
