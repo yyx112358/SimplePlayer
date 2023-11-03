@@ -290,9 +290,9 @@ void DecoderManager::_loop()
         
         // 送入生产者-消费者队列。
         // !!!此处有锁!!!
-        if (_avPacket->stream_index == 0)
+        if (pipeline->videoFrame)
             _videoQueue->enqueue(pipeline);
-        else if (_avPacket->stream_index == 1)
+        if (pipeline->audioFrame)
             _audioQueue->enqueue(pipeline);
     }
 }

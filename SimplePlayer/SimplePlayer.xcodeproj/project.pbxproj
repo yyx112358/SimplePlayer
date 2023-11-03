@@ -35,6 +35,8 @@
 		7A31BA712A5D5DB10057E592 /* libswresample.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 7A31B69E2A5D553C0057E592 /* libswresample.a */; };
 		7A31BA722A5D5DB10057E592 /* libswscale.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 7A31B69F2A5D553C0057E592 /* libswscale.a */; };
 		7A349A862AF4EC960008502F /* AudioOutputManager.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7A349A842AF4EC960008502F /* AudioOutputManager.cpp */; };
+		7A349A892AF4F5140008502F /* AudioSpeaker_Mac.mm in Sources */ = {isa = PBXBuildFile; fileRef = 7A349A872AF4F5140008502F /* AudioSpeaker_Mac.mm */; };
+		7A349A8C2AF4FA410008502F /* SPNSObjectHolder.mm in Sources */ = {isa = PBXBuildFile; fileRef = 7A349A8A2AF4FA410008502F /* SPNSObjectHolder.mm */; };
 		7A56B2792A5DB09600094E41 /* AudioToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7A56B2782A5DB09600094E41 /* AudioToolbox.framework */; };
 		7A56B27B2A5DB09D00094E41 /* CoreAudio.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7A56B27A2A5DB09D00094E41 /* CoreAudio.framework */; };
 		7A56B27D2A5DB0A500094E41 /* VideoToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7A56B27C2A5DB0A500094E41 /* VideoToolbox.framework */; };
@@ -111,6 +113,10 @@
 		7A31B6A52A5D553D0057E592 /* libpostproc.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libpostproc.a; path = ../thirdParty/build/FFMpeg/lib/libpostproc.a; sourceTree = "<group>"; };
 		7A349A842AF4EC960008502F /* AudioOutputManager.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = AudioOutputManager.cpp; sourceTree = "<group>"; };
 		7A349A852AF4EC960008502F /* AudioOutputManager.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = AudioOutputManager.hpp; sourceTree = "<group>"; };
+		7A349A872AF4F5140008502F /* AudioSpeaker_Mac.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = AudioSpeaker_Mac.mm; sourceTree = "<group>"; };
+		7A349A882AF4F5140008502F /* AudioSpeaker_Mac.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = AudioSpeaker_Mac.hpp; sourceTree = "<group>"; };
+		7A349A8A2AF4FA410008502F /* SPNSObjectHolder.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = SPNSObjectHolder.mm; sourceTree = "<group>"; };
+		7A349A8B2AF4FA410008502F /* SPNSObjectHolder.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = SPNSObjectHolder.hpp; sourceTree = "<group>"; };
 		7A56B2782A5DB09600094E41 /* AudioToolbox.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AudioToolbox.framework; path = System/Library/Frameworks/AudioToolbox.framework; sourceTree = SDKROOT; };
 		7A56B27A2A5DB09D00094E41 /* CoreAudio.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreAudio.framework; path = System/Library/Frameworks/CoreAudio.framework; sourceTree = SDKROOT; };
 		7A56B27C2A5DB0A500094E41 /* VideoToolbox.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = VideoToolbox.framework; path = System/Library/Frameworks/VideoToolbox.framework; sourceTree = SDKROOT; };
@@ -177,6 +183,7 @@
 			isa = PBXGroup;
 			children = (
 				7AE896A62AF3D1000099A279 /* PureCpp */,
+				7A349A8D2AF4FB720008502F /* Bridge */,
 				7A45740F2AE51DED002CF4C0 /* Engine */,
 				7AE0D6B42AC5590C00972D44 /* Model */,
 				7A191B452A5AE6270016692E /* SPLog.cpp */,
@@ -283,6 +290,15 @@
 			name = Frameworks;
 			sourceTree = "<group>";
 		};
+		7A349A8D2AF4FB720008502F /* Bridge */ = {
+			isa = PBXGroup;
+			children = (
+				7A349A8A2AF4FA410008502F /* SPNSObjectHolder.mm */,
+				7A349A8B2AF4FA410008502F /* SPNSObjectHolder.hpp */,
+			);
+			path = Bridge;
+			sourceTree = "<group>";
+		};
 		7A45740F2AE51DED002CF4C0 /* Engine */ = {
 			isa = PBXGroup;
 			children = (
@@ -328,6 +344,8 @@
 		7A8C80992AC306C80051A19F /* Audio */ = {
 			isa = PBXGroup;
 			children = (
+				7A349A872AF4F5140008502F /* AudioSpeaker_Mac.mm */,
+				7A349A882AF4F5140008502F /* AudioSpeaker_Mac.hpp */,
 			);
 			path = Audio;
 			sourceTree = "<group>";
@@ -476,6 +494,7 @@
 			files = (
 				7A23A4142A4D367C005FDEB8 /* ImageWriterBmp.cpp in Sources */,
 				7A191B502A5AEFC10016692E /* GLVertexArray.cpp in Sources */,
+				7A349A8C2AF4FA410008502F /* SPNSObjectHolder.mm in Sources */,
 				7A191B5B2A5B006C0016692E /* GLRendererPreview.cpp in Sources */,
 				7A2699A62A2B7E00009C722B /* SimplePlayer.xcdatamodeld in Sources */,
 				7A191B5E2A5B025B0016692E /* GLRendererCharPainting.cpp in Sources */,
@@ -497,6 +516,7 @@
 				7A191B402A5AE4460016692E /* GLProgram.cpp in Sources */,
 				7A191B582A5AF9200016692E /* GLContextMac.mm in Sources */,
 				7AE0D6BD2AC55A8100972D44 /* Pipeline.cpp in Sources */,
+				7A349A892AF4F5140008502F /* AudioSpeaker_Mac.mm in Sources */,
 				7A1C65762AF4D0B100E8E6F8 /* AudioRendererManager.cpp in Sources */,
 				7A191B472A5AE6270016692E /* SPLog.cpp in Sources */,
 				7AE0D6BA2AC559A300972D44 /* AudioFrameBase.cpp in Sources */,

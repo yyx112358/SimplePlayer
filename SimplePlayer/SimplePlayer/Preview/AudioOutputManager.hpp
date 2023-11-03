@@ -12,8 +12,9 @@
 
 #include "Pipeline.hpp"
 
-
 namespace sp {
+
+class AudioSpeaker_Mac;
 
 class AudioOutputManager {
 public:
@@ -25,8 +26,8 @@ public:
     };
     
 public:
-    AudioOutputManager() {}
-    ~AudioOutputManager() {}
+    AudioOutputManager();
+    ~AudioOutputManager();
     
     AudioOutputManager(const AudioOutputManager &) = delete;
     AudioOutputManager &operator = (const AudioOutputManager &) = delete;
@@ -53,6 +54,8 @@ protected:
 protected:
     
     Status _status = Status::UNINITAILIZED;
+    
+    std::unique_ptr<sp::AudioSpeaker_Mac> _speaker;
     
     std::thread _processThread;
     

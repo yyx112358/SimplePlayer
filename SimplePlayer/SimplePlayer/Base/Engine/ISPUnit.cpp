@@ -28,8 +28,9 @@ public:
     virtual bool disconnect() = 0;
     
 protected:
+    virtual bool _input() = 0;
     virtual bool _process(std::shared_ptr<sp::Pipeline>) = 0;
-    
+    virtual bool _output() = 0;
 };
 
 class SPUnitBase : public ISPUnit {
