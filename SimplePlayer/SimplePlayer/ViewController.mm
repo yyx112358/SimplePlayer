@@ -6,14 +6,18 @@
 //
 
 #import "ViewController.h"
-#import "IPreviewManager.hpp"
 
 #include "SPLog.h"
 #include "DecoderManager.hpp"
+#include "AudioRendererManager.hpp"
+#include "AudioOutputManager.hpp"
+#import "IPreviewManager.hpp"
 
 
 @interface ViewController () {
     std::shared_ptr<IPreviewManager> preview;
+    std::shared_ptr<sp::AudioRendererManager> audioRenderer;
+    std::shared_ptr<sp::AudioOutputManager> audioOutput;
     std::shared_ptr<sp::DecoderManager> decoder;
 }
 
@@ -30,24 +34,31 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
 
-    preview = IPreviewManager::createIPreviewManager();
-    preview->setParentViews((__bridge_retained void *)self.playerView);
-    
-    // FIXME: 这种写法会引入循环引用
-    self.timer = [NSTimer scheduledTimerWithTimeInterval:1.0 / 60 target:self selector:@selector(refresh:) userInfo:self repeats:YES];
-    [self loadVideo];
-    
-    decoder->start(false);
-    preview->start(false);
-}
-
-- (void)loadVideo {
-//     NSString *video = [[NSBundle mainBundle] pathForResource:@"Sync" ofType:@"mp4"];
+    //     NSString *video = [[NSBundle mainBundle] pathForResource:@"Sync" ofType:@"mp4"];
     NSString *video = [[NSBundle mainBundle] pathForResource:@"1：1" ofType:@"MOV"];
     
     decoder = std::make_shared<sp::DecoderManager>();
     decoder->init(video.UTF8String);
-    decoder->start(true);
+    
+    audioRenderer = std::make_shared<sp::AudioRendererManager>();
+    audioRenderer->init();
+    audioRenderer->setInputQueue(decoder->_audioQueue);
+    
+    audioOutput = std::make_shared<sp::AudioOutputManager>();
+    audioOutput->init();
+    audioOutput->setInputQueue(audioRenderer->getOutputQueue());
+    
+    preview = IPreviewManager::createIPreviewManager();
+    preview->setParentViews((__bridge_retained void *)self.playerView);
+    preview->setPipelineQueue(decoder->_videoQueue, audioRenderer->getOutputQueue());
+    
+    decoder->start(false);
+    audioRenderer->start(false);
+    audioOutput->start(false);
+    preview->start(false);
+    
+    // FIXME: 这种写法会引入循环引用
+//    self.timer = [NSTimer scheduledTimerWithTimeInterval:1.0 / 60 target:self selector:@selector(refresh:) userInfo:self repeats:YES];
 }
 
 
@@ -103,6 +114,8 @@
 
 - (void)exit {
     decoder = nullptr;
+    audioRenderer = nullptr;
+    audioOutput = nullptr;
     preview = nullptr;
     [self.view.window.windowController close];
     __weak ViewController* wself = self;

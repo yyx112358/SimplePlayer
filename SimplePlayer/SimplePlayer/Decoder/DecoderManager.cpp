@@ -124,9 +124,9 @@ bool DecoderManager::unInit()
     if (_processThread.joinable()) {
         stop(true);
     }
-    while (_videoQueue->empty() == false)
+    while (_videoQueue && _videoQueue->empty() == false)
         _videoQueue->deque();
-    while (_audioQueue->empty() == false)
+    while (_audioQueue && _audioQueue->empty() == false)
         _audioQueue->deque();
     _cmdQueue.clear();
     _processThread = std::thread();

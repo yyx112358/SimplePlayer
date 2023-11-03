@@ -23,6 +23,7 @@ public:
     
     virtual bool setParentViews(void *parents) = 0;
     
+    virtual bool setPipelineQueue(std::shared_ptr<sp::SPPipelineQueue> videoQueue, std::shared_ptr<sp::SPPipelineQueue> audioQueue) = 0;
     virtual bool addPipeline(std::shared_ptr<sp::Pipeline> pipeline) = 0;
     
 protected:

@@ -418,20 +418,20 @@ bool PreviewManager_Mac::setParentViews(void *parents) {
 
 bool PreviewManager_Mac::start(bool isSync) {
     
-    if (_displayLink == NULL) {
-        CVDisplayLinkCreateWithActiveCGDisplays(&_displayLink);
-        CVDisplayLinkSetOutputCallback(_displayLink, &PreviewManager_Mac::_displayLinkCallback, this); // TODO: 使用weak_ptr
+    if (_videoDisplayLink == NULL) {
+        CVDisplayLinkCreateWithActiveCGDisplays(&_videoDisplayLink);
+        CVDisplayLinkSetOutputCallback(_videoDisplayLink, &PreviewManager_Mac::_displayLinkCallback, this); // TODO: 使用weak_ptr
     }
-    CVDisplayLinkStart(_displayLink);
+    CVDisplayLinkStart(_videoDisplayLink);
     
     return true;
 }
 
 bool PreviewManager_Mac::stop(bool isSync) {
     
-    if (_displayLink != NULL) {
-        CVDisplayLinkStop(_displayLink);
-        _displayLink = NULL;
+    if (_videoDisplayLink != NULL) {
+        CVDisplayLinkStop(_videoDisplayLink);
+        _videoDisplayLink = NULL;
     }
     
     return true;
@@ -440,6 +440,9 @@ bool PreviewManager_Mac::stop(bool isSync) {
 CVReturn PreviewManager_Mac::_displayLinkCallback(CVDisplayLinkRef displayLink, const CVTimeStamp *now, const CVTimeStamp *outputTime, CVOptionFlags flagsIn, CVOptionFlags *flagsOut, void *displayLinkContext) {
     PreviewManager_Mac *preview = static_cast<PreviewManager_Mac *>(displayLinkContext);
     
+    if (preview->_videoQueue->size() > 0) {
+        preview->_videoQueue->deque();
+    }
     
     return kCVReturnSuccess;
 }

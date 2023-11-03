@@ -73,6 +73,7 @@ public:
 //    std::future<bool> seek(bool isSync);
 //    std::future<bool> pause(bool isSync);
 //    std::future<bool> flush(bool isSync);
+//    std::future<bool> reset(bool isSync);
     
 protected:
     void _loop();
@@ -92,6 +93,7 @@ protected:
     
     static Pipeline::EStatus _checkAVError(int code, const char *msg = nullptr);
     
+// stop时不改变，uninit()时会清空
 protected:
     struct AVFormatContext *_fmtCtx = nullptr;
     struct AVCodecContext *_codecCtx[2] = {nullptr};
@@ -100,12 +102,15 @@ protected:
     struct AVFrame *_avFrame = nullptr;
     struct SwsContext *_swsCtx = nullptr;
     
+// stop时会被清空的数据
+protected:
     std::thread _processThread;
     
     Status _status = Status::UNINITAILIZED;
     std::deque<DecodeCommand> _cmdQueue;
     mutable std::shared_mutex _cmdLock;
     
+public: // FIXME: 后续使用connnect()完成
     const std::shared_ptr<sp::SPPipelineQueue> _videoQueue = std::make_shared<sp::SPPipelineQueue>(8);
     const std::shared_ptr<sp::SPPipelineQueue> _audioQueue = std::make_shared<sp::SPPipelineQueue>(3);
 };
