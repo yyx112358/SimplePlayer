@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.Storyboard.XIB" version="3.0" toolsVersion="21507" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES" initialViewController="B8D-0N-5wS">
+<document type="com.apple.InterfaceBuilder3.Cocoa.Storyboard.XIB" version="3.0" toolsVersion="22155" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES" initialViewController="B8D-0N-5wS">
     <dependencies>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="21507"/>
+        <deployment identifier="macosx"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="22155"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <scenes>
@@ -176,40 +177,49 @@
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                 <subviews>
                                     <customView fixedFrame="YES" id="PKp-ZS-07t">
-                                        <rect key="frame" x="0.0" y="0.0" width="480" height="271"/>
+                                        <rect key="frame" x="0.0" y="0.0" width="480" height="272"/>
                                         <autoresizingMask key="autoresizingMask"/>
                                     </customView>
                                     <slider verticalHuggingPriority="750" fixedFrame="YES" id="3za-Hs-Y3V">
-                                        <rect key="frame" x="-2" y="270" width="484" height="28"/>
+                                        <rect key="frame" x="-2" y="271" width="484" height="28"/>
                                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                         <sliderCell key="cell" state="on" alignment="left" maxValue="100" doubleValue="50" tickMarkPosition="above" sliderType="linear" id="uDa-iU-YW6"/>
+                                        <connections>
+                                            <action selector="seekChanged:" target="XfG-lQ-9wD" id="SfE-zr-MXh"/>
+                                        </connections>
                                     </slider>
                                     <stackView distribution="fillEqually" orientation="horizontal" alignment="top" horizontalStackHuggingPriority="249.99998474121094" verticalStackHuggingPriority="249.99998474121094" fixedFrame="YES" detachesHiddenViews="YES" translatesAutoresizingMaskIntoConstraints="NO" id="T0V-Mn-U0i">
-                                        <rect key="frame" x="0.0" y="293" width="480" height="27"/>
+                                        <rect key="frame" x="0.0" y="294" width="480" height="26"/>
                                         <subviews>
                                             <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="CXo-MU-AGE">
-                                                <rect key="frame" x="-7" y="0.0" width="128" height="32"/>
+                                                <rect key="frame" x="-7" y="-2" width="128" height="32"/>
                                                 <buttonCell key="cell" type="push" title="▶️" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="jbS-uO-PGe">
                                                     <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
                                                     <font key="font" metaFont="system"/>
                                                 </buttonCell>
+                                                <connections>
+                                                    <action selector="playClicked:" target="XfG-lQ-9wD" id="lSa-NA-gHg"/>
+                                                </connections>
                                             </button>
                                             <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="bFJ-hb-C8C">
-                                                <rect key="frame" x="115" y="0.0" width="128" height="32"/>
-                                                <buttonCell key="cell" type="push" title="Button" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="XBN-nc-YQb">
+                                                <rect key="frame" x="115" y="-2" width="128" height="32"/>
+                                                <buttonCell key="cell" type="push" title="⏹" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="XBN-nc-YQb">
                                                     <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
-                                                    <font key="font" metaFont="system"/>
+                                                    <font key="font" size="13" name="STIXTwoMath-Regular"/>
                                                 </buttonCell>
+                                                <connections>
+                                                    <action selector="stopClicked:" target="XfG-lQ-9wD" id="NWU-qO-g8e"/>
+                                                </connections>
                                             </button>
                                             <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="dgb-DC-MkF">
-                                                <rect key="frame" x="237" y="0.0" width="128" height="32"/>
+                                                <rect key="frame" x="237" y="-1" width="128" height="32"/>
                                                 <buttonCell key="cell" type="push" title="Button" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="U5o-Cs-arr">
                                                     <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
                                                     <font key="font" metaFont="system"/>
                                                 </buttonCell>
                                             </button>
                                             <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="81g-BJ-XnD">
-                                                <rect key="frame" x="359" y="0.0" width="128" height="32"/>
+                                                <rect key="frame" x="359" y="-1" width="128" height="32"/>
                                                 <buttonCell key="cell" type="push" title="Button" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="gB3-6G-gSp">
                                                     <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
                                                     <font key="font" metaFont="system"/>
@@ -240,6 +250,9 @@
                     </view>
                     <connections>
                         <outlet property="PlayerView" destination="PKp-ZS-07t" id="esj-WP-tcJ"/>
+                        <outlet property="playBtn" destination="CXo-MU-AGE" id="C9V-uw-dLa"/>
+                        <outlet property="seekSlider" destination="3za-Hs-Y3V" id="t2B-Dq-AGf"/>
+                        <outlet property="stopBtn" destination="bFJ-hb-C8C" id="jZb-uP-RR4"/>
                     </connections>
                 </viewController>
                 <customObject id="rPt-NT-nkU" userLabel="First Responder" customClass="NSResponder" sceneMemberID="firstResponder"/>

@@ -23,6 +23,9 @@
 
 @property (weak) IBOutlet NSView *playerView;
 
+@property (weak) IBOutlet NSButton *playBtn;
+@property (weak) IBOutlet NSButton *stopBtn;
+@property (weak) IBOutlet NSSlider *seekSlider;
 
 @property (nonatomic, strong) NSTimer *timer;
 @end
@@ -34,8 +37,8 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
 
-         NSString *video = [[NSBundle mainBundle] pathForResource:@"Sync" ofType:@"mp4"];
-//    NSString *video = [[NSBundle mainBundle] pathForResource:@"1：1" ofType:@"MOV"];
+//         NSString *video = [[NSBundle mainBundle] pathForResource:@"Sync" ofType:@"mp4"];
+    NSString *video = [[NSBundle mainBundle] pathForResource:@"1：1" ofType:@"MOV"];
     
     decoder = std::make_shared<sp::DecoderManager>();
     decoder->init(video.UTF8String);
@@ -71,6 +74,19 @@
         [subView setFrame:self.playerView.bounds];
         [subView setNeedsDisplay:YES];
     }
+}
+
+- (IBAction)playClicked:(NSButtonCell *)sender {
+    
+}
+
+- (IBAction)stopClicked:(id)sender {
+    [self exit];
+}
+
+- (IBAction)seekChanged:(NSSlider *)sender {
+    NSLog(@"");
+    
 }
 
 - (void)exit {
