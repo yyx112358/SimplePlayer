@@ -9,6 +9,7 @@
 
 #include <memory>
 #include <deque>
+#include <shared_mutex>
 
 #include "VideoFrameBase.hpp"
 #include "AudioFrameBase.hpp"
@@ -51,7 +52,10 @@ public:
         _producerSem.acquire();
         
         // 因为有锁，所以无需判定full()
-        _buffer.push_back(value);
+        {
+            std::unique_lock lk(_mtx);
+            _buffer.push_back(value);
+        }
         
         _consumerSem.release();
     }
@@ -61,18 +65,34 @@ public:
         _consumerSem.acquire();
         
         // 因为有锁，所以无需判定empty()
-        std::shared_ptr<Pipeline> out = _buffer.front();
-        _buffer.pop_front();
+        std::shared_ptr<Pipeline> out;
+        {
+            std::unique_lock lk(_mtx);
+            out = _buffer.front();
+            _buffer.pop_front();
+        }
         
         _producerSem.release();
         return out;
     }
     
+    /// 清空
+    void clear() {
+        std::unique_lock lk(_mtx);
+        while(_buffer.size() > 0) {
+            _consumerSem.acquire();
+            _buffer.pop_front();
+            _producerSem.release();
+        }
+    }
+    
     inline std::shared_ptr<Pipeline>& front() {
+        std::shared_lock lk(_mtx);
         return _buffer.front();
     }
     
     inline std::shared_ptr<Pipeline>& back() {
+        std::shared_lock lk(_mtx);
         return _buffer.back();
     }
     
@@ -81,14 +101,17 @@ public:
     }
     
     inline size_t size() const {
+        std::shared_lock lk(_mtx);
         return _buffer.size();
     }
     
     inline bool full() const {
+        std::shared_lock lk(_mtx);
         return size() >= capacity();
     }
     
     inline bool empty() const {
+        std::shared_lock lk(_mtx);
         return size() == 0;
     }
     
@@ -97,6 +120,7 @@ private:
     
     const size_t _capacity;
     SPSemaphore _producerSem, _consumerSem;
+    mutable std::shared_mutex _mtx;
 };
 
 }
