@@ -45,6 +45,8 @@ bool AudioOutputManager::start(bool isSync) {
         _processThread = std::thread([this]{ _loop(); });
     }
     _status = Status::RUN;
+    if (_speaker)
+        _speaker->start(isSync);
     
     return true;
 }
@@ -60,6 +62,21 @@ bool AudioOutputManager::stop(bool isSync) {
         if (_processThread.joinable())
             _processThread.join();
     }
+    if (_speaker)
+        _speaker->stop(isSync);
+    return true;
+}
+
+bool AudioOutputManager::pause(bool isSync) {
+    // stop的_setStatus()到线程完全结束之间还有一小段时间，需要等待完全结束
+    if (_processThread.joinable() == true && _status == Status::STOP)
+        _processThread.join();
+    if (_processThread.joinable() == false) {
+        _processThread = std::thread([this]{ _loop(); });
+    }
+    if (_speaker)
+        _speaker->pause(isSync);
+    
     return true;
 }
 
@@ -126,11 +143,13 @@ void AudioOutputManager::_loop() {
             
             _speaker = std::make_unique<AudioSpeaker_Mac>();
             _speaker->init(audioFormat);
+            _speaker->enqueue(pipeline->audioFrame);
+            _speaker->start(false);
+            continue;
         }
         
         if (_speaker && pipeline->audioFrame) {
             _speaker->enqueue(pipeline->audioFrame);
-            _speaker->start(false);
         }
     }
     SPLOGD("Audio output thread end");

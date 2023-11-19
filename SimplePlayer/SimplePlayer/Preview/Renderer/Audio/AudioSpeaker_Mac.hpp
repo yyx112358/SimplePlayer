@@ -22,6 +22,7 @@ public:
     
     bool start(bool isSync);
     bool stop(bool isSync);
+    bool pause(bool isSync);
     
 public:
     bool enqueue(std::shared_ptr<sp::AudioFrame>);

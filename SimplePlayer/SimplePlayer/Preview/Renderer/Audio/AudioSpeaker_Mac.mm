@@ -110,11 +110,13 @@ using namespace sp;
             [self frameToBuffer:audioFrame audioBuffer:&audioBuffer];
             AudioQueueEnqueueBuffer(_audioQueue, audioBuffer, 0, 0);
         }
-        AudioQueueStart(_audioQueue, NULL);
     }
+    AudioQueueStart(_audioQueue, NULL);
 }
 
 - (void)stop {
+    while(_audioBufferQueue.size() > 0)
+        _audioBufferQueue.deque();
     if (self.isRunning == true) {
         AudioQueueFlush(_audioQueue);
         AudioQueueStop(_audioQueue, true);
@@ -226,9 +228,15 @@ bool AudioSpeaker_Mac::start(bool isSync) {
 
 bool AudioSpeaker_Mac::stop(bool isSync) {
     // TODO: 异步操作。否则有20ms左右延迟
-    
     SPASSERT(_impl->obj);
     [_impl->obj stop];
+    return true;
+}
+
+bool AudioSpeaker_Mac::pause(bool isSync) {
+    // TODO: 异步操作。否则有20ms左右延迟
+    SPASSERT(_impl->obj);
+    [_impl->obj pause];
     return true;
 }
 

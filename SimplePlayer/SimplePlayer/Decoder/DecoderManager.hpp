@@ -68,7 +68,7 @@ public:
     std::future<bool> start(bool isSync);
     std::future<bool> stop(bool isSync);
 //    std::future<bool> seek(bool isSync);
-//    std::future<bool> pause(bool isSync);
+    std::future<bool> pause(bool isSync);
 //    std::future<bool> flush(bool isSync);
 //    std::future<bool> reset(bool isSync);
     

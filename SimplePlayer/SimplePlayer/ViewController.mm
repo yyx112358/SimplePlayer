@@ -77,7 +77,19 @@
 }
 
 - (IBAction)playClicked:(NSButtonCell *)sender {
-    
+    if ([sender.title isEqualToString:@"▶️"]) {
+        if (decoder != nullptr)
+            decoder->pause(false);
+        if (audioOutput != nullptr)
+            audioOutput->pause(false);
+        [sender setTitle:@"⏸"];
+    } else {
+        if (decoder != nullptr)
+            decoder->start(false);
+        if (audioOutput != nullptr)
+            audioOutput->start(false);
+        [sender setTitle:@"▶️"];
+    }
 }
 
 - (IBAction)stopClicked:(id)sender {

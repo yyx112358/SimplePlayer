@@ -213,18 +213,40 @@ std::future<bool> DecoderManager::stop(bool isSync)
 }
 
 //std::future<bool> DecoderManager::startseek(bool isSync);
-//std::future<bool> DecoderManager::startpause(bool isSync);
+std::future<bool> DecoderManager::pause(bool isSync) {
+    DecodeCommand cmd {.type = DecodeCommand::Type::start};
+    cmd.type = DecodeCommand::Type::pause;
+    std::future<bool> f = cmd.result.get_future();
+    
+    if (_processThread.joinable() == false) { // 已经停止了
+        cmd.result.set_value(true);
+        return f;
+    }
+    if (_getStatus() != Status::STOP) {
+        _pushNextCommand(std::move(cmd));
+    } else {
+        // future被配置后，thread还会执行一小段时间。不能再_pushNextCommand()，否则future会永远等待下去
+        cmd.result.set_value(true);
+    }
+    
+    return f;
+}
 //std::future<bool> DecoderManager::startflush(bool isSync);
 
 void DecoderManager::_loop()
 {
     SPLOGD("Decode thread start");
+    DecodeCommand::Type lastCmdType = DecodeCommand::Type::start;
     while(1) {
         // 获取下一个命令，调整状态
         if (auto nextCommand = _popNextCommand()) {
-            if (nextCommand->type == DecodeCommand::Type::pause) {
+            if (nextCommand->type == DecodeCommand::Type::start) {
+                _finishCommand(nextCommand);
+                lastCmdType = DecodeCommand::Type::start;
+            } else if (nextCommand->type == DecodeCommand::Type::pause) {
                 std::this_thread::sleep_for(std::chrono::milliseconds(1));
                 _finishCommand(nextCommand);
+                lastCmdType = DecodeCommand::Type::pause;
                 continue;
             } else if (nextCommand->type == DecodeCommand::Type::stop) {
                 _setStatus(Status::STOP);
@@ -239,7 +261,17 @@ void DecoderManager::_loop()
                 nextCommand->result.set_value(true);
                 _finishCommand(nextCommand);
             } else {
-                _finishCommand(nextCommand);
+                SPASSERT_NOT_IMPL;
+            }
+        } else {
+            if (lastCmdType == DecodeCommand::Type::start) {
+            } else if (lastCmdType == DecodeCommand::Type::pause) {
+                std::this_thread::sleep_for(std::chrono::milliseconds(1));
+                continue;
+            } else if (lastCmdType == DecodeCommand::Type::stop) {
+            } else if (lastCmdType == DecodeCommand::Type::seek) {
+            } else {
+                SPASSERT_NOT_IMPL;
             }
         }
         
@@ -305,6 +337,8 @@ bool DecoderManager::_pushNextCommand(DecodeCommand cmd)
             _cmdQueue.pop_front();
         }
     } else if (cmd.type == DecodeCommand::Type::seek) {
+        
+    } else if (cmd.type == DecodeCommand::Type::pause) {
         
     }
     

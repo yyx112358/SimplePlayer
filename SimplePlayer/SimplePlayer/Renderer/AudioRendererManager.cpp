@@ -61,6 +61,8 @@ bool AudioRendererManager::stop(bool isSync) {
         inputQueue->clear();
         inputQueue->enqueue(Pipeline::CreateStopPipeline());
     }
+    _outputQueue->clear();
+//    _outputQueue->enqueue(Pipeline::CreateStopPipeline());
     
     if (isSync) {
         if (_processThread.joinable())
