@@ -25,10 +25,13 @@ public:
         TEMPORARILY_UNAVALIABLE,
         END_OF_FILE,                // 文件结束
         ERROR,                      // 出错
+        STOP,                       // 主动结束
     };
     
 public:
-    
+    static std::shared_ptr<Pipeline> CreateStopPipeline() {
+        return std::shared_ptr<Pipeline>(new Pipeline{.status = EStatus::STOP});
+    }
     
 public:
     std::shared_ptr<VideoFrame> videoFrame;

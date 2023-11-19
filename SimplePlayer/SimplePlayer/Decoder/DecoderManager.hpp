@@ -65,9 +65,6 @@ public:
     bool init(const std::string &path);
     bool unInit();
     
-    // 获取下一帧。无可用帧时返回nullptr
-    std::shared_ptr<Pipeline> getNextFrame(MediaType mediaType);
-    
     std::future<bool> start(bool isSync);
     std::future<bool> stop(bool isSync);
 //    std::future<bool> seek(bool isSync);
@@ -81,6 +78,7 @@ protected:
     bool _pushNextCommand(DecodeCommand cmd);
     std::optional<DecodeCommand> _popNextCommand();
     void _finishCommand(std::optional<DecodeCommand> &cmd);
+    void _enqueueStopPipeline();
     
     Status _getStatus() const;
     void _setStatus(Status newStatus);

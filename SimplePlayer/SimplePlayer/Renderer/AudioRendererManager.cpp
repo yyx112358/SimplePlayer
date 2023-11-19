@@ -9,6 +9,7 @@
 #include "SPLog.h"
 
 using namespace sp;
+using std::chrono_literals::operator""ms;
 
 AudioRendererManager::AudioRendererManager() {
     
@@ -28,12 +29,10 @@ bool AudioRendererManager::uninit() {
     if (_processThread.joinable()) {
         stop(true);
     }
-    while(_inputQueue && _inputQueue->size() > 0) {
-        _inputQueue->deque();
-    }
-    while(_outputQueue && _outputQueue->size() > 0) {
-        _outputQueue->deque();
-    }
+    _inputQueue.reset();
+    
+    if (_outputQueue != nullptr)
+        _outputQueue->clear();
     _processThread = std::thread();
     _status = Status::UNINITAILIZED;
     
@@ -41,10 +40,13 @@ bool AudioRendererManager::uninit() {
 }
 
 bool AudioRendererManager::start(bool isSync) {
-    SPASSERT(_inputQueue != nullptr);
-    if (_inputQueue == nullptr)
+    SPASSERT(_inputQueue.lock() != nullptr);
+    if (_inputQueue.lock() == nullptr)
         return false;
     
+    // stop的_setStatus()到线程完全结束之间还有一小段时间，需要等待完全结束
+    if (_processThread.joinable() == true && _status == Status::STOP)
+        _processThread.join();
     if (_processThread.joinable() == false) {
         _processThread = std::thread([this]{ _loop(); });
     }
@@ -54,10 +56,17 @@ bool AudioRendererManager::start(bool isSync) {
 }
 
 bool AudioRendererManager::stop(bool isSync) {
-    _status = Status::STOP;
     
-    if (_processThread.joinable())
-        _processThread.join();
+    if (auto inputQueue = _inputQueue.lock()) {
+        inputQueue->clear();
+        inputQueue->enqueue(Pipeline::CreateStopPipeline());
+    }
+    
+    if (isSync) {
+        if (_processThread.joinable())
+            _processThread.join();
+    }
+
     return true;
 }
 
@@ -82,15 +91,31 @@ bool AudioRendererManager::reset(bool isSync) {
 }
 
 void AudioRendererManager::_loop() {
+    SPLOGD("Audio render thread start");
     while(1) {
-        // TODO: 采用cmdQueue
-        if (_status == Status::STOP)
+        auto inpueQueue = _inputQueue.lock();
+        if (inpueQueue == nullptr) {
+            _status = Status::STOP;
+            _enqueueStopPipeline();
             break;
+        }
+        std::shared_ptr<Pipeline> pipeline = inpueQueue->deque();
         
-        std::shared_ptr<Pipeline> pipeline = _inputQueue->deque();
+        if (pipeline->status == Pipeline::EStatus::STOP) {
+            _status = Status::STOP;
+            _enqueueStopPipeline();
+            break;
+        }
+//        std::this_thread::sleep_for(1000ms);
         
         // TODO: 处理和转换
         
         _outputQueue->enqueue(pipeline);
     }
+    SPLOGD("Audio render thread end");
+}
+
+void AudioRendererManager::_enqueueStopPipeline() {
+    _outputQueue->clear();
+    _outputQueue->enqueue(Pipeline::CreateStopPipeline());
 }

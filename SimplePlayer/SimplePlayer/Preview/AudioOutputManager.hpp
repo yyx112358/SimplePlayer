@@ -59,7 +59,7 @@ protected:
     
     std::thread _processThread;
     
-    std::shared_ptr<sp::SPPipelineQueue> _inputQueue;
+    std::weak_ptr<sp::SPPipelineQueue> _inputQueue;
 };
 
 }

@@ -121,17 +121,17 @@ bool DecoderManager::init(const std::string &path)
 
 bool DecoderManager::unInit()
 {
+    // 停止处理线程
     if (_processThread.joinable()) {
         stop(true);
     }
-    while (_videoQueue && _videoQueue->empty() == false)
-        _videoQueue->deque();
-    while (_audioQueue && _audioQueue->empty() == false)
-        _audioQueue->deque();
+    _videoQueue->clear();
+    _audioQueue->clear();
     _cmdQueue.clear();
     _processThread = std::thread();
-    _status = Status::UNINITAILIZED;
+    _setStatus(Status::UNINITAILIZED);
 
+    // 清空FFMpeg上下文
     if (_swsCtx != nullptr)
         sws_freeContext(_swsCtx);
     _swsCtx = nullptr;
@@ -157,26 +157,19 @@ bool DecoderManager::unInit()
     return true;
 }
 
-std::shared_ptr<Pipeline> DecoderManager::getNextFrame(MediaType mediaType)
-{
-    std::shared_ptr<Pipeline> pipeline = nullptr;
-    if (mediaType == MediaType::VIDEO && _videoQueue->empty() == false)
-        pipeline = _videoQueue->deque();
-    else if (mediaType == MediaType::AUDIO && _audioQueue->empty() == false)
-        pipeline = _audioQueue->deque();
-
-    return pipeline;
-}
-
 std::future<bool> DecoderManager::start(bool isSync)
 {
     DecodeCommand cmd {.type = DecodeCommand::Type::start};
     cmd.type = DecodeCommand::Type::start;
     std::future<bool> f = cmd.result.get_future();
     
-    if (_processThread.joinable() == false) {
+    // stop的_setStatus()到线程完全结束之间还有一小段时间，需要等待完全结束
+    if (_processThread.joinable() && _getStatus() == Status::STOP)
+        _processThread.join();
+    // 启动线程
+    if (_processThread.joinable() == false)
         _processThread = std::thread([this]{_loop();});
-    }
+    // 压入指令
     _pushNextCommand(std::move(cmd));
     
     if (isSync)
@@ -185,7 +178,8 @@ std::future<bool> DecoderManager::start(bool isSync)
 }
 
 
-std::future<bool> DecoderManager::stop(bool isSync) {
+std::future<bool> DecoderManager::stop(bool isSync) 
+{
     DecodeCommand cmd {.type = DecodeCommand::Type::start};
     cmd.type = DecodeCommand::Type::stop;
     std::future<bool> f = cmd.result.get_future();
@@ -194,16 +188,16 @@ std::future<bool> DecoderManager::stop(bool isSync) {
         cmd.result.set_value(true);
         return f;
     }
-    _pushNextCommand(std::move(cmd));
+    if (_getStatus() != Status::STOP) {
+        _pushNextCommand(std::move(cmd));
+    } else {
+        // future被配置后，thread还会执行一小段时间。不能再_pushNextCommand()，否则future会永远等待下去
+        cmd.result.set_value(true);
+    }
+    // 主线程也执行一次，避免解码线程因_videoQueue满而阻塞
+    _enqueueStopPipeline();
     
     if (isSync) {
-        // 释放所有的pipeline，避免解码线程因_videoQueue满而阻塞
-        while (_videoQueue->empty() == false) {
-            _videoQueue->deque();
-        }
-        while (_audioQueue->empty() == false) {
-            _audioQueue->deque();
-        }
         // 等待stop命令执行完毕
         f.wait();
         // 清空命令队列
@@ -233,9 +227,10 @@ void DecoderManager::_loop()
                 _finishCommand(nextCommand);
                 continue;
             } else if (nextCommand->type == DecodeCommand::Type::stop) {
-                SPLOGD("Decode thread end");
+                _setStatus(Status::STOP);
+                _enqueueStopPipeline();
                 _finishCommand(nextCommand);
-                return;
+                break;
             } else if (nextCommand->type == DecodeCommand::Type::seek) {
                 // TODO: 调整参数
                 int ret = av_seek_frame(_fmtCtx, -1, nextCommand->seekPts, 0);
@@ -290,11 +285,13 @@ void DecoderManager::_loop()
         
         // 送入生产者-消费者队列。
         // !!!此处有锁!!!
+        // TODO: 在这里检查一遍是否stop，否则stop会延迟一帧
         if (pipeline->videoFrame)
             _videoQueue->enqueue(pipeline);
         if (pipeline->audioFrame)
             _audioQueue->enqueue(pipeline);
     }
+    SPLOGD("Decode thread end");
 }
 
 
@@ -302,6 +299,15 @@ bool DecoderManager::_pushNextCommand(DecodeCommand cmd)
 {
     // TODO: 优化，例如stop会清空_cmdQueue，seek会调整到最近的seek时间点
     std::unique_lock<std::shared_mutex> lock(_cmdLock);
+    if (cmd.type == DecodeCommand::Type::stop) {
+        while (_cmdQueue.size() > 0) {
+            _cmdQueue.front().result.set_value(false);
+            _cmdQueue.pop_front();
+        }
+    } else if (cmd.type == DecodeCommand::Type::seek) {
+        
+    }
+    
     _cmdQueue.push_back(std::move(cmd));
     return true;
 }
@@ -344,11 +350,26 @@ void DecoderManager::_finishCommand(std::optional<DecodeCommand> &cmd)
     cmd->result.set_value(true);
 }
 
-sp::DecoderManager::Status DecoderManager::_getStatus() const {
+void DecoderManager::_enqueueStopPipeline() {
+    // 压入结束帧，通知后续节点结束运行
+    if (_videoQueue) {
+        _videoQueue->clear();
+        _videoQueue->enqueue(sp::Pipeline::CreateStopPipeline());
+    }
+    if (_audioQueue) {
+        _audioQueue->clear();
+        _audioQueue->enqueue(sp::Pipeline::CreateStopPipeline());
+    }
+}
+
+sp::DecoderManager::Status DecoderManager::_getStatus() const 
+{
     std::shared_lock<std::shared_mutex> lock(_cmdLock);
     return _status;
 }
-void DecoderManager::_setStatus(Status newStatus) {
+
+void DecoderManager::_setStatus(Status newStatus)
+{
     std::unique_lock<std::shared_mutex> lock(_cmdLock);
     _status = newStatus;
 }
@@ -447,7 +468,8 @@ bool DecoderManager::_decodePacket(std::shared_ptr<Pipeline> &pipeline, AVCodecC
 }
 
 
-AVCodecContext * DecoderManager::_getCodecCtx(MediaType mediaType) const {
+AVCodecContext * DecoderManager::_getCodecCtx(MediaType mediaType) const 
+{
     switch (mediaType) {
         case MediaType::VIDEO:          return _codecCtx[0];
         case MediaType::AUDIO:          return _codecCtx[1];
@@ -456,7 +478,8 @@ AVCodecContext * DecoderManager::_getCodecCtx(MediaType mediaType) const {
     }
 }
 
-AVStream * DecoderManager::_getStream(MediaType mediaType) const {
+AVStream * DecoderManager::_getStream(MediaType mediaType) const 
+{
     switch (mediaType) {
         case MediaType::VIDEO:          return _stream[0];
         case MediaType::AUDIO:          return _stream[1];
@@ -465,7 +488,8 @@ AVStream * DecoderManager::_getStream(MediaType mediaType) const {
     }
 }
 
-Pipeline::EStatus DecoderManager::_checkAVError(int code, const char *msg /*= nullptr*/) {
+Pipeline::EStatus DecoderManager::_checkAVError(int code, const char *msg /*= nullptr*/) 
+{
     if (code == 0) { // 其它
         return Pipeline::EStatus::READY;
     } else if (code == AVERROR_EOF) { // 文件结束

@@ -21,6 +21,7 @@ public:
     bool init(const AudioStreamBasicDescription &desc);
     
     bool start(bool isSync);
+    bool stop(bool isSync);
     
 public:
     bool enqueue(std::shared_ptr<sp::AudioFrame>);

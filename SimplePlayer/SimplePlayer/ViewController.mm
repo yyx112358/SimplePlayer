@@ -90,10 +90,22 @@
 }
 
 - (void)exit {
+    std::future<bool> futureDecoder = decoder->stop(false);
+    audioRenderer->stop(false);
+    audioOutput->stop(false);
+
+    // futureDecoder.wait();
+    decoder->unInit();
     decoder = nullptr;
+
+    audioRenderer->uninit();
     audioRenderer = nullptr;
+
+    audioOutput->uninit();
     audioOutput = nullptr;
+
     preview = nullptr;
+
     [self.view.window.windowController close];
     __weak ViewController* wself = self;
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 500 * NSEC_PER_MSEC), dispatch_get_main_queue(), ^{

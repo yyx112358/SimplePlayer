@@ -76,8 +76,7 @@ using namespace sp;
 
 - (void)dealloc {
     // 等待音频播放完成
-    AudioQueueFlush(_audioQueue);
-    AudioQueueStop(_audioQueue, true);
+    [self stop];
     
     // 销毁音频队列和缓冲区
     AudioQueueDispose(_audioQueue, true);
@@ -170,6 +169,8 @@ using namespace sp;
 // 音频数据回调函数
 void audioQueueOutputCallback(void *inUserData, AudioQueueRef inAQ, AudioQueueBufferRef inBuffer) {
     AudioSpeaker_Mac_Impl *speaker = (__bridge AudioSpeaker_Mac_Impl *)inUserData;
+    if (speaker.isRunning == false)
+        return;
   
     // 循环等待下一段音频数据
     std::shared_ptr<sp::AudioFrame> audioFrame;
@@ -220,6 +221,14 @@ bool AudioSpeaker_Mac::start(bool isSync) {
     SPASSERT(_impl->obj);
     [_impl->obj play];
     
+    return true;
+}
+
+bool AudioSpeaker_Mac::stop(bool isSync) {
+    // TODO: 异步操作。否则有20ms左右延迟
+    
+    SPASSERT(_impl->obj);
+    [_impl->obj stop];
     return true;
 }
 

@@ -13,18 +13,34 @@ using namespace sp;
 
 AudioOutputManager::AudioOutputManager() {}
 
-AudioOutputManager::~AudioOutputManager() {}
+AudioOutputManager::~AudioOutputManager() 
+{
+    uninit();
+}
 
-bool AudioOutputManager::init() {
+bool AudioOutputManager::init() 
+{
     
     return true;
 }
 
+bool AudioOutputManager::uninit() 
+{
+    if (_processThread.joinable()) {
+        stop(true);
+    }
+    _speaker = nullptr;
+    return true;
+}
+
 bool AudioOutputManager::start(bool isSync) {
-    SPASSERT(_inputQueue != nullptr);
-    if (_inputQueue == nullptr)
+    SPASSERT(_inputQueue.lock() != nullptr);
+    if (_inputQueue.lock() == nullptr)
         return false;
     
+    // stop的_setStatus()到线程完全结束之间还有一小段时间，需要等待完全结束
+    if (_processThread.joinable() == true && _status == Status::STOP)
+        _processThread.join();
     if (_processThread.joinable() == false) {
         _processThread = std::thread([this]{ _loop(); });
     }
@@ -33,14 +49,38 @@ bool AudioOutputManager::start(bool isSync) {
     return true;
 }
 
+bool AudioOutputManager::stop(bool isSync) {
+    
+    if (auto inputQueue = _inputQueue.lock()) {
+        inputQueue->clear();
+        inputQueue->enqueue(Pipeline::CreateStopPipeline());
+    }
+    
+    if (isSync) {
+        if (_processThread.joinable())
+            _processThread.join();
+    }
+    return true;
+}
+
 
 void AudioOutputManager::_loop() {
+    SPLOGD("Audio output thread start");
     while(1) {
-        // TODO: 采用cmdQueue
-        if (_status == Status::STOP)
+        auto inpueQueue = _inputQueue.lock();
+        if (inpueQueue == nullptr) {
+            _status = Status::STOP;
+            _speaker->stop(false);
             break;
+        }
         
-        std::shared_ptr<Pipeline> pipeline = _inputQueue->deque();
+        std::shared_ptr<Pipeline> pipeline = inpueQueue->deque();
+        
+        if (_status == Status::STOP || pipeline->status == Pipeline::EStatus::STOP) {
+            _status = Status::STOP;
+            _speaker->stop(false);
+            break;
+        }
         
         // TODO: 应该有一个专门的解析流程，将Preview、Speaker的创建和配置集中起来
         // TODO: 不支持更改音频配置。如果存在采样率等参数不一致，应加入一个converter过程做音频重采样
@@ -93,4 +133,5 @@ void AudioOutputManager::_loop() {
             _speaker->start(false);
         }
     }
+    SPLOGD("Audio output thread end");
 }

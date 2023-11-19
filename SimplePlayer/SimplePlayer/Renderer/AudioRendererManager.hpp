@@ -50,6 +50,7 @@ public:
     
 protected:
     void _loop();
+    void _enqueueStopPipeline();
     
 protected:
     
@@ -59,7 +60,7 @@ protected:
     
     std::thread _processThread;
     
-    std::shared_ptr<sp::SPPipelineQueue> _inputQueue;
+    std::weak_ptr<sp::SPPipelineQueue> _inputQueue;
     const std::shared_ptr<sp::SPPipelineQueue> _outputQueue = std::make_shared<sp::SPPipelineQueue>(OUTPUT_QUEUE_MAX_SIZE);
 };
 
