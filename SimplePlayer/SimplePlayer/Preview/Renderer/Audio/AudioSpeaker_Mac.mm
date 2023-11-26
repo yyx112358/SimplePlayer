@@ -32,6 +32,7 @@ using namespace sp;
     AudioStreamBasicDescription _audioFormat;
     AudioQueueRef _audioQueue;          // 音频队列
     sp::RingQueue<std::shared_ptr<sp::AudioFrame>, 3> _audioBufferQueue;
+    int _audioBufferRefNum;
 }
 
 @property (nonatomic, readonly) BOOL isRunning;
@@ -65,6 +66,7 @@ using namespace sp;
     if (self = [super init]) {
         // 创建音频队列
         _audioFormat = audioFormat;
+        _audioBufferRefNum = 0;
         OSStatus status = AudioQueueNewOutput(&_audioFormat, audioQueueOutputCallback, (__bridge void *)(self), NULL, NULL, 0, &_audioQueue);
         if (status != 0) {
             SPLOGE("AudioQueueNewOutput Failed: %d", status);
@@ -104,11 +106,12 @@ using namespace sp;
 
 - (void)play {
     if (self.isRunning == false) {
-        if (_audioBufferQueue.empty() == false) {
+        if (_audioBufferQueue.size() > 0 && _audioBufferRefNum < _audioBufferQueue.capacity()) {
             AudioQueueBufferRef audioBuffer = nil;
             auto audioFrame = [self dequeue];
             [self frameToBuffer:audioFrame audioBuffer:&audioBuffer];
             AudioQueueEnqueueBuffer(_audioQueue, audioBuffer, 0, 0);
+            _audioBufferRefNum++;
         }
     }
     AudioQueueStart(_audioQueue, NULL);
@@ -132,6 +135,18 @@ using namespace sp;
         return;
     
     _audioBufferQueue.enqueue(audioFrame);
+
+    // 如果只有一个AudioQueueBuffer，会有音频卡顿爆音
+    // 因此，如果个数小于_audioBufferQueue.capacity()，则直接压入AudioQueue而无需等待回调
+    if (self.isRunning == true) {
+        if (_audioBufferQueue.size() > 0 && _audioBufferRefNum < _audioBufferQueue.capacity()) {
+            AudioQueueBufferRef audioBuffer = nil;
+            auto audioFrame = [self dequeue];
+            [self frameToBuffer:audioFrame audioBuffer:&audioBuffer];
+            AudioQueueEnqueueBuffer(_audioQueue, audioBuffer, 0, 0);
+            _audioBufferRefNum++;
+        }
+    }
 }
 
 - (std::shared_ptr<sp::AudioFrame>)dequeue {
