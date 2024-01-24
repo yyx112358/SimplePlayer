@@ -8,17 +8,20 @@
 #import "ViewController.h"
 
 #include "SPLog.h"
-#include "DecoderManager.hpp"
-#include "AudioRendererManager.hpp"
-#include "AudioOutputManager.hpp"
-#import "IPreviewManager.hpp"
+//#include "DecoderManager.hpp"
+//#include "AudioRendererManager.hpp"
+//#include "AudioOutputManager.hpp"
+//#import "IPreviewManager.hpp"
+#include "SPGraphPreview.hpp"
 
 
 @interface ViewController () {
-    std::shared_ptr<IPreviewManager> preview;
-    std::shared_ptr<sp::AudioRendererManager> audioRenderer;
-    std::shared_ptr<sp::AudioOutputManager> audioOutput;
-    std::shared_ptr<sp::DecoderManager> decoder;
+//    std::shared_ptr<IPreviewManager> preview;
+//    std::shared_ptr<sp::AudioRendererManager> audioRenderer;
+//    std::shared_ptr<sp::AudioOutputManager> audioOutput;
+//    std::shared_ptr<sp::DecoderManager> decoder;
+    std::shared_ptr<sp::SPMediaModel> _model;
+    std::shared_ptr<sp::SPGraphPreview> _previewGraph;
 }
 
 @property (weak) IBOutlet NSView *playerView;
@@ -36,29 +39,42 @@
 
 - (void)viewDidLoad {
     [super viewDidLoad];
-
+    
+    _model = std::make_shared<sp::SPMediaModel>();
     NSString *video = [[NSBundle mainBundle] pathForResource:@"Sync" ofType:@"mp4"];
+    _model->videoTracks.push_back({std::string(video.UTF8String)});
+    
+    _previewGraph = std::make_shared<sp::SPGraphPreview>();
+    if (auto f = _previewGraph->updateModel(*_model, true);f.get() == false)
+        SPASSERT_NOT_IMPL;
+    _previewGraph->_parentPlayerView = (__bridge_retained void *)self.playerView;
+    
+    if (auto f = _previewGraph->init(true);f.get() == false)
+        SPASSERT_NOT_IMPL;
+
+    if (auto f = _previewGraph->start(true);f.get() == false)
+        SPASSERT_NOT_IMPL;
 //    NSString *video = [[NSBundle mainBundle] pathForResource:@"1：1" ofType:@"MOV"];
     
-    decoder = std::make_shared<sp::DecoderManager>();
-    decoder->init(video.UTF8String);
-    
-    audioRenderer = std::make_shared<sp::AudioRendererManager>();
-    audioRenderer->init();
-    audioRenderer->setInputQueue(decoder->_audioQueue);
-    
-    audioOutput = std::make_shared<sp::AudioOutputManager>();
-    audioOutput->init();
-    audioOutput->setInputQueue(audioRenderer->getOutputQueue());
-    
-    preview = IPreviewManager::createIPreviewManager();
-    preview->setParentViews((__bridge_retained void *)self.playerView);
-    preview->setPipelineQueue(decoder->_videoQueue);
-    
-    decoder->start(false);
-    audioRenderer->start(false);
-    audioOutput->start(false);
-    preview->start(false);
+//    decoder = std::make_shared<sp::DecoderManager>();
+//    decoder->init(video.UTF8String);
+//    
+//    audioRenderer = std::make_shared<sp::AudioRendererManager>();
+//    audioRenderer->init();
+//    audioRenderer->setInputQueue(decoder->_audioQueue);
+//    
+//    audioOutput = std::make_shared<sp::AudioOutputManager>();
+//    audioOutput->init();
+//    audioOutput->setInputQueue(audioRenderer->getOutputQueue());
+//    
+//    preview = IPreviewManager::createIPreviewManager();
+//    preview->setParentViews((__bridge_retained void *)self.playerView);
+//    preview->setPipelineQueue(decoder->_videoQueue);
+//    
+//    decoder->start(false);
+//    audioRenderer->start(false);
+//    audioOutput->start(false);
+//    preview->start(false);
     
 }
 
@@ -78,16 +94,10 @@
 
 - (IBAction)playClicked:(NSButtonCell *)sender {
     if ([sender.title isEqualToString:@"▶️"]) {
-        if (decoder != nullptr)
-            decoder->pause(false);
-        if (audioOutput != nullptr)
-            audioOutput->pause(false);
+        _previewGraph->pause(true);
         [sender setTitle:@"⏸"];
     } else {
-        if (decoder != nullptr)
-            decoder->start(false);
-        if (audioOutput != nullptr)
-            audioOutput->start(false);
+        _previewGraph->start(true);
         [sender setTitle:@"▶️"];
     }
 }
@@ -102,21 +112,24 @@
 }
 
 - (void)exit {
-    std::future<bool> futureDecoder = decoder->stop(false);
-    audioRenderer->stop(false);
-    audioOutput->stop(false);
-
-    // futureDecoder.wait();
-    decoder->unInit();
-    decoder = nullptr;
-
-    audioRenderer->uninit();
-    audioRenderer = nullptr;
-
-    audioOutput->uninit();
-    audioOutput = nullptr;
-
-    preview = nullptr;
+//    std::future<bool> futureDecoder = decoder->stop(false);
+//    audioRenderer->stop(false);
+//    audioOutput->stop(false);
+//
+//    // futureDecoder.wait();
+//    decoder->unInit();
+//    decoder = nullptr;
+//
+//    audioRenderer->uninit();
+//    audioRenderer = nullptr;
+//
+//    audioOutput->uninit();
+//    audioOutput = nullptr;
+//
+//    preview = nullptr;
+    _previewGraph->uninit(true);
+    _previewGraph = nullptr;
+    _model = nullptr;
 
     [self.view.window.windowController close];
     __weak ViewController* wself = self;

@@ -168,7 +168,7 @@ std::optional<sp::VideoFrame> LoadBufferFromImage(NSImage *image) {
 }
 
 - (void)drawRect:(NSRect)dirtyRect {
-    NSDate *date = [NSDate date];
+//    NSDate *date = [NSDate date];
     [super drawRect:dirtyRect];
     if (imageBuffer == nullptr || charBuffer.has_value() == false)
         return;
