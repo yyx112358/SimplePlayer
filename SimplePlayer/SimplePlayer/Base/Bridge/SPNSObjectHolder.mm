@@ -35,7 +35,6 @@ SPNSObjectHolder::SPNSObjectHolder(SPNSObjectHolder &&other) : _pImpl(std::move(
     
 }
 
-
 SPNSObjectHolder& SPNSObjectHolder::operator=(void *ocPtr) {
     _pImpl = std::make_unique<Impl>(ocPtr);
     return *this;

@@ -7,7 +7,7 @@
 
 #include "DecoderManager.hpp"
 #include "SPLog.h"
-#include "ImageWriterBmp.h"
+#include "ImageWriterUIImage.h"
 
 extern "C" {
 #include "libavformat/avformat.h"
@@ -441,7 +441,8 @@ bool DecoderManager::_decodePacket(std::shared_ptr<Pipeline> &pipeline, AVCodecC
             
             static bool isSave = true;
             if (isSave) {
-                writeBMP2File("decode.bmp", videoFrame->data.get(), avFrame->width, avFrame->height, 4);
+//                writeBMP2File("decode.bmp", videoFrame->data.get(), avFrame->width, avFrame->height, 4);
+                SPNSObjectHolder holder = writeRGBA2UIImage(videoFrame->data.get(), avFrame->width, avFrame->height, 4, false);
                 isSave = false;
             }
         }

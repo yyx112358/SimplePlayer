@@ -17,7 +17,6 @@
 #include "GLFrameBuffer.hpp"
 
 #include "ImageReader.hpp"
-#include "ImageWriterBmp.h"
 
 namespace sp {
 
