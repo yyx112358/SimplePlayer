@@ -7,8 +7,6 @@
 
 #include <memory>
 
-class SPNSObjectHolderImpl;
-
 /**
  * Apple端NSObject包装器，使用RAII和ARC自动管理内存
  * 读取时务必区分强持有和弱持有
@@ -22,15 +20,19 @@ class SPNSObjectHolderImpl;
  */
 class SPNSObjectHolder {
 public:
-    SPNSObjectHolder() = default;
+    SPNSObjectHolder();
     SPNSObjectHolder(void *ocPtr);
-    SPNSObjectHolder& operator=(void *ocPtr);
+    SPNSObjectHolder(SPNSObjectHolder &&other);
     
-    virtual ~SPNSObjectHolder() = default;
+    SPNSObjectHolder& operator=(void *ocPtr);
+    SPNSObjectHolder& operator=(SPNSObjectHolder &&other);
+    
+    ~SPNSObjectHolder();
     
     void *getStrongObject();
     void *getWeakObject();
 
 protected:
-    std::shared_ptr<SPNSObjectHolderImpl> impl = nullptr;
+    class Impl;
+    std::unique_ptr<Impl> _pImpl;
 };
