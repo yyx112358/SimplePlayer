@@ -25,10 +25,10 @@ void GLVertexArray::VERTEX_BUFFER_DELETER(GLuint p) {
 const std::vector<GLVertexArray::VertexBuffer> &GLVertexArray::DEFAULT_RECT_VERTEX_BUFFER()
 {
     const static std::vector<GLVertexArray::VertexBuffer> buf = {
-        {{-1.0, 1.0}, {0.0, 1.0},}, // 左上
-        {{ 1.0, 1.0}, {1.0, 1.0},}, // 右上
-        {{-1.0,-1.0}, {0.0, 0.0},}, // 左下
-        {{ 1.0,-1.0}, {1.0, 0.0},}, // 右下
+        {{-1.0, 1.0}, {0.0, 0.0},}, // 左上
+        {{ 1.0, 1.0}, {1.0, 0.0},}, // 右上
+        {{-1.0,-1.0}, {0.0, 1.0},}, // 左下
+        {{ 1.0,-1.0}, {1.0, 1.0},}, // 右下
     };
     return buf;
 }

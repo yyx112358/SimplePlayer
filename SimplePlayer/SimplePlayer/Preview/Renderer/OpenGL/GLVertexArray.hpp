@@ -20,7 +20,7 @@ class GLVertexArray {
 public:
     typedef struct {
         // TODO: 灵活性太差，考虑别的设计
-        std::array<GLfloat, 2>location;
+        std::array<GLfloat, 4>location;
         std::array<GLfloat, 2>texture;
     } VertexBuffer;
     
