@@ -10,6 +10,7 @@
 #include <vector>
 #include <array>
 #include <optional>
+#include <typeindex>
 
 #include "IGLContext.hpp"
 
@@ -18,11 +19,29 @@ namespace sp {
 
 class GLVertexArray {
 public:
+    /// 标准VertexBuffer类型，满足大多数场景
     typedef struct {
-        // TODO: 灵活性太差，考虑别的设计
-        std::array<GLfloat, 4>location;
+        std::array<GLfloat, 3>location;
         std::array<GLfloat, 2>texture;
     } VertexBuffer;
+    
+    /// 扩展VertexBuffer，支持其它场景
+    class VertexBufferEx {
+    public:
+        std::unique_ptr<char []> buf;
+        size_t vertexNum = 0;
+        std::vector<std::pair<std::type_index, size_t>> descs;
+        
+        template<typename Tp>
+        friend VertexBufferEx toBuffer(const std::vector<Tp> &src);
+        
+        static GLenum typeToGLenum(std::type_index typeIndex);
+        static size_t typeToSize(std::type_index typeIndex);
+        
+        size_t attribSizeInByte(int index = -1) const;
+        size_t vertexSizeInByte() const;
+        size_t sizeInByte() const;
+    };
     
     typedef std::array<GLuint, 3> ElementBuffer;
 
@@ -46,6 +65,11 @@ public:
         _vertexBuffer = vbo;
     }
     
+    void UpdateVertexBufferEx(VertexBufferEx &&vboEx) {
+        _vertexBufferEx = std::move(vboEx);
+        _vertexBuffer.clear();
+    }
+    
     void UpdateElementBuffer(const std::vector<ElementBuffer> &ebo) {
         _elementBuffer = ebo;
     }
@@ -60,6 +84,7 @@ protected:
     
     // Vertex Buffer Object(VBO)
     std::vector<VertexBuffer> _vertexBuffer = DEFAULT_RECT_VERTEX_BUFFER();
+    std::optional<VertexBufferEx> _vertexBufferEx; // 优先使用Ex
     GL_IdHolder _vertexBufferId = GL_IdHolder(VERTEX_BUFFER_DELETER);
     std::optional<GLuint> _vertexBufferSize;
     

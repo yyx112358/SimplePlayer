@@ -50,4 +50,15 @@ bool IGLContext::CheckGLError(const char *function, int line)
     return errorCode != 0;
 }
 
+GLint IGLContext::GetMaxTextureUnits() {
+    GLint value = 0;
+    glGetIntegerv(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS, &value);
+    return value;
+}
+
+GLint IGLContext::GetMaxVertexAttribs() {
+    GLint value = 0;
+    glGetIntegerv(GL_MAX_VERTEX_ATTRIBS, &value);
+    return value;
+}
 

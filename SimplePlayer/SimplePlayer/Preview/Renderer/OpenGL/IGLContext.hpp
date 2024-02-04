@@ -36,6 +36,12 @@ public:
     // 应在最后一个GL操作完成时调用
     virtual bool Flush() = 0;
     
+public:
+    /// 获取最大支持的纹理单元数，最少32
+    static GLint GetMaxTextureUnits();
+    /// 获取支持的最大顶点属性个数，最少16
+    static GLint GetMaxVertexAttribs();
+    
 };
 
 #define GLCheckError() IGLContext::CheckGLError(__FUNCTION__, __LINE__)
