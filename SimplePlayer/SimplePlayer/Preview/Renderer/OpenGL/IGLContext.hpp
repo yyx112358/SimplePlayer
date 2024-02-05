@@ -37,8 +37,11 @@ public:
     virtual bool Flush() = 0;
     
 public:
-    /// 获取最大支持的纹理单元数，最少32
-    static GLint GetMaxTextureUnits();
+    /// 获取Vertex Shader最大支持的纹理单元数，最少16
+    static GLint GetMaxVertexTextureUnits();
+    /// 获取Fragment Shader最大支持的纹理单元数，最少16
+    /// 注意还有一个GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS参数，表示所有Shader中能支持的最大texture总数
+    static GLint GetMaxFragmentTextureUnits();
     /// 获取支持的最大顶点属性个数，最少16
     static GLint GetMaxVertexAttribs();
     

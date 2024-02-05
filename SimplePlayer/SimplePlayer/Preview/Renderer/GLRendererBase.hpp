@@ -34,6 +34,7 @@ public:
     }
     
     bool UpdateTexture(const std::vector<VideoFrame> &buffers) {
+        SPASSERT1(buffers.size() <= IGLContext::GetMaxFragmentTextureUnits(), "输入纹理数量超出限制");
         for (auto &buffer : buffers) {
             auto texture = std::make_shared<GLTexture>(_context, buffer);
             _textures.emplace_back(std::move(texture));

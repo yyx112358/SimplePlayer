@@ -18,8 +18,7 @@ GLRendererCharPainting::GLRendererCharPainting(std::shared_ptr<IGLContext> conte
     layout (location = 1) in vec2 aTexCoord;
 
     uniform mat4 transform;
-    uniform sampler2D texture0;
-    uniform sampler2D texture1;
+    uniform sampler2D textures[2];
     uniform int texWidth, texHeight;
     uniform int charWidth, charHeight;
 
@@ -49,7 +48,7 @@ GLRendererCharPainting::GLRendererCharPainting(std::shared_ptr<IGLContext> conte
         {
             for (int x = left; x < right; x += xstep)
             {
-                vec4 color = texture(texture0, vec2(float(x) / texWidth, float(y) / texHeight));
+                vec4 color = texture(textures[0], vec2(float(x) / texWidth, float(y) / texHeight));
                 sumR += color.r;
                 sumG += color.g;
                 sumB += color.b;
@@ -76,13 +75,12 @@ GLRendererCharPainting::GLRendererCharPainting(std::shared_ptr<IGLContext> conte
     in vec2  vtxTexCoord;
     
     out vec4 FragColor;
-    
-    uniform sampler2D texture0;
-    uniform sampler2D texture1;
+        
+    uniform sampler2D textures[2];
 
     void main()
     {
-        FragColor = texture(texture1, vtxTexCoord).rgba * vec4(vtxColor, 1.0);
+        FragColor = texture(textures[1], vtxTexCoord).rgba * vec4(vtxColor, 1.0);
         FragColor = vec4(vtxColor, 1.0);
     })";
     UpdateShader({vertexShaderSource}, {fragmentShaderSource});

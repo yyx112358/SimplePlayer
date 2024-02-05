@@ -50,9 +50,15 @@ bool IGLContext::CheckGLError(const char *function, int line)
     return errorCode != 0;
 }
 
-GLint IGLContext::GetMaxTextureUnits() {
+GLint IGLContext::GetMaxVertexTextureUnits() {
     GLint value = 0;
-    glGetIntegerv(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS, &value);
+    glGetIntegerv(GL_MAX_VERTEX_TEXTURE_IMAGE_UNITS, &value);
+    return value;
+}
+
+GLint IGLContext::GetMaxFragmentTextureUnits() {
+    GLint value = 0;
+    glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &value);
     return value;
 }
 

@@ -54,16 +54,16 @@ bool GLRendererBase::_InternalRender()
     GLCheckError();
     
     _vertexArray.Activate();
+    std::vector<GLint> textureIds;
     for (int i = 0; i < _textures.size(); i++) {
         SPASSERT(_textures[i]->id().has_value());
         
         glActiveTexture(GL_TEXTURE0 + i); // 激活纹理单元1
         _textures[i]->Activate(); // 绑定纹理。根据上下文，这个纹理绑定到了纹理单元1
         
-        char textureName[] = "texture00";
-        snprintf(textureName, sizeof(textureName), "texture%d", i);
-        _program->UpdateUniform(textureName, i); // 更新纹理uniform
+        textureIds.push_back(i);
     }
+    UpdateUniform("textures", textureIds);
     
     GLCheckError();
     
