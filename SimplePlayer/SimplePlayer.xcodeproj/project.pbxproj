@@ -56,6 +56,8 @@
 		7AA2BC6E2A5EAFF300BACC4F /* Sync.mp4 in Resources */ = {isa = PBXBuildFile; fileRef = 7AA2BC6D2A5EAFF300BACC4F /* Sync.mp4 */; };
 		7AA2BC772A5EBDD400BACC4F /* DecoderManager.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7AA2BC752A5EBDD400BACC4F /* DecoderManager.cpp */; };
 		7AAAD7082AEBD1E200746DA1 /* SPParam.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7AAAD7062AEBD1E200746DA1 /* SPParam.cpp */; };
+		7ACD8FD22B6BCC6A000E6EA0 /* GLRendererMultiBlend.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7ACD8FD02B6BCC6A000E6EA0 /* GLRendererMultiBlend.cpp */; };
+		7ACE52C62B6CFE0B00A2C120 /* ImageWriterUIImage.mm in Sources */ = {isa = PBXBuildFile; fileRef = 7ACE52C42B6CFE0B00A2C120 /* ImageWriterUIImage.mm */; };
 		7AE0D6B72AC5593900972D44 /* VideoFrameBase.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7AE0D6B52AC5593900972D44 /* VideoFrameBase.cpp */; };
 		7AE0D6BA2AC559A300972D44 /* AudioFrameBase.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7AE0D6B82AC559A300972D44 /* AudioFrameBase.cpp */; };
 		7AE0D6BD2AC55A8100972D44 /* Pipeline.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7AE0D6BB2AC55A8100972D44 /* Pipeline.cpp */; };
@@ -149,6 +151,10 @@
 		7AAAD7062AEBD1E200746DA1 /* SPParam.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = SPParam.cpp; sourceTree = "<group>"; };
 		7AAAD7072AEBD1E200746DA1 /* SPParam.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = SPParam.hpp; sourceTree = "<group>"; };
 		7AC27A1C2AF4D84F00C82D1A /* SPEnum.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SPEnum.h; sourceTree = "<group>"; };
+		7ACD8FD02B6BCC6A000E6EA0 /* GLRendererMultiBlend.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = GLRendererMultiBlend.cpp; sourceTree = "<group>"; };
+		7ACD8FD12B6BCC6A000E6EA0 /* GLRendererMultiBlend.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = GLRendererMultiBlend.hpp; sourceTree = "<group>"; };
+		7ACE52C42B6CFE0B00A2C120 /* ImageWriterUIImage.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = ImageWriterUIImage.mm; sourceTree = "<group>"; };
+		7ACE52C52B6CFE0B00A2C120 /* ImageWriterUIImage.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ImageWriterUIImage.h; sourceTree = "<group>"; };
 		7AE0D6B52AC5593900972D44 /* VideoFrameBase.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = VideoFrameBase.cpp; sourceTree = "<group>"; };
 		7AE0D6B62AC5593900972D44 /* VideoFrameBase.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = VideoFrameBase.hpp; sourceTree = "<group>"; };
 		7AE0D6B82AC559A300972D44 /* AudioFrameBase.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = AudioFrameBase.cpp; sourceTree = "<group>"; };
@@ -225,6 +231,8 @@
 			children = (
 				7A23A4122A4D367C005FDEB8 /* ImageWriterBmp.h */,
 				7A23A4132A4D367C005FDEB8 /* ImageWriterBmp.cpp */,
+				7ACE52C42B6CFE0B00A2C120 /* ImageWriterUIImage.mm */,
+				7ACE52C52B6CFE0B00A2C120 /* ImageWriterUIImage.h */,
 			);
 			path = Writer;
 			sourceTree = "<group>";
@@ -354,6 +362,8 @@
 				7A191B5A2A5B006C0016692E /* GLRendererPreview.hpp */,
 				7A191B5C2A5B025B0016692E /* GLRendererCharPainting.cpp */,
 				7A191B5D2A5B025B0016692E /* GLRendererCharPainting.hpp */,
+				7ACD8FD02B6BCC6A000E6EA0 /* GLRendererMultiBlend.cpp */,
+				7ACD8FD12B6BCC6A000E6EA0 /* GLRendererMultiBlend.hpp */,
 			);
 			path = Renderer;
 			sourceTree = "<group>";
@@ -528,6 +538,7 @@
 				7A2699A62A2B7E00009C722B /* SimplePlayer.xcdatamodeld in Sources */,
 				7A191B5E2A5B025B0016692E /* GLRendererCharPainting.cpp in Sources */,
 				7A2699A32A2B7E00009C722B /* ViewController.mm in Sources */,
+				7ACE52C62B6CFE0B00A2C120 /* ImageWriterUIImage.mm in Sources */,
 				7AAAD7082AEBD1E200746DA1 /* SPParam.cpp in Sources */,
 				7A416AC92B52364100DF3C67 /* SPGraphPreview.cpp in Sources */,
 				7A191B532A5AEFCF0016692E /* GLFrameBuffer.cpp in Sources */,
@@ -539,6 +550,7 @@
 				7AE0D6B72AC5593900972D44 /* VideoFrameBase.cpp in Sources */,
 				7A1C65792AF4D0C000E8E6F8 /* VideoRendererManager.cpp in Sources */,
 				7A2699AD2A2B7E01009C722B /* main.m in Sources */,
+				7ACD8FD22B6BCC6A000E6EA0 /* GLRendererMultiBlend.cpp in Sources */,
 				7A2699A02A2B7E00009C722B /* AppDelegate.m in Sources */,
 				7A191B4A2A5AEFA10016692E /* GLTexture.cpp in Sources */,
 				7A2699BC2A2B81E9009C722B /* PreviewManager_Mac.mm in Sources */,

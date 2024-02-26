@@ -179,6 +179,12 @@ void GLProgram::_UpdateUniform()
             glUniformMatrix4fv(location, 1, GL_FALSE, glm::value_ptr(std::get<glm::mat4>(value)));
         else if (std::holds_alternative<std::vector<GLint>>(value))
             glUniform1iv(location, static_cast<GLsizei>(std::get<std::vector<GLint>>(value).size()), std::get<std::vector<GLint>>(value).data());
+        else if (std::holds_alternative<std::vector<glm::mat4>>(value)) {
+            const std::vector<glm::mat4> &m4v = std::get<std::vector<glm::mat4>>(value);
+            if (m4v.size() > 0) {
+                glUniformMatrix4fv(location, static_cast<int>(m4v.size()), GL_FALSE, glm::value_ptr(m4v[0]));
+            }
+        }
         else
             SPASSERTEX(0, "Unsupport uniform type");
     }

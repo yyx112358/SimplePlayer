@@ -17,7 +17,8 @@
 namespace sp {
 
 typedef std::variant<int32_t, uint32_t, float,
-                    glm::mat4, std::vector<GLint>> GLUniform;
+                    std::vector<GLint>,
+                    glm::mat4, std::vector<glm::mat4>> GLUniform;
 
 class GLProgram {
 public:

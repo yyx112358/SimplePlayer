@@ -28,12 +28,12 @@ public:
         _context->SwitchContext();
     }
     
-    bool UpdateShader(const std::vector<std::string> &vertexShader, const std::vector<std::string> &fragmentShader) {
+    virtual bool UpdateShader(const std::vector<std::string> &vertexShader, const std::vector<std::string> &fragmentShader) {
         _program->UpdateShader(vertexShader, fragmentShader);
         return true;
     }
     
-    bool UpdateTexture(const std::vector<VideoFrame> &buffers) {
+    virtual bool UpdateTexture(const std::vector<VideoFrame> &buffers) {
         SPASSERT1(buffers.size() <= IGLContext::GetMaxFragmentTextureUnits(), "输入纹理数量超出限制");
         for (auto &buffer : buffers) {
             auto texture = std::make_shared<GLTexture>(_context, buffer);
@@ -49,26 +49,26 @@ public:
         return true;
     }
     
-    bool UpdateOutputTexture(std::shared_ptr<GLTexture> texture) {
+    virtual bool UpdateOutputTexture(std::shared_ptr<GLTexture> texture) {
         _outputTexture = texture;
         _needUpdate = true;
         return true;
     }
     
-    std::shared_ptr<GLTexture> GetOutputTexture() {
+    virtual std::shared_ptr<GLTexture> GetOutputTexture() {
         return _outputTexture;
     }
     
-    bool UpdateTransform(const glm::mat4 &transform) {
+    virtual bool UpdateTransform(const glm::mat4 &transform) {
         _transform = transform;
         return true;
     }
     
-    const glm::mat4 &GetTransform() {
+    virtual const glm::mat4 &GetTransform() {
         return _transform;
     }
     
-    bool UpdateUniform(const std::string &name, GLUniform uniform) {
+    virtual bool UpdateUniform(const std::string &name, GLUniform uniform) {
         return _program->UpdateUniform(name, uniform);
     }
     
@@ -95,7 +95,7 @@ public:
         return _InternalUpdate();
     }
     
-    bool Render() {
+    virtual bool Render() {
         // 获取当前OpenGL上下文
         if (_context == nullptr || _context->SwitchContext() == false)
             return false;

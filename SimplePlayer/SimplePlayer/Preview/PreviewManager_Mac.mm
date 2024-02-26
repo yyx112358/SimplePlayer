@@ -25,6 +25,7 @@
 #include "GLContextMac.hpp"
 #include "GLRendererCharPainting.hpp"
 #include "GLRendererPreview.hpp"
+#include "GLRendererMultiBlend.hpp"
 #include "ImageReader.hpp"
 
 std::optional<sp::VideoFrame> LoadBufferFromImage(NSImage *image) {
@@ -119,6 +120,7 @@ std::optional<sp::VideoFrame> LoadBufferFromImage(NSImage *image) {
 
 @interface Preview_Mac : NSOpenGLView {
     std::shared_ptr<sp::GLContextMac> pGLContext;
+    std::unique_ptr<sp::GLRendererMultiBlend> pBlendRenderer;
     std::unique_ptr<sp::GLRendererCharPainting> pRenderer;
     std::unique_ptr<sp::GLRendererPreview> pRendererPreview;
     
@@ -142,6 +144,8 @@ std::optional<sp::VideoFrame> LoadBufferFromImage(NSImage *image) {
         if (pGLContext->Init() == false)
             return nil;
         [self setOpenGLContext:pGLContext->context()];
+        
+        pBlendRenderer = std::make_unique<sp::GLRendererMultiBlend>(pGLContext);
         
         // 创建并初始化Renderer
         pRenderer = std::make_unique<sp::GLRendererCharPainting>(pGLContext);
@@ -181,19 +185,29 @@ std::optional<sp::VideoFrame> LoadBufferFromImage(NSImage *image) {
 //    charTexture->UploadBuffer(*charBuffer);
     imageBuffer.reset();
     
-    pRenderer->UpdateTexture({imageTexture, charTexture});
+
+    pBlendRenderer->UpdateTexture({imageTexture, charTexture});
+    if (std::shared_ptr<sp::GLTexture> outputTexture = pBlendRenderer->GetOutputTexture(); outputTexture == nullptr) {
+        pBlendRenderer->UpdateOutputTexture(std::make_shared<sp::GLTexture>(pGLContext, sp::VideoFrame{.width = imageTexture->width(), .height = imageTexture->height(), .pixelFormat = AV_PIX_FMT_RGBA}));
+    } else if (outputTexture->width() != imageTexture->width() || outputTexture->height() != imageTexture->height()) {
+        outputTexture->UploadBuffer(sp::VideoFrame{.width = imageTexture->width(), .height = imageTexture->height(), .pixelFormat = AV_PIX_FMT_RGBA});
+    }
+
+    pBlendRenderer->Render();
+    
+    pRenderer->UpdateTexture({pBlendRenderer->GetOutputTexture(), charTexture});
     
     if (std::shared_ptr<sp::GLTexture> outputTexture = pRenderer->GetOutputTexture(); outputTexture == nullptr) {
         pRenderer->UpdateOutputTexture(std::make_shared<sp::GLTexture>(pGLContext, sp::VideoFrame{.width = imageTexture->width(), .height = imageTexture->height(), .pixelFormat = AV_PIX_FMT_RGBA}));
     } else if (outputTexture->width() != imageTexture->width() || outputTexture->height() != imageTexture->height()) {
         outputTexture->UploadBuffer(sp::VideoFrame{.width = imageTexture->width(), .height = imageTexture->height(), .pixelFormat = AV_PIX_FMT_RGBA});
     }
-    pRendererPreview->UpdateTexture({pRenderer->GetOutputTexture()});
     
     pRenderer->Render();
     
     float scale = 2; // TODO: 自动获取Retina scale
     
+    pRendererPreview->UpdateTexture({pRenderer->GetOutputTexture()});
     pRendererPreview->UpdatePreviewSize(dirtyRect.size.width * scale, dirtyRect.size.height * scale);
     pRendererPreview->Render();
     
