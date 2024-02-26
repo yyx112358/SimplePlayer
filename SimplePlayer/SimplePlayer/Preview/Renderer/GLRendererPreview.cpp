@@ -9,6 +9,7 @@
 
 #include "glm/glm.hpp"
 #include "glm/gtc/matrix_transform.hpp"
+#include "VideoTransform.hpp"
 
 using namespace sp;
 
@@ -43,56 +44,12 @@ GLRendererPreview::GLRendererPreview(std::shared_ptr<IGLContext> context):GLRend
 
 void GLRendererPreview::_UpdateTransform()
 {
-    if (_textures.size() == 0 || _fillmode == EFillMode::Free)
+    if (_textures.size() == 0)
         return;
     
-    GLfloat texWidth = _textures[0]->width(), texHeight = _textures[0]->height();
-    if (_rotation == ERotation::Rotation90 || _rotation == ERotation::Rotation270)
-        std::swap(texWidth, texHeight);
-    GLfloat scaleX = 1, scaleY = 1;
-    switch(_fillmode) {
-        case EFillMode::Fit:
-            if (GLfloat scale = _previewWidth / texWidth; texHeight * scale <= _previewHeight) {
-                scaleX = scale;
-                scaleY = scale;
-            } else {
-                scaleX = _previewHeight / texHeight;
-                scaleY = _previewHeight / texHeight;
-            }
-            break;
-            
-        case EFillMode::Stretch:
-            scaleX = _previewWidth / texWidth;
-            scaleY = _previewHeight / texHeight;
-            break;
-            
-        case EFillMode::Fill:
-            if (GLfloat scale = _previewWidth / texWidth; texHeight * scale >= _previewHeight) {
-                scaleX = scale;
-                scaleY = scale;
-            } else {
-                scaleX = _previewHeight / texHeight;
-                scaleY = _previewHeight / texHeight;
-            }
-            break;
-            
-        case EFillMode::Origin:
-            scaleX = 1;
-            scaleY = 1;
-            break;
-            
-        case EFillMode::Free:
-            return;
-    }
-    if (_flipX)
-        scaleX *= -1;
-    if (_flipY)
-        scaleY *= -1;
-    
-    _transform = glm::identity<glm::mat4>();
-    _transform = glm::scale(_transform, glm::vec3(scaleX, scaleY, 1.0f));   // 缩放到preview区域内
-    _transform = glm::scale(_transform, glm::vec3(texWidth / _previewWidth, texHeight / _previewHeight, 1.0f)); // 归一化
-    _transform = glm::rotate(_transform, glm::pi<GLfloat>() / 2 * (int)_rotation, glm::vec3(0.0f, 0.0f, 1.0f)); // 旋转
+    _transformPreview.inSize.width = _textures[0]->width();
+    _transformPreview.inSize.height = _textures[0]->height();
+    _transform = _transformPreview.toMatrix();
 }
 
 bool GLRendererPreview::_InternalUpdate()
@@ -110,7 +67,7 @@ bool GLRendererPreview::_InternalUpdate()
 bool GLRendererPreview::_InternalRender()
 {
     glBindFramebuffer(GL_FRAMEBUFFER, 0); // 绑定到屏幕
-    glViewport(0, 0, _previewWidth, _previewHeight);
+    glViewport(0, 0, _transformPreview.outSize.width, _transformPreview.outSize.height);
     glClearColor(1, 1, 1, 1);
     glClear(GL_COLOR_BUFFER_BIT);
     

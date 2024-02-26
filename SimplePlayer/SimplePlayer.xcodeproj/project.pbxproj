@@ -56,6 +56,8 @@
 		7AA2BC6E2A5EAFF300BACC4F /* Sync.mp4 in Resources */ = {isa = PBXBuildFile; fileRef = 7AA2BC6D2A5EAFF300BACC4F /* Sync.mp4 */; };
 		7AA2BC772A5EBDD400BACC4F /* DecoderManager.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7AA2BC752A5EBDD400BACC4F /* DecoderManager.cpp */; };
 		7AAAD7082AEBD1E200746DA1 /* SPParam.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7AAAD7062AEBD1E200746DA1 /* SPParam.cpp */; };
+		7ABEAC7B2B8C9B61003AB33F /* VideoTransform.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7ABEAC792B8C9B61003AB33F /* VideoTransform.cpp */; };
+		7ABEAC7E2B8CB448003AB33F /* Geometry.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7ABEAC7C2B8CB448003AB33F /* Geometry.cpp */; };
 		7ACD8FD22B6BCC6A000E6EA0 /* GLRendererMultiBlend.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7ACD8FD02B6BCC6A000E6EA0 /* GLRendererMultiBlend.cpp */; };
 		7ACE52C62B6CFE0B00A2C120 /* ImageWriterUIImage.mm in Sources */ = {isa = PBXBuildFile; fileRef = 7ACE52C42B6CFE0B00A2C120 /* ImageWriterUIImage.mm */; };
 		7AE0D6B72AC5593900972D44 /* VideoFrameBase.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7AE0D6B52AC5593900972D44 /* VideoFrameBase.cpp */; };
@@ -150,6 +152,10 @@
 		7AAAD7042AEBD0E300746DA1 /* ISPUnit.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = ISPUnit.hpp; sourceTree = "<group>"; };
 		7AAAD7062AEBD1E200746DA1 /* SPParam.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = SPParam.cpp; sourceTree = "<group>"; };
 		7AAAD7072AEBD1E200746DA1 /* SPParam.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = SPParam.hpp; sourceTree = "<group>"; };
+		7ABEAC792B8C9B61003AB33F /* VideoTransform.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = VideoTransform.cpp; sourceTree = "<group>"; };
+		7ABEAC7A2B8C9B61003AB33F /* VideoTransform.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = VideoTransform.hpp; sourceTree = "<group>"; };
+		7ABEAC7C2B8CB448003AB33F /* Geometry.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = Geometry.cpp; sourceTree = "<group>"; };
+		7ABEAC7D2B8CB448003AB33F /* Geometry.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = Geometry.hpp; sourceTree = "<group>"; };
 		7AC27A1C2AF4D84F00C82D1A /* SPEnum.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SPEnum.h; sourceTree = "<group>"; };
 		7ACD8FD02B6BCC6A000E6EA0 /* GLRendererMultiBlend.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = GLRendererMultiBlend.cpp; sourceTree = "<group>"; };
 		7ACD8FD12B6BCC6A000E6EA0 /* GLRendererMultiBlend.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = GLRendererMultiBlend.hpp; sourceTree = "<group>"; };
@@ -427,6 +433,10 @@
 				7AE0D6BC2AC55A8100972D44 /* Pipeline.hpp */,
 				7A416ACA2B52376600DF3C67 /* SPMediaModel.cpp */,
 				7A416ACB2B52376600DF3C67 /* SPMediaModel.hpp */,
+				7ABEAC792B8C9B61003AB33F /* VideoTransform.cpp */,
+				7ABEAC7A2B8C9B61003AB33F /* VideoTransform.hpp */,
+				7ABEAC7C2B8CB448003AB33F /* Geometry.cpp */,
+				7ABEAC7D2B8CB448003AB33F /* Geometry.hpp */,
 			);
 			path = Model;
 			sourceTree = "<group>";
@@ -531,6 +541,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				7A23A4142A4D367C005FDEB8 /* ImageWriterBmp.cpp in Sources */,
+				7ABEAC7E2B8CB448003AB33F /* Geometry.cpp in Sources */,
 				7A416ACC2B52376600DF3C67 /* SPMediaModel.cpp in Sources */,
 				7A191B502A5AEFC10016692E /* GLVertexArray.cpp in Sources */,
 				7A349A8C2AF4FA410008502F /* SPNSObjectHolder.mm in Sources */,
@@ -543,6 +554,7 @@
 				7A416AC92B52364100DF3C67 /* SPGraphPreview.cpp in Sources */,
 				7A191B532A5AEFCF0016692E /* GLFrameBuffer.cpp in Sources */,
 				7A6D8B4C2A3359DC00C40E5C /* GLRendererBase.cpp in Sources */,
+				7ABEAC7B2B8C9B61003AB33F /* VideoTransform.cpp in Sources */,
 				7AA2BC772A5EBDD400BACC4F /* DecoderManager.cpp in Sources */,
 				7A191B4D2A5AEFB40016692E /* GLRenderBuffer.cpp in Sources */,
 				7A349A862AF4EC960008502F /* AudioOutputManager.cpp in Sources */,
