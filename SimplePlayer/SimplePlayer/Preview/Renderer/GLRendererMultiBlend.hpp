@@ -8,6 +8,7 @@
 #pragma once
 
 #include "GLRendererBase.hpp"
+#include "VideoTransform.hpp"
 #include <bitset>
 
 namespace sp {
@@ -36,7 +37,7 @@ protected:
     
     /// 使用中的纹理标志
     std::bitset<ARRAY_SIZE> _activateTextureFlags;
-    std::vector<glm::mat4> _textureTransforms;
+    std::vector<sp::VideoTransformFillmode> _textureTransforms;
 };
 
 }

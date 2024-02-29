@@ -8,6 +8,7 @@
 #include "GLRendererMultiBlend.hpp"
 
 #include "glm/gtc/matrix_transform.hpp"
+#include "ImageWriterUIImage.h"
 
 
 using namespace sp;
@@ -89,15 +90,24 @@ bool GLRendererMultiBlend::_InternalUpdate()
     _needUpdateVertex = false;
     
     _textureTransforms.resize(2);
-    _textureTransforms[0] = glm::identity<glm::mat4>();
-    _textureTransforms[0] = glm::translate(_textureTransforms[0], glm::vec3(0.3, 0.4, 1.0f));
-    _textureTransforms[0] = glm::scale(_textureTransforms[0], glm::vec3(0.3, 0.3, 1.0f));
+    _textureTransforms[0].inSize.width = _textures[0]->width();
+    _textureTransforms[0].inSize.height = _textures[0]->height();
+    _textureTransforms[0].outSize.width = _outputTexture->width();
+    _textureTransforms[0].outSize.height = _outputTexture->height();
+    _textureTransforms[0].scale = 0.5;
+    _textureTransforms[0].displayRotation = VideoTransformFillmode::EDisplayRotation::Rotation0;
+//    _textureTransforms[0] = glm::identity<glm::mat4>();
+//    _textureTransforms[0] = glm::translate(_textureTransforms[0], glm::vec3(0.3, 0.4, 1.0f));
+//    _textureTransforms[0] = glm::scale(_textureTransforms[0], glm::vec3(0.3, 0.3, 1.0f));
 //    _textureTransforms[0] = glm::scale(_textureTransforms[0], glm::vec3(texWidth / _previewWidth, texHeight / _previewHeight, 1.0f)); // 归一化
-    _textureTransforms[0] = glm::rotate(_textureTransforms[0], glm::pi<GLfloat>() / 2 * (int)30, glm::vec3(0.0f, 0.0f, 1.0f)); // 旋转
+//    _textureTransforms[0] = glm::rotate(_textureTransforms[0], glm::pi<GLfloat>() / 2 * (int)30, glm::vec3(0.0f, 0.0f, 1.0f)); // 旋转
     
     
-    _textureTransforms[1] = glm::identity<glm::mat4>();
-    _textureTransforms[1] = glm::scale(_textureTransforms[1], glm::vec3(0.5, 0.5, 1.0f));
+    _textureTransforms[1].inSize.width = _textures[1]->width();
+    _textureTransforms[1].inSize.height = _textures[1]->height();
+    _textureTransforms[1].outSize.width = _outputTexture->width();
+    _textureTransforms[1].outSize.height = _outputTexture->height();
+    _textureTransforms[1].scale = 0.003;
     
     return GLRendererBase::_InternalUpdate();
 }
@@ -113,8 +123,12 @@ bool GLRendererMultiBlend::_InternalRender() {
     _program->Activate(); // 启用Shader程序
     GLCheckError();
     
+    static int r = 0;
+    _textureTransforms[0].freeRotation = r++;
+    
     _vertexArray.Activate();
     std::vector<GLint> textureIds;
+    std::vector<glm::mat4> transforms;
     for (int i = 0; i < _textures.size(); i++) {
         SPASSERT(_textures[i]->id().has_value());
         
@@ -122,18 +136,24 @@ bool GLRendererMultiBlend::_InternalRender() {
         _textures[i]->Activate(); // 绑定纹理。根据上下文，这个纹理绑定到了纹理单元1
         
         textureIds.push_back(i);
+        transforms.emplace_back(_textureTransforms[i].toMatrix());
     }
     UpdateUniform("textures", textureIds);
     
     GLCheckError();
     
-    _program->UpdateUniform("transforms", _textureTransforms);
+    _program->UpdateUniform("transforms", transforms);
     
     _program->FlushUniform();
     
     _vertexArray.Render();
     GLCheckError();
     
+    bool b = true;
+    if (auto buffer = _frameBuffer->DownloadFrameBuffer(GL_BGRA)) {
+        SPNSObjectHolder holder = writeRGBA2UIImage(buffer->data.get(), buffer->width, buffer->height, 4, true);
+        b = false;
+    }
     
     if (GLCheckError())
         return false;

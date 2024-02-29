@@ -17,6 +17,10 @@
 
 namespace sp {
 
+/// 当前渲染帧流水线
+/// 主要包含两部分：
+///     1. 当前时刻、当前帧的渲染数据切片快照
+///     2. 渲染流水线中所有节点的公用上下文
 class Pipeline {
 public:
     enum class EStatus {
