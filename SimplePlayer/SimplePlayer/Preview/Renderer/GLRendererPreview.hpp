@@ -43,7 +43,6 @@ public:
     }
     
 protected:
-    virtual void _UpdateTransform();
     
     bool _InternalUpdate() override;
     

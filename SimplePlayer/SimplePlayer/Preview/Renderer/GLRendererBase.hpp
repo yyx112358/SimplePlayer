@@ -102,7 +102,7 @@ public:
         // 更新内部参数
         if (_InternalUpdate() == false)
             return false;
-        
+        // 执行渲染
         return _InternalRender();
     }
 

@@ -42,16 +42,6 @@ GLRendererPreview::GLRendererPreview(std::shared_ptr<IGLContext> context):GLRend
     )"});
 }
 
-void GLRendererPreview::_UpdateTransform()
-{
-    if (_textures.size() == 0)
-        return;
-    
-    _transformPreview.inSize.width = _textures[0]->width();
-    _transformPreview.inSize.height = _textures[0]->height();
-    _transform = _transformPreview.toMatrix();
-}
-
 bool GLRendererPreview::_InternalUpdate()
 {
     if (_needUpdate == false)
@@ -81,8 +71,9 @@ bool GLRendererPreview::_InternalRender()
     _textures[0]->Activate(); // 绑定纹理。根据上下文，这个纹理绑定到了纹理单元1
     _program->UpdateUniform("screenTexture", 0); // 更新纹理uniform
     
-    _UpdateTransform();
-    _program->UpdateUniform("transform", _transform); // 更新转换矩阵
+    _transformPreview.inSize.width = _textures[0]->width();
+    _transformPreview.inSize.height = _textures[0]->height();
+    _program->UpdateUniform("transform", _transformPreview.toMatrix()); // 更新转换矩阵
     _program->FlushUniform();
     
     _vertexArray.Render();

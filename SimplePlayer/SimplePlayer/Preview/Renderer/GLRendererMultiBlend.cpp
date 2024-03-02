@@ -96,11 +96,6 @@ bool GLRendererMultiBlend::_InternalUpdate()
     _textureTransforms[0].outSize.height = _outputTexture->height();
     _textureTransforms[0].scale = 0.5;
     _textureTransforms[0].displayRotation = VideoTransformFillmode::EDisplayRotation::Rotation0;
-//    _textureTransforms[0] = glm::identity<glm::mat4>();
-//    _textureTransforms[0] = glm::translate(_textureTransforms[0], glm::vec3(0.3, 0.4, 1.0f));
-//    _textureTransforms[0] = glm::scale(_textureTransforms[0], glm::vec3(0.3, 0.3, 1.0f));
-//    _textureTransforms[0] = glm::scale(_textureTransforms[0], glm::vec3(texWidth / _previewWidth, texHeight / _previewHeight, 1.0f)); // 归一化
-//    _textureTransforms[0] = glm::rotate(_textureTransforms[0], glm::pi<GLfloat>() / 2 * (int)30, glm::vec3(0.0f, 0.0f, 1.0f)); // 旋转
     
     
     _textureTransforms[1].inSize.width = _textures[1]->width();

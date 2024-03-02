@@ -9,6 +9,7 @@
 #include "glm/gtc/matrix_transform.hpp"
 #include <string>
 
+using namespace std;
 using namespace sp;
 
 std::string to_string(const glm::mat4 &m) {
@@ -21,36 +22,42 @@ std::string to_string(const glm::mat4 &m) {
 glm::mat4 sp::VideoTransformFillmode::toMatrix() const {
     float inWidth = inSize.width, inHeight = inSize.height;
     float outWidth = outSize.width, outHeight = outSize.height;
-//    if (displayRotation == EDisplayRotation::Rotation90 || displayRotation == EDisplayRotation::Rotation270)
-//        std::swap(inWidth, inHeight);
     float scaleX = scale, scaleY = scale;
+    
+    float inDisplayWidth = inWidth, inDisplayHeight = inHeight;
+    if (displayRotation == EDisplayRotation::Rotation90 || displayRotation == EDisplayRotation::Rotation270)
+        std::swap(inDisplayWidth, inDisplayHeight);
     switch(fillmode) {
         case EFillMode::Fit:
         default:
-            if (float whRatio = outWidth / inWidth; inHeight * whRatio <= outHeight) {
-                scaleX *= whRatio;
-                scaleY *= whRatio;
+            if (float whRatio = inDisplayWidth / inDisplayHeight;outHeight * whRatio * outHeight <= outWidth / whRatio * outWidth) {
+                // 若宽高比为whRatio的等高内接矩形（outputHeight = canvasHeight）总面积更小
+                scaleX *= outHeight / inDisplayHeight;
+                scaleY *= outHeight / inDisplayHeight;
             } else {
-                scaleX = outHeight / inHeight;
-                scaleY = outHeight / inHeight;
+                // 若若宽高比为whRatio的等宽内接矩形（outputWidth = canvasWidth）总面积更小
+                scaleX *= outWidth / inDisplayWidth;
+                scaleY *= outWidth / inDisplayWidth;
             }
-            break;
-            
-        case EFillMode::Stretch:
-            scaleX *= outWidth / inWidth;
-            scaleY *= outHeight / inHeight;
             break;
             
         case EFillMode::Fill:
-            if (float whRatio = outWidth / inWidth; inHeight * whRatio >= outHeight) {
-                scaleX *= whRatio;
-                scaleY *= whRatio;
+            if (float whRatio = inDisplayWidth / inDisplayHeight;outHeight * whRatio * outHeight >= outWidth / whRatio * outWidth) {
+                // 若宽高比为whRatio的等高内接矩形（outputHeight = canvasHeight）总面积更小
+                scaleX *= outHeight / inDisplayHeight;
+                scaleY *= outHeight / inDisplayHeight;
             } else {
-                scaleX *= outHeight / inHeight;
-                scaleY *= outHeight / inHeight;
+                // 若若宽高比为whRatio的等宽内接矩形（outputWidth = canvasWidth）总面积更小
+                scaleX *= outWidth / inDisplayWidth;
+                scaleY *= outWidth / inDisplayWidth;
             }
             break;
-            
+
+        case EFillMode::Stretch:
+            scaleX *= outWidth / inDisplayWidth;
+            scaleY *= outHeight / inDisplayHeight;
+            break;
+
         case EFillMode::Origin:
             scaleX *= 1;
             scaleY *= 1;
@@ -71,26 +78,18 @@ glm::mat4 sp::VideoTransformFillmode::toMatrix() const {
     rotationAngle += freeRotation;
     rotationAngle = glm::radians(rotationAngle);
 
-    glm::mat4 m = glm::identity<glm::mat4>();
-    m = glm::translate(m, glm::vec3(0.0f, 0.0f, 0.0f)); // 平移
-    // 这里为什么要变换到1:1没理解
-    m = glm::scale(m, glm::vec3(inHeight / inWidth, 1.0f, 1.0f));   // 变换为1:1
-    std::string s = to_string(m);
-    m = glm::rotate(m, rotationAngle, glm::vec3(0.0f, 0.0f, 1.0f)); // 旋转
-    s = to_string(m);
-    m = glm::scale(m, glm::vec3(inWidth / inHeight, 1.0f, 1.0f));   // 变回原比例
-    s = to_string(m);
-    m = glm::scale(m, glm::vec3(scaleX, scaleY, 1.0f));   // 缩放到preview区域内
-    m = glm::scale(m, glm::vec3(inWidth / outWidth, inHeight / outHeight, 1.0f)); // 归一化
-//    m = glm::scale(m, glm::vec3(inWidth, inHeight, 1.0f));
+    // OpenGL是列向量，需要左乘
+    glm::mat4 identity = glm::identity<glm::mat4>();
+    glm::mat4 m = identity; // 模型矩阵
+    m = glm::scale(identity, glm::vec3(inWidth / 2.0f, inHeight / 2.0f, 1.0f)) * m;  // 从(1, 1)缩放到输入纹理的大小
+    m = glm::scale(identity, glm::vec3(scaleX, scaleY, 1.0f)) * m; // 缩放
+    m = glm::rotate(identity, rotationAngle, glm::vec3(0.0f, 0.0f, 1.0f)) * m; // 旋转
+    m = glm::translate(identity, glm::vec3(0.0f, 0.0f, 0.0f)) * m; // 平移
     
-    glm::mat4 v = glm::lookAt(glm::vec3(0.0f, 0.0f, 1.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3( 0.0f, 1.0f, 0.0f));
-    glm::mat4 p = glm::ortho(-outWidth / 2, outWidth / 2, -outHeight / 2, outHeight / 2, -2.0f, 2.0f);
-//    m = m * v * p;
-    
-//    printf("[%2f, %2f, %2f, %f2\n %2f, %2f, %2f, %2f\n %2f, %2f, %2f, %2f\n %2f, %2f, %2f, %2f]",
-//             m[0][0], m[0][1], m[0][2], m[0][3], m[1][0], m[1][1], m[1][2], m[1][3], m[2][0], m[2][1], m[2][2], m[2][3], m[3][0], m[3][1], m[3][2], m[3][3]);
-    return m;
+    glm::mat4 v = glm::lookAt(glm::vec3(0.0f, 0.0f, 1.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3( 0.0f, 1.0f, 0.0f)); // 视图矩阵
+    glm::mat4 p = glm::ortho(-outWidth / 2.0f, outWidth / 2.0f, -outHeight / 2.0f, outHeight / 2.0f, -2.0f, 2.0f); // 投影矩阵，投影到[-1, +1]范围
+
+    return p * v * m;
 }
 
 
