@@ -22,34 +22,34 @@ public:
     
     void UpdatePreviewSize(int width, int height)
     {
-        _transformPreview.outSize.width = width;
-        _transformPreview.outSize.height = height;
+        GetPreviewTransform()._outSize.width = width;
+        GetPreviewTransform()._outSize.height = height;
     }
     
-    void UpdatePreviewFillMode(sp::VideoTransformFillmode::EFillMode fillmode)
+    void UpdatePreviewFillMode(sp::EDisplayFillMode fillmode)
     {
-        _transformPreview.fillmode = fillmode;
+        GetPreviewTransform()._fillmode = fillmode;
     }
     
-    void UpdatePreviewRotation(sp::VideoTransformFillmode::EDisplayRotation rotation)
+    void UpdatePreviewRotation(sp::EDisplayRotation rotation)
     {
-        _transformPreview.displayRotation = rotation;
+        GetPreviewTransform()._displayRotation = rotation;
     }
     
     void UpdatePreviewFlip(bool flipX, bool flipY)
     {
-        _transformPreview.flipX = flipX;
-        _transformPreview.flipY = flipY;
+        GetPreviewTransform()._flipX = flipX;
+        GetPreviewTransform()._flipY = flipY;
     }
     
+    sp::VideoTransform2D & GetPreviewTransform() {
+        return *static_cast<sp::VideoTransform2D *>(_transform.get());
+    }
 protected:
     
     bool _InternalUpdate() override;
     
     bool _InternalRender() override;
-    
-protected:
-    VideoTransformFillmode _transformPreview;
 };
 
 

@@ -187,6 +187,11 @@ std::optional<sp::VideoFrame> LoadBufferFromImage(NSImage *image) {
     
 
     pBlendRenderer->UpdateTexture({imageTexture, charTexture});
+    
+    pBlendRenderer->SetScale(0, 1);
+    pBlendRenderer->SetFreeRotation(0, pBlendRenderer->GetFreeRotation(0) + 1);
+    pBlendRenderer->SetScale(1, 0.001);
+    
     if (std::shared_ptr<sp::GLTexture> outputTexture = pBlendRenderer->GetOutputTexture(); outputTexture == nullptr) {
         pBlendRenderer->UpdateOutputTexture(std::make_shared<sp::GLTexture>(pGLContext, sp::VideoFrame{.width = imageTexture->width(), .height = imageTexture->height(), .pixelFormat = AV_PIX_FMT_RGBA}));
     } else if (outputTexture->width() != imageTexture->width() || outputTexture->height() != imageTexture->height()) {

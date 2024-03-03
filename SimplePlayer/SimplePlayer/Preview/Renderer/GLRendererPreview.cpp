@@ -57,7 +57,7 @@ bool GLRendererPreview::_InternalUpdate()
 bool GLRendererPreview::_InternalRender()
 {
     glBindFramebuffer(GL_FRAMEBUFFER, 0); // 绑定到屏幕
-    glViewport(0, 0, _transformPreview.outSize.width, _transformPreview.outSize.height);
+    glViewport(0, 0, GetPreviewTransform()._outSize.width, GetPreviewTransform()._outSize.height);
     glClearColor(1, 1, 1, 1);
     glClear(GL_COLOR_BUFFER_BIT);
     
@@ -71,9 +71,9 @@ bool GLRendererPreview::_InternalRender()
     _textures[0]->Activate(); // 绑定纹理。根据上下文，这个纹理绑定到了纹理单元1
     _program->UpdateUniform("screenTexture", 0); // 更新纹理uniform
     
-    _transformPreview.inSize.width = _textures[0]->width();
-    _transformPreview.inSize.height = _textures[0]->height();
-    _program->UpdateUniform("transform", _transformPreview.toMatrix()); // 更新转换矩阵
+    GetPreviewTransform()._inSize.width = _textures[0]->width();
+    GetPreviewTransform()._inSize.height = _textures[0]->height();
+    _program->UpdateUniform("transform", GetPreviewTransform().toMatrix()); // 更新转换矩阵
     _program->FlushUniform();
     
     _vertexArray.Render();

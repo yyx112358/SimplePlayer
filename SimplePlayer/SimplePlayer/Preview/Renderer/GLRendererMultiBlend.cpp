@@ -89,20 +89,6 @@ bool GLRendererMultiBlend::_InternalUpdate()
     _vertexArray.Activate();
     _needUpdateVertex = false;
     
-    _textureTransforms.resize(2);
-    _textureTransforms[0].inSize.width = _textures[0]->width();
-    _textureTransforms[0].inSize.height = _textures[0]->height();
-    _textureTransforms[0].outSize.width = _outputTexture->width();
-    _textureTransforms[0].outSize.height = _outputTexture->height();
-    _textureTransforms[0].scale = 0.5;
-    _textureTransforms[0].displayRotation = VideoTransformFillmode::EDisplayRotation::Rotation0;
-    
-    
-    _textureTransforms[1].inSize.width = _textures[1]->width();
-    _textureTransforms[1].inSize.height = _textures[1]->height();
-    _textureTransforms[1].outSize.width = _outputTexture->width();
-    _textureTransforms[1].outSize.height = _outputTexture->height();
-    _textureTransforms[1].scale = 0.003;
     
     return GLRendererBase::_InternalUpdate();
 }
@@ -118,9 +104,6 @@ bool GLRendererMultiBlend::_InternalRender() {
     _program->Activate(); // 启用Shader程序
     GLCheckError();
     
-    static int r = 0;
-    _textureTransforms[0].freeRotation = r++;
-    
     _vertexArray.Activate();
     std::vector<GLint> textureIds;
     std::vector<glm::mat4> transforms;
@@ -131,6 +114,14 @@ bool GLRendererMultiBlend::_InternalRender() {
         _textures[i]->Activate(); // 绑定纹理。根据上下文，这个纹理绑定到了纹理单元1
         
         textureIds.push_back(i);
+        
+        if (i < _textureTransforms.size()) {
+            _textureTransforms[i]._inSize.width = _textures[0]->width();
+            _textureTransforms[i]._inSize.height = _textures[0]->height();
+            _textureTransforms[i]._outSize.width = _outputTexture->width();
+            _textureTransforms[i]._outSize.height = _outputTexture->height();
+        }
+        
         transforms.emplace_back(_textureTransforms[i].toMatrix());
     }
     UpdateUniform("textures", textureIds);

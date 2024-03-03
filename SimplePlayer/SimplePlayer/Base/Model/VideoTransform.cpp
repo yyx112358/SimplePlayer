@@ -19,16 +19,20 @@ std::string to_string(const glm::mat4 &m) {
     return buf;
 }
 
-glm::mat4 sp::VideoTransformFillmode::toMatrix() const {
-    float inWidth = inSize.width, inHeight = inSize.height;
-    float outWidth = outSize.width, outHeight = outSize.height;
-    float scaleX = scale, scaleY = scale;
+IVideoTransform *sp::VideoTransform2D::clone() const {
+    return new VideoTransform2D(*this);
+}
+
+glm::mat4 sp::VideoTransform2D::toMatrix() const {
+    double inWidth = _inSize.width, inHeight = _inSize.height;
+    double outWidth = _outSize.width, outHeight = _outSize.height;
+    double scaleX = _scaleX, scaleY = _scaleY;
     
-    float inDisplayWidth = inWidth, inDisplayHeight = inHeight;
-    if (displayRotation == EDisplayRotation::Rotation90 || displayRotation == EDisplayRotation::Rotation270)
+    double inDisplayWidth = inWidth, inDisplayHeight = inHeight;
+    if (_displayRotation == EDisplayRotation::Rotation90 || _displayRotation == EDisplayRotation::Rotation270)
         std::swap(inDisplayWidth, inDisplayHeight);
-    switch(fillmode) {
-        case EFillMode::Fit:
+    switch(_fillmode) {
+        case EDisplayFillMode::Fit:
         default:
             if (float whRatio = inDisplayWidth / inDisplayHeight;outHeight * whRatio * outHeight <= outWidth / whRatio * outWidth) {
                 // 若宽高比为whRatio的等高内接矩形（outputHeight = canvasHeight）总面积更小
@@ -41,7 +45,7 @@ glm::mat4 sp::VideoTransformFillmode::toMatrix() const {
             }
             break;
             
-        case EFillMode::Fill:
+        case EDisplayFillMode::Fill:
             if (float whRatio = inDisplayWidth / inDisplayHeight;outHeight * whRatio * outHeight >= outWidth / whRatio * outWidth) {
                 // 若宽高比为whRatio的等高内接矩形（outputHeight = canvasHeight）总面积更小
                 scaleX *= outHeight / inDisplayHeight;
@@ -53,53 +57,43 @@ glm::mat4 sp::VideoTransformFillmode::toMatrix() const {
             }
             break;
 
-        case EFillMode::Stretch:
+        case EDisplayFillMode::Stretch:
             scaleX *= outWidth / inDisplayWidth;
             scaleY *= outHeight / inDisplayHeight;
             break;
 
-        case EFillMode::Origin:
+        case EDisplayFillMode::Origin:
             scaleX *= 1;
             scaleY *= 1;
             break;
     }
-    if (flipX)
+    if (_flipX)
         scaleX *= -1;
-    if (flipY)
+    if (_flipY)
         scaleY *= -1;
     
     float rotationAngle = 0;
-    switch (displayRotation) {
+    switch (_displayRotation) {
         case EDisplayRotation::Rotation90:  rotationAngle = 90;   break;
         case EDisplayRotation::Rotation180: rotationAngle = 180;  break;
         case EDisplayRotation::Rotation270: rotationAngle = 270;  break;
         default: rotationAngle = 0;  break;
     }
-    rotationAngle += freeRotation;
+    rotationAngle += _freeRotation;
     rotationAngle = glm::radians(rotationAngle);
 
     // OpenGL是列向量，需要左乘
     glm::mat4 identity = glm::identity<glm::mat4>();
     glm::mat4 m = identity; // 模型矩阵
-    m = glm::scale(identity, glm::vec3(inWidth / 2.0f, inHeight / 2.0f, 1.0f)) * m;  // 从(1, 1)缩放到输入纹理的大小
-    m = glm::scale(identity, glm::vec3(scaleX, scaleY, 1.0f)) * m; // 缩放
-    m = glm::rotate(identity, rotationAngle, glm::vec3(0.0f, 0.0f, 1.0f)) * m; // 旋转
-    m = glm::translate(identity, glm::vec3(0.0f, 0.0f, 0.0f)) * m; // 平移
+    m = glm::scale<float>(identity, glm::vec3(inWidth / 2.0f, inHeight / 2.0f, 1.0f)) * m;  // 从(1, 1)缩放到输入纹理的大小
+    m = glm::scale<float>(identity, glm::vec3(scaleX, scaleY, 1.0f)) * m; // 缩放
+    m = glm::rotate<float>(identity, rotationAngle, glm::vec3(0.0f, 0.0f, 1.0f)) * m; // 旋转
+    m = glm::translate<float>(identity, glm::vec3(0.0f, 0.0f, 0.0f)) * m; // 平移
     
-    glm::mat4 v = glm::lookAt(glm::vec3(0.0f, 0.0f, 1.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3( 0.0f, 1.0f, 0.0f)); // 视图矩阵
-    glm::mat4 p = glm::ortho(-outWidth / 2.0f, outWidth / 2.0f, -outHeight / 2.0f, outHeight / 2.0f, -2.0f, 2.0f); // 投影矩阵，投影到[-1, +1]范围
+    const static glm::mat4 v = glm::lookAt<float>(glm::vec3(0.0f, 0.0f, 1.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3( 0.0f, 1.0f, 0.0f)); // 视图矩阵
+    glm::mat4 p = glm::ortho<float>(-outWidth / 2.0f, outWidth / 2.0f, -outHeight / 2.0f, outHeight / 2.0f, -2.0f, 2.0f); // 投影矩阵，投影到[-1, +1]范围
 
-    return p * v * m;
-}
-
-
-
-glm::mat4 sp::VideoTransformAbs::toMatrix() const {
-
-    glm::mat4 m = glm::identity<glm::mat4>();
-    m = glm::translate(m, glm::vec3(transformX, transformY, 1.0f));
-    m = glm::scale(m, glm::vec3(scaleX, scaleY, 1.0f));
-    m = glm::rotate(m, glm::pi<float>() / 2 * rotation, glm::vec3(0.0f, 0.0f, 1.0f)); // 旋转
-    
+    m = p * v * m;
     return m;
 }
+

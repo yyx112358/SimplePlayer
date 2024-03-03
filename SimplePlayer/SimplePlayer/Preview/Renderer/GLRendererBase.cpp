@@ -67,7 +67,7 @@ bool GLRendererBase::_InternalRender()
     
     GLCheckError();
     
-    _program->UpdateUniform("transform", _transform);
+    _program->UpdateUniform("transform", _transform->toMatrix());
     
     _program->FlushUniform();
     

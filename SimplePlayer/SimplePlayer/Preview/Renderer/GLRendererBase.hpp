@@ -10,13 +10,13 @@
 
 #include "glm/ext/matrix_float4x4.hpp"
 
-#import "IGLContext.hpp"
-#import "GLProgram.hpp"
+#include "IGLContext.hpp"
+#include "GLProgram.hpp"
 #include "GLTexture.hpp"
 #include "GLVertexArray.hpp"
 #include "GLFrameBuffer.hpp"
 
-#include "ImageReader.hpp"
+#include "VideoTransform.hpp"
 
 namespace sp {
 
@@ -59,13 +59,17 @@ public:
         return _outputTexture;
     }
     
-    virtual bool UpdateTransform(const glm::mat4 &transform) {
-        _transform = transform;
+    virtual bool UpdateTransform(const sp::IVideoTransform &transform) {
+        _transform.reset(transform.clone());
         return true;
     }
     
-    virtual const glm::mat4 &GetTransform() {
-        return _transform;
+    virtual sp::IVideoTransform &GetTransform() {
+        return *_transform;
+    }
+    
+    virtual const sp::IVideoTransform &GetTransform() const {
+        return *_transform;
     }
     
     virtual bool UpdateUniform(const std::string &name, GLUniform uniform) {
@@ -119,7 +123,7 @@ protected:
     /// 输出纹理，单输出
     std::shared_ptr<GLTexture> _outputTexture;
     /// 变换矩阵
-    glm::mat4 _transform = glm::mat4(1.0f);
+    std::unique_ptr<sp::IVideoTransform> _transform = std::make_unique<sp::VideoTransform2D>();
     
     std::unique_ptr<GLProgram> _program;
     GLVertexArray _vertexArray = GLVertexArray(_context);
