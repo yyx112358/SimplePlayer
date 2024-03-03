@@ -55,6 +55,9 @@ public:
     /// 翻转
     bool _flipX = false, _flipY = false;
     
+    /// 平移
+    float _transX = 0, _transY = 0;
+    
     /// 输入图像分辨率，上层一般不需要关心
     sp::Size _inSize;
     

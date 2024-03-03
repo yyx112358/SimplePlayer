@@ -16,7 +16,8 @@ using namespace sp;
 GLVertexArray::VertexBufferEx toBuffer(const std::vector<GLRendererMultiBlend::VertexBlend> &src);
 
 
-GLRendererMultiBlend::GLRendererMultiBlend(std::shared_ptr<IGLContext> context) : GLRendererBase(context) {
+GLRendererMultiBlend::GLRendererMultiBlend(std::shared_ptr<IGLContext> context) : GLRendererBase(context) 
+{
     UpdateShader({
         R"(
         #version 330 core
@@ -51,44 +52,18 @@ GLRendererMultiBlend::GLRendererMultiBlend(std::shared_ptr<IGLContext> context) 
             FragColor = texture(textures[vtxTexId], vtxTexCoord);
         }
         )"});
-    _needUpdateVertex = true;
+    _vertexUpdatedNum = 0;
 }
 
 size_t GLRendererMultiBlend::MAX_SUPPORT_INPUT_SIZE() 
 {
-    static size_t value = std::min<size_t>(IGLContext::GetMaxFragmentTextureUnits(), ARRAY_SIZE);
-    return value;
+    return IGLContext::GetMaxFragmentTextureUnits();
 }
 
 bool GLRendererMultiBlend::_InternalUpdate()
 {
     if (_needUpdate == false)
         return true;
-    
-    if (_needUpdateVertex == false)
-        return true;
-    
-    std::vector<VertexBlend> vtxBufs;
-    for (int i = 0; i < _textures.size() && i < MAX_SUPPORT_INPUT_SIZE(); i++) {
-        float depth = (float)i / MAX_SUPPORT_INPUT_SIZE();
-        std::vector<VertexBlend> vtxBuf = {
-            {{-1.0, 1.0, depth}, {0.0, 0.0}, i}, // 左上
-            {{ 1.0, 1.0, depth}, {1.0, 0.0}, i}, // 右上
-            {{-1.0,-1.0, depth}, {0.0, 1.0}, i}, // 左下
-            {{-1.0,-1.0, depth}, {0.0, 1.0}, i}, // 左下
-            {{ 1.0, 1.0, depth}, {1.0, 0.0}, i}, // 右上
-            {{ 1.0,-1.0, depth}, {1.0, 1.0}, i}, // 右下
-        };
-        vtxBufs.insert(vtxBufs.end(), vtxBuf.begin(), vtxBuf.end());
-
-        _activateTextureFlags[i] = true;
-    }
-    
-    _vertexArray.UpdateVertexBufferEx(toBuffer(vtxBufs));
-    _vertexArray.UpdateElementBuffer({});
-    _vertexArray.Activate();
-    _needUpdateVertex = false;
-    
     
     return GLRendererBase::_InternalUpdate();
 }
@@ -104,41 +79,53 @@ bool GLRendererMultiBlend::_InternalRender() {
     _program->Activate(); // 启用Shader程序
     GLCheckError();
     
-    _vertexArray.Activate();
-    std::vector<GLint> textureIds;
-    std::vector<glm::mat4> transforms;
-    for (int i = 0; i < _textures.size(); i++) {
-        SPASSERT(_textures[i]->id().has_value());
+    std::vector<std::shared_ptr<GLTexture>> texturesNotRender = _textures;
+    while(texturesNotRender.size() > 0) {
+        size_t textureSize = std::min<size_t>(texturesNotRender.size(), MAX_SUPPORT_INPUT_SIZE());
+        std::vector<std::shared_ptr<GLTexture>> textures(texturesNotRender.begin(), texturesNotRender.begin() + textureSize);
+        std::vector<GLint> textureIds;
+        std::vector<glm::mat4> transforms;
         
-        glActiveTexture(GL_TEXTURE0 + i); // 激活纹理单元1
-        _textures[i]->Activate(); // 绑定纹理。根据上下文，这个纹理绑定到了纹理单元1
+        // 如果已经上传的顶点数和待渲染的个数不一样，就需要重新传递顶点
+        // 不建议使用discard丢弃顶点，参考https://stackoverflow.com/questions/8509051/is-discard-bad-for-program-performance-in-opengl
+        if (_vertexUpdatedNum == 0 || _vertexUpdatedNum != textures.size())
+            _vertexUpdatedNum = _UpdateVertexArray(textureSize);
+        _vertexArray.Activate();
         
-        textureIds.push_back(i);
-        
-        if (i < _textureTransforms.size()) {
-            _textureTransforms[i]._inSize.width = _textures[0]->width();
-            _textureTransforms[i]._inSize.height = _textures[0]->height();
-            _textureTransforms[i]._outSize.width = _outputTexture->width();
-            _textureTransforms[i]._outSize.height = _outputTexture->height();
+        for (int i = 0; i < texturesNotRender.size(); i++) {
+            SPASSERT(texturesNotRender[i]->id().has_value());
+            
+            glActiveTexture(GL_TEXTURE0 + i); // 激活纹理单元1
+            texturesNotRender[i]->Activate(); // 绑定纹理。根据上下文，这个纹理绑定到了纹理单元1
+            
+            textureIds.push_back(i);
+            
+            if (i < _textureTransforms.size()) {
+                _textureTransforms[i]._inSize.width = texturesNotRender[0]->width();
+                _textureTransforms[i]._inSize.height = texturesNotRender[0]->height();
+                _textureTransforms[i]._outSize.width = _outputTexture->width();
+                _textureTransforms[i]._outSize.height = _outputTexture->height();
+            }
+            
+            transforms.emplace_back(_textureTransforms[i].toMatrix());
         }
+        UpdateUniform("textures", textureIds);
         
-        transforms.emplace_back(_textureTransforms[i].toMatrix());
-    }
-    UpdateUniform("textures", textureIds);
-    
-    GLCheckError();
-    
-    _program->UpdateUniform("transforms", transforms);
-    
-    _program->FlushUniform();
-    
-    _vertexArray.Render();
-    GLCheckError();
-    
-    bool b = true;
-    if (auto buffer = _frameBuffer->DownloadFrameBuffer(GL_BGRA)) {
-        SPNSObjectHolder holder = writeRGBA2UIImage(buffer->data.get(), buffer->width, buffer->height, 4, true);
-        b = false;
+        GLCheckError();
+        
+        _program->UpdateUniform("transforms", transforms);
+        
+        _program->FlushUniform();
+        
+        _vertexArray.Render();
+        GLCheckError();
+        
+        bool b = true;
+        if (auto buffer = _frameBuffer->DownloadFrameBuffer(GL_BGRA)) {
+            SPNSObjectHolder holder = writeRGBA2UIImage(buffer->data.get(), buffer->width, buffer->height, 4, true);
+            b = false;
+        }
+        texturesNotRender.erase(texturesNotRender.begin(), texturesNotRender.begin() + textureSize);
     }
     
     if (GLCheckError())
@@ -147,7 +134,28 @@ bool GLRendererMultiBlend::_InternalRender() {
     return true;
 }
 
-GLVertexArray::VertexBufferEx toBuffer(const std::vector<GLRendererMultiBlend::VertexBlend> &src) {
+size_t GLRendererMultiBlend::_UpdateVertexArray(size_t textureNum) {
+    std::vector<VertexBlend> vtxBufs;
+    for (int i = 0; i < textureNum && i < MAX_SUPPORT_INPUT_SIZE(); i++) {
+        float depth = (float)i / MAX_SUPPORT_INPUT_SIZE();
+        std::vector<VertexBlend> vtxBuf = {
+            {{-1.0, 1.0, depth}, {0.0, 0.0}, i}, // 左上
+            {{ 1.0, 1.0, depth}, {1.0, 0.0}, i}, // 右上
+            {{-1.0,-1.0, depth}, {0.0, 1.0}, i}, // 左下
+            {{-1.0,-1.0, depth}, {0.0, 1.0}, i}, // 左下
+            {{ 1.0, 1.0, depth}, {1.0, 0.0}, i}, // 右上
+            {{ 1.0,-1.0, depth}, {1.0, 1.0}, i}, // 右下
+        };
+        vtxBufs.insert(vtxBufs.end(), vtxBuf.begin(), vtxBuf.end());
+    }
+    
+    _vertexArray.UpdateVertexBufferEx(toBuffer(vtxBufs));
+    _vertexArray.UpdateElementBuffer({});
+    return _vertexArray.Activate() ? textureNum : 0;
+}
+
+GLVertexArray::VertexBufferEx toBuffer(const std::vector<GLRendererMultiBlend::VertexBlend> &src)
+{
     GLVertexArray::VertexBufferEx vtxBuf;
     vtxBuf.vertexNum = src.size();
     vtxBuf.descs = {

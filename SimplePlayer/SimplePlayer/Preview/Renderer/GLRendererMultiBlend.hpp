@@ -9,7 +9,6 @@
 
 #include "GLRendererBase.hpp"
 #include "VideoTransform.hpp"
-#include <bitset>
 
 namespace sp {
 
@@ -53,32 +52,25 @@ public:
     }
     
 public:
-    void SetDisplayRotation(int id, EDisplayRotation value) {
-        _textureTransforms[id]._displayRotation = value;
-    }
-    EDisplayRotation GetDisplayRotation(int id) const {
-        return _textureTransforms[id]._displayRotation;
-    }
-    void SetFreeRotation(int id, float value) {
-        _textureTransforms[id]._freeRotation = value;
-    }
-    float GetFreeRotation(int id) const {
-        return _textureTransforms[id]._freeRotation;
-    }
-    void SetScale(int id, float value) {
-        _textureTransforms[id]._scaleX = _textureTransforms[id]._scaleY = value;
-    }    
+    void SetDisplayRotation(int id, EDisplayRotation value) { _textureTransforms[id]._displayRotation = value; }
+    EDisplayRotation GetDisplayRotation(int id) const { return _textureTransforms[id]._displayRotation; }
+    
+    void SetFreeRotation(int id, float value) { _textureTransforms[id]._freeRotation = value; }
+    float GetFreeRotation(int id) const { return _textureTransforms[id]._freeRotation; }
+    
+    void SetScale(int id, float value) { _textureTransforms[id]._scaleX = _textureTransforms[id]._scaleY = value; }
+    
+    void SetTransX(int id, float value) { _textureTransforms[id]._transX = value; }
+    void SetTransY(int id, float value) { _textureTransforms[id]._transY = value; }
     
 protected:
     bool _InternalUpdate() override;
     bool _InternalRender() override;
     
+    size_t _UpdateVertexArray(size_t textureNum);
 protected:
-    static constexpr size_t ARRAY_SIZE = 64;
-    bool _needUpdateVertex = false;
+    size_t _vertexUpdatedNum = 0;
     
-    /// 使用中的纹理标志
-    std::bitset<ARRAY_SIZE> _activateTextureFlags;
     std::vector<sp::VideoTransform2D> _textureTransforms;
 };
 

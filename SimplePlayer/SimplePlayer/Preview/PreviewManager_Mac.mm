@@ -185,12 +185,19 @@ std::optional<sp::VideoFrame> LoadBufferFromImage(NSImage *image) {
 //    charTexture->UploadBuffer(*charBuffer);
     imageBuffer.reset();
     
-
-    pBlendRenderer->UpdateTexture({imageTexture, charTexture});
+    std::vector<std::shared_ptr<sp::GLTexture>> blendTexs(3, imageTexture);
+    pBlendRenderer->UpdateTexture(blendTexs);
     
-    pBlendRenderer->SetScale(0, 1);
+    pBlendRenderer->SetScale(0, 0.5);
     pBlendRenderer->SetFreeRotation(0, pBlendRenderer->GetFreeRotation(0) + 1);
-    pBlendRenderer->SetScale(1, 0.001);
+    pBlendRenderer->SetScale(1, 0.4);
+    pBlendRenderer->SetTransX(1, 400);
+    pBlendRenderer->SetFreeRotation(1, pBlendRenderer->GetFreeRotation(1) + 2);
+    pBlendRenderer->SetScale(2, 0.5);
+    pBlendRenderer->SetDisplayRotation(2, sp::EDisplayRotation::Rotation90);
+    pBlendRenderer->SetTransX(2, -600);
+    pBlendRenderer->SetTransY(2, -300);
+    pBlendRenderer->SetFreeRotation(2, pBlendRenderer->GetFreeRotation(2) + 3);
     
     if (std::shared_ptr<sp::GLTexture> outputTexture = pBlendRenderer->GetOutputTexture(); outputTexture == nullptr) {
         pBlendRenderer->UpdateOutputTexture(std::make_shared<sp::GLTexture>(pGLContext, sp::VideoFrame{.width = imageTexture->width(), .height = imageTexture->height(), .pixelFormat = AV_PIX_FMT_RGBA}));

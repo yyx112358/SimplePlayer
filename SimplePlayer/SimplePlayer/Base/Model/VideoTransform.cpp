@@ -88,7 +88,7 @@ glm::mat4 sp::VideoTransform2D::toMatrix() const {
     m = glm::scale<float>(identity, glm::vec3(inWidth / 2.0f, inHeight / 2.0f, 1.0f)) * m;  // 从(1, 1)缩放到输入纹理的大小
     m = glm::scale<float>(identity, glm::vec3(scaleX, scaleY, 1.0f)) * m; // 缩放
     m = glm::rotate<float>(identity, rotationAngle, glm::vec3(0.0f, 0.0f, 1.0f)) * m; // 旋转
-    m = glm::translate<float>(identity, glm::vec3(0.0f, 0.0f, 0.0f)) * m; // 平移
+    m = glm::translate<float>(identity, glm::vec3(_transX, _transY, 0.0f)) * m; // 平移
     
     const static glm::mat4 v = glm::lookAt<float>(glm::vec3(0.0f, 0.0f, 1.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3( 0.0f, 1.0f, 0.0f)); // 视图矩阵
     glm::mat4 p = glm::ortho<float>(-outWidth / 2.0f, outWidth / 2.0f, -outHeight / 2.0f, outHeight / 2.0f, -2.0f, 2.0f); // 投影矩阵，投影到[-1, +1]范围
