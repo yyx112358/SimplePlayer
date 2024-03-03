@@ -172,11 +172,15 @@ std::optional<sp::VideoFrame> LoadBufferFromImage(NSImage *image) {
 }
 
 - (void)drawRect:(NSRect)dirtyRect {
-//    NSDate *date = [NSDate date];
+    NSDate *date = [NSDate date];
     [super drawRect:dirtyRect];
-    if (imageBuffer == nullptr || charBuffer.has_value() == false)
+    if (imageBuffer == nullptr || charBuffer.has_value() == false) {
+        // 缩放窗口时，需要Preview Renderer使用上一次的图像重绘一次
+        pRendererPreview->UpdatePreviewSize(dirtyRect.size.width * 2, dirtyRect.size.height * 2);
+        pRendererPreview->Render();
+        pGLContext->Flush();
         return;
-//    NSLog(@"%@", NSStringFromRect(dirtyRect));
+    }
     
     pGLContext->SwitchContext();
     
