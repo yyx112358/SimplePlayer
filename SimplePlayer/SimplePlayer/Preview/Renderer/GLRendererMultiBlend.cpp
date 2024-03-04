@@ -120,7 +120,7 @@ bool GLRendererMultiBlend::_InternalRender() {
         _vertexArray.Render();
         GLCheckError();
         
-        bool b = true;
+        static bool b = true;
         if (auto buffer = _frameBuffer->DownloadFrameBuffer(GL_BGRA)) {
             SPNSObjectHolder holder = writeRGBA2UIImage(buffer->data.get(), buffer->width, buffer->height, 4, true);
             b = false;

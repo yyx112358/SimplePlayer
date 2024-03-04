@@ -435,8 +435,6 @@
 				7A416ACB2B52376600DF3C67 /* SPMediaModel.hpp */,
 				7ABEAC792B8C9B61003AB33F /* VideoTransform.cpp */,
 				7ABEAC7A2B8C9B61003AB33F /* VideoTransform.hpp */,
-				7ABEAC7C2B8CB448003AB33F /* Geometry.cpp */,
-				7ABEAC7D2B8CB448003AB33F /* Geometry.hpp */,
 			);
 			path = Model;
 			sourceTree = "<group>";
@@ -449,6 +447,8 @@
 				7AAAD7062AEBD1E200746DA1 /* SPParam.cpp */,
 				7AAAD7072AEBD1E200746DA1 /* SPParam.hpp */,
 				7AC27A1C2AF4D84F00C82D1A /* SPEnum.h */,
+				7ABEAC7C2B8CB448003AB33F /* Geometry.cpp */,
+				7ABEAC7D2B8CB448003AB33F /* Geometry.hpp */,
 			);
 			path = PureCpp;
 			sourceTree = "<group>";
@@ -726,6 +726,7 @@
 					"@executable_path/../Frameworks",
 				);
 				LIBRARY_SEARCH_PATHS = ../thirdParty/build/FFMpeg/lib;
+				MACOSX_DEPLOYMENT_TARGET = "$(RECOMMENDED_MACOSX_DEPLOYMENT_TARGET)";
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.yyx.SimplePlayer;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -760,6 +761,7 @@
 					"@executable_path/../Frameworks",
 				);
 				LIBRARY_SEARCH_PATHS = ../thirdParty/build/FFMpeg/lib;
+				MACOSX_DEPLOYMENT_TARGET = "$(RECOMMENDED_MACOSX_DEPLOYMENT_TARGET)";
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.yyx.SimplePlayer;
 				PRODUCT_NAME = "$(TARGET_NAME)";

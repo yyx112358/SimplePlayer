@@ -68,9 +68,13 @@ bool GLVertexArray::Activate()
 
         // 创建VBO并传输数据
         GLuint vertexBufId;
-        glGenBuffers(1, &vertexBufId); // 生成 1 个顶点缓冲区对象，vertexBufId是绑定的唯一OpenGL标识
+        if (_vertexBufferId.has_value())
+            vertexBufId = *_vertexBufferId;
+        else
+            glGenBuffers(1, &vertexBufId); // 生成 1 个顶点缓冲区对象，vertexBufId是绑定的唯一OpenGL标识
+        
         glBindBuffer(GL_ARRAY_BUFFER, vertexBufId); // 绑定为GL_ARRAY_BUFFER
-        glBufferData(GL_ARRAY_BUFFER, static_cast<GLsizei>(_vertexBufferEx->sizeInByte()), _vertexBufferEx->buf.get(), GL_STATIC_DRAW); // 传输数据
+        glBufferData(GL_ARRAY_BUFFER, static_cast<GLsizei>(_vertexBufferEx->sizeInByte()), _vertexBufferEx->buf.get(), GL_STATIC_DRAW); // 删除已有数据并传输新的数据
         if (GLCheckError())
             return false;
         
@@ -95,7 +99,8 @@ bool GLVertexArray::Activate()
         }
         
         // 记录参数
-        _vertexBufferId.reset(vertexBufId);
+        if (_vertexBufferId.has_value() == false)
+            _vertexBufferId.reset(vertexBufId);
         _vertexBufferSize.emplace(_vertexBufferEx->vertexNum);
         _vertexBufferEx.reset();
     } else if (_vertexBuffer.size() > 0) {

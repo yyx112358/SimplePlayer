@@ -71,6 +71,7 @@ protected:
 protected:
     size_t _vertexUpdatedNum = 0;
     
+    // TODO: Alpha透明度
     std::vector<sp::VideoTransform2D> _textureTransforms;
 };
 
