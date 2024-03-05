@@ -16,7 +16,7 @@ using namespace sp;
 GLVertexArray::VertexBufferEx toBuffer(const std::vector<GLRendererMultiBlend::VertexBlend> &src);
 
 
-GLRendererMultiBlend::GLRendererMultiBlend(std::shared_ptr<IGLContext> context) : GLRendererBase(context) 
+GLRendererMultiBlend::GLRendererMultiBlend(std::shared_ptr<IGLContext> context) : GLRendererBase(context)
 {
     UpdateShader({
         R"(
@@ -68,7 +68,8 @@ bool GLRendererMultiBlend::_InternalUpdate()
     return GLRendererBase::_InternalUpdate();
 }
 
-bool GLRendererMultiBlend::_InternalRender() {
+bool GLRendererMultiBlend::_InternalRender() 
+{
     // 上屏绘制
     _frameBuffer->Activate();
     glViewport(0, 0, _outputTexture->width(), _outputTexture->height());
@@ -80,11 +81,15 @@ bool GLRendererMultiBlend::_InternalRender() {
     GLCheckError();
     
     std::vector<std::shared_ptr<GLTexture>> texturesNotRender = _textures;
+    std::vector<VideoTransform2D> transformsNotRender = _textureTransforms;
     while(texturesNotRender.size() > 0) {
+        // OpenGL一次可渲染的纹理数有上限，因此需要分批渲染，一次渲染textureSize个
         size_t textureSize = std::min<size_t>(texturesNotRender.size(), MAX_SUPPORT_INPUT_SIZE());
         std::vector<std::shared_ptr<GLTexture>> textures(texturesNotRender.begin(), texturesNotRender.begin() + textureSize);
+        std::vector<VideoTransform2D> transforms(transformsNotRender.begin(), transformsNotRender.begin() + textureSize);
+        
         std::vector<GLint> textureIds;
-        std::vector<glm::mat4> transforms;
+        std::vector<glm::mat4> transformMats;
         
         // 如果已经上传的顶点数和待渲染的个数不一样，就需要重新传递顶点
         // 不建议使用discard丢弃顶点，参考https://stackoverflow.com/questions/8509051/is-discard-bad-for-program-performance-in-opengl
@@ -92,40 +97,38 @@ bool GLRendererMultiBlend::_InternalRender() {
             _vertexUpdatedNum = _UpdateVertexArray(textureSize);
         _vertexArray.Activate();
         
-        for (int i = 0; i < texturesNotRender.size(); i++) {
-            SPASSERT(texturesNotRender[i]->id().has_value());
+        for (int i = 0; i < textures.size(); i++) {
+            SPASSERT(textures[i]->id().has_value());
             
-            glActiveTexture(GL_TEXTURE0 + i); // 激活纹理单元1
-            texturesNotRender[i]->Activate(); // 绑定纹理。根据上下文，这个纹理绑定到了纹理单元1
+            glActiveTexture(GL_TEXTURE0 + i); // 激活纹理单元i
+            textures[i]->Activate(); // 绑定纹理。根据上下文，这个纹理绑定到了纹理单元1
             
             textureIds.push_back(i);
             
-            if (i < _textureTransforms.size()) {
-                _textureTransforms[i]._inSize.width = texturesNotRender[0]->width();
-                _textureTransforms[i]._inSize.height = texturesNotRender[0]->height();
-                _textureTransforms[i]._outSize.width = _outputTexture->width();
-                _textureTransforms[i]._outSize.height = _outputTexture->height();
-            }
+            transforms[i]._inSize.width = textures[i]->width();
+            transforms[i]._inSize.height = textures[i]->height();
+            transforms[i]._outSize.width = _outputTexture->width();
+            transforms[i]._outSize.height = _outputTexture->height();
             
-            transforms.emplace_back(_textureTransforms[i].toMatrix());
+            transformMats.emplace_back(transforms[i].toMatrix());
         }
         UpdateUniform("textures", textureIds);
-        
-        GLCheckError();
-        
-        _program->UpdateUniform("transforms", transforms);
-        
+        UpdateUniform("transforms", transformMats);
         _program->FlushUniform();
+        GLCheckError();
         
         _vertexArray.Render();
         GLCheckError();
         
         static bool b = true;
-        if (auto buffer = _frameBuffer->DownloadFrameBuffer(GL_BGRA)) {
-            SPNSObjectHolder holder = writeRGBA2UIImage(buffer->data.get(), buffer->width, buffer->height, 4, true);
-            b = false;
+        if (b) {
+            if (auto buffer = _frameBuffer->DownloadFrameBuffer(GL_BGRA)) {
+                SPNSObjectHolder holder = writeRGBA2UIImage(buffer->data.get(), buffer->width, buffer->height, 4, true);
+                b = false;
+            }
         }
         texturesNotRender.erase(texturesNotRender.begin(), texturesNotRender.begin() + textureSize);
+        transformsNotRender.erase(transformsNotRender.begin(), transformsNotRender.begin() + textureSize);
     }
     
     if (GLCheckError())
@@ -134,7 +137,8 @@ bool GLRendererMultiBlend::_InternalRender() {
     return true;
 }
 
-size_t GLRendererMultiBlend::_UpdateVertexArray(size_t textureNum) {
+size_t GLRendererMultiBlend::_UpdateVertexArray(size_t textureNum) 
+{
     std::vector<VertexBlend> vtxBufs;
     for (int i = 0; i < textureNum && i < MAX_SUPPORT_INPUT_SIZE(); i++) {
         float depth = (float)i / MAX_SUPPORT_INPUT_SIZE();

@@ -189,19 +189,24 @@ std::optional<sp::VideoFrame> LoadBufferFromImage(NSImage *image) {
 //    charTexture->UploadBuffer(*charBuffer);
     imageBuffer.reset();
     
-    std::vector<std::shared_ptr<sp::GLTexture>> blendTexs(3, imageTexture);
+    std::vector<std::shared_ptr<sp::GLTexture>> blendTexs(256, imageTexture);
     pBlendRenderer->UpdateTexture(blendTexs);
     
-    pBlendRenderer->SetScale(0, 0.5);
-    pBlendRenderer->SetFreeRotation(0, pBlendRenderer->GetFreeRotation(0) + 1);
-    pBlendRenderer->SetScale(1, 0.4);
-    pBlendRenderer->SetTransX(1, 400);
-    pBlendRenderer->SetFreeRotation(1, pBlendRenderer->GetFreeRotation(1) + 2);
-    pBlendRenderer->SetScale(2, 0.5);
-    pBlendRenderer->SetDisplayRotation(2, sp::EDisplayRotation::Rotation90);
-    pBlendRenderer->SetTransX(2, -600);
-    pBlendRenderer->SetTransY(2, -300);
-    pBlendRenderer->SetFreeRotation(2, pBlendRenderer->GetFreeRotation(2) + 3);
+    {
+        static bool b = true;
+        srand(0);
+        if (b) {
+            for (int i = 0; i < blendTexs.size(); i++) {
+                pBlendRenderer->SetScale(i, (float)rand() / RAND_MAX);
+                pBlendRenderer->SetTransX(i, ((float)rand() / RAND_MAX - 0.5) * 1920.0);
+                pBlendRenderer->SetTransY(i, ((float)rand() / RAND_MAX - 0.5) * 1080.0);
+            }
+            b = false;
+        }
+    }
+    pBlendRenderer->SetDisplayRotation(1, sp::EDisplayRotation::Rotation90);
+    for (int i = 0; i < blendTexs.size(); i++)
+        pBlendRenderer->SetFreeRotation(i, pBlendRenderer->GetFreeRotation(i) + i % 4 + 1);
     
     if (std::shared_ptr<sp::GLTexture> outputTexture = pBlendRenderer->GetOutputTexture(); outputTexture == nullptr) {
         pBlendRenderer->UpdateOutputTexture(std::make_shared<sp::GLTexture>(pGLContext, sp::VideoFrame{.width = imageTexture->width(), .height = imageTexture->height(), .pixelFormat = AV_PIX_FMT_RGBA}));
@@ -230,7 +235,18 @@ std::optional<sp::VideoFrame> LoadBufferFromImage(NSImage *image) {
     pGLContext->Flush();
 //    glFinish(); // 添加glFinish()以阻塞等待GPU执行完成
 
-//    NSLog(@"耗时：%.2fms", [[NSDate  date] timeIntervalSinceDate:date] * 1000.0f);
+    double duration = [[NSDate  date] timeIntervalSinceDate:date] * 1000.0f;
+    static std::vector<double> allDuration;
+    if (allDuration.size() < 400) {
+        allDuration.push_back(duration);
+        double mean = std::reduce(allDuration.cbegin(), allDuration.cend(), 0);
+        mean /= allDuration.size();
+        NSLog(@"耗时：%.2fms, %.2f ms", mean, duration);
+    } else {
+        double mean = std::reduce(allDuration.cbegin(), allDuration.cend(), 0);
+        mean /= allDuration.size();
+        NSLog(@"======耗时：%.2fms, %.2f ms", mean, duration);
+    }
 }
 
 - (void) setBuffer:(std::shared_ptr<sp::VideoFrame>)frame {

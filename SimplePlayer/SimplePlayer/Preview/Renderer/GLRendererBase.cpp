@@ -64,12 +64,9 @@ bool GLRendererBase::_InternalRender()
         textureIds.push_back(i);
     }
     UpdateUniform("textures", textureIds);
-    
-    GLCheckError();
-    
-    _program->UpdateUniform("transform", _transform->toMatrix());
-    
+    UpdateUniform("transform", _transform->toMatrix());
     _program->FlushUniform();
+    GLCheckError();
     
     _vertexArray.Render();
     GLCheckError();
