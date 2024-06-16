@@ -13,3 +13,6 @@
 [submodule "thirdParty/spdlog"]
 	path = thirdParty/spdlog
 	url = git@github.com:gabime/spdlog.git
+[submodule "thirdParty/imgui"]
+	path = thirdParty/imgui
+	url = git@github.com:ocornut/imgui.git

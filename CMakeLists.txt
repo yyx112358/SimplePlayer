@@ -27,13 +27,26 @@ endif()
 # spdlog日志库
 add_subdirectory(thirdParty/spdlog)
 
+# glm矩阵计算
+add_subdirectory(thirdParty/glm)
+
+
 # 3. 添加源文件
+
+include_directories(${PROJECT_SOURCE_DIR}/proj/win/GUI/imgui)
+
 # 收集当前目录下的所有cpp文件
-file(GLOB SDK_FILES src/*)
+file(GLOB_RECURSE DEMO_FILES 
+    proj/win/GUI/*.cpp 
+    proj/win/GUI/imgui/*.cpp
+    proj/win/main.cpp)
+
 
 # 添加可执行文件并将所有cpp文件链接起来
-add_executable(${PROJECT_NAME} ${SDK_FILES})
+add_executable(${PROJECT_NAME} ${DEMO_FILES})
 
 
 # 4. 链接
-target_link_libraries(${PROJECT_NAME} spdlog)
+target_link_libraries(${PROJECT_NAME} 
+    spdlog 
+    OpenGL32.lib)
