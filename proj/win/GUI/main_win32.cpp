@@ -17,58 +17,122 @@
 #include <windows.h>
 #include <GL/GL.h>
 #include <tchar.h>
+#include <spdlog/spdlog.h>
+#include <chrono>
+#include <thread>
 
 // Data stored per platform window
-struct WGL_WindowData { HDC hDC; };
+struct WGL_WindowData
+{
+    HDC hDC;
+};
 
 // Data
-static HGLRC            g_hRC;
-static WGL_WindowData   g_MainWindow;
-static int              g_Width;
-static int              g_Height;
+static HGLRC g_hRC;
+static WGL_WindowData g_MainWindow;
+static int g_Width;
+static int g_Height;
 
 // Forward declarations of helper functions
-bool CreateDeviceWGL(HWND hWnd, WGL_WindowData* data);
-void CleanupDeviceWGL(HWND hWnd, WGL_WindowData* data);
+bool CreateDeviceWGL(HWND hWnd, WGL_WindowData *data);
+void CleanupDeviceWGL(HWND hWnd, WGL_WindowData *data);
 void ResetDeviceWGL();
 LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
-// Main code
-int main_win32(int argc, char* argv[])
+class UI_Controller
+{
+public:
+    UI_Controller() = default;
+    ~UI_Controller()
+    {
+        destroy();
+    }
+
+    int init();
+    void destroy();
+    void run();
+
+    void RenderUI()
+    {
+        if (show_demo_window)
+            ImGui::ShowDemoWindow(&show_demo_window);
+
+        ImGui::Begin("播放控制");
+
+        if (ImGui::BeginTable("control buttons", 2))
+        {
+            const char *playBtnText = isPlaying ? "暂停" : "播放"; //"\u23f8" : "\u25b6";
+            ImGui::TableNextColumn();
+            if (ImGui::Button(playBtnText))
+            {
+                isPlaying = !isPlaying;
+            }
+
+            ImGui::TableNextColumn();
+            const char *stopBtnText = "停止"; //"\u23f9";
+            if (ImGui::Button(stopBtnText))
+            {
+            }
+            ImGui::EndTable();
+        }
+
+        if (ImGui::SliderFloat("1", &currentTime, 0, 66.66))
+        {
+        }
+
+        ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+        ImGui::End();
+    }
+
+private:
+    WNDCLASSEXW _wc;
+    HWND _hwnd = 0;
+
+
+    bool show_demo_window = false;
+    bool show_another_window = false;
+
+    bool isPlaying = false;
+    float currentTime = 0;
+    float totalTime = 1;
+};
+
+int UI_Controller::init()
 {
     // Create application window
-    //ImGui_ImplWin32_EnableDpiAwareness();
-    WNDCLASSEXW wc = { sizeof(wc), CS_OWNDC, WndProc, 0L, 0L, GetModuleHandle(nullptr), nullptr, nullptr, nullptr, nullptr, L"ImGui Example", nullptr };
-    ::RegisterClassExW(&wc);
-    HWND hwnd = ::CreateWindowW(wc.lpszClassName, L"Dear ImGui Win32+OpenGL3 Example", WS_OVERLAPPEDWINDOW, 100, 100, 1280, 800, nullptr, nullptr, wc.hInstance, nullptr);
+    // ImGui_ImplWin32_EnableDpiAwareness();
+    _wc = {sizeof(_wc), CS_OWNDC, WndProc, 0L, 0L, GetModuleHandle(nullptr), nullptr, nullptr, nullptr, nullptr, L"SimplePlayer", nullptr};
+    ::RegisterClassExW(&_wc);
+    _hwnd = ::CreateWindowW(_wc.lpszClassName, L"Simple Player", WS_OVERLAPPEDWINDOW, 100, 100, 1280, 800, nullptr, nullptr, _wc.hInstance, nullptr);
 
     // Initialize OpenGL
-    if (!CreateDeviceWGL(hwnd, &g_MainWindow))
+    if (!CreateDeviceWGL(_hwnd, &g_MainWindow))
     {
-        CleanupDeviceWGL(hwnd, &g_MainWindow);
-        ::DestroyWindow(hwnd);
-        ::UnregisterClassW(wc.lpszClassName, wc.hInstance);
-        return 1;
+        CleanupDeviceWGL(_hwnd, &g_MainWindow);
+        ::DestroyWindow(_hwnd);
+        ::UnregisterClassW(_wc.lpszClassName, _wc.hInstance);
+        return -1;
     }
     wglMakeCurrent(g_MainWindow.hDC, g_hRC);
 
     // Show the window
-    ::ShowWindow(hwnd, SW_SHOWDEFAULT);
-    ::UpdateWindow(hwnd);
+    ::ShowWindow(_hwnd, SW_SHOWDEFAULT);
+    ::UpdateWindow(_hwnd);
 
     // Setup Dear ImGui context
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
-    ImGuiIO& io = ImGui::GetIO(); (void)io;
-    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;   // Enable Keyboard Controls
-    io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;    // Enable Gamepad Controls
+    ImGuiIO &io = ImGui::GetIO();
+    (void)io;
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard; // Enable Keyboard Controls
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;  // Enable Gamepad Controls
 
     // Setup Dear ImGui style
     ImGui::StyleColorsLight();
-    //ImGui::StyleColorsClassic();
+    // ImGui::StyleColorsClassic();
 
     // Setup Platform/Renderer backends
-    ImGui_ImplWin32_InitForOpenGL(hwnd);
+    ImGui_ImplWin32_InitForOpenGL(_hwnd);
     ImGui_ImplOpenGL3_Init();
 
     // Load Fonts
@@ -79,29 +143,38 @@ int main_win32(int argc, char* argv[])
     // - Use '#define IMGUI_ENABLE_FREETYPE' in your imconfig file to use Freetype for higher quality font rendering.
     // - Read 'docs/FONTS.md' for more instructions and details.
     // - Remember that in C/C++ if you want to include a backslash \ in a string literal you need to write a double backslash \\ !
-    //io.Fonts->AddFontDefault();
-    //io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\segoeui.ttf", 18.0f);
-    //io.Fonts->AddFontFromFileTTF("../../misc/fonts/DroidSans.ttf", 16.0f);
-    //io.Fonts->AddFontFromFileTTF("../../misc/fonts/Roboto-Medium.ttf", 16.0f);
-    //io.Fonts->AddFontFromFileTTF("../../misc/fonts/Cousine-Regular.ttf", 15.0f);
-    //设置微软雅黑字体,并指定字体大小
-    ImFont* font = io.Fonts->AddFontFromFileTTF
-    (
+    // io.Fonts->AddFontDefault();
+    // io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\segoeui.ttf", 18.0f);
+    // io.Fonts->AddFontFromFileTTF("../../misc/fonts/DroidSans.ttf", 16.0f);
+    // io.Fonts->AddFontFromFileTTF("../../misc/fonts/Roboto-Medium.ttf", 16.0f);
+    // io.Fonts->AddFontFromFileTTF("../../misc/fonts/Cousine-Regular.ttf", 15.0f);
+    // 设置微软雅黑字体,并指定字体大小
+    ImFont *font = io.Fonts->AddFontFromFileTTF(
         "C:/Windows/Fonts/msyh.ttc",
         14,
         nullptr,
-        //设置加载中文
-        io.Fonts->GetGlyphRangesChineseFull()
-    );
-    //必须判断一下字体有没有加载成功
+        // 设置加载中文
+        io.Fonts->GetGlyphRangesChineseFull());
+    // 必须判断一下字体有没有加载成功
     IM_ASSERT(font != nullptr);
 
-    // Our state
-    bool show_demo_window = false;
-    bool show_another_window = false;
-    ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
+    return 0;
+}
 
-    // Main loop
+void UI_Controller::destroy()
+{
+    ImGui_ImplOpenGL3_Shutdown();
+    ImGui_ImplWin32_Shutdown();
+    ImGui::DestroyContext();
+
+    CleanupDeviceWGL(_hwnd, &g_MainWindow);
+    wglDeleteContext(g_hRC);
+    ::DestroyWindow(_hwnd);
+    ::UnregisterClassW(_wc.lpszClassName, _wc.hInstance);
+}
+
+void UI_Controller::run() {
+        // Main loop
     bool done = false;
     while (!done)
     {
@@ -123,43 +196,9 @@ int main_win32(int argc, char* argv[])
         ImGui_ImplWin32_NewFrame();
         ImGui::NewFrame();
 
-        // 1. Show the big demo window (Most of the sample code is in ImGui::ShowDemoWindow()! You can browse its code to learn more about Dear ImGui!).
-        if (show_demo_window)
-            ImGui::ShowDemoWindow(&show_demo_window);
+        RenderUI();
 
-        // 2. Show a simple window that we create ourselves. We use a Begin/End pair to create a named window.
-        {
-            static float f = 0.0f;
-            static int counter = 0;
-
-            ImGui::Begin("Hello, world! 啊啊 ");                          // Create a window called "Hello, world!" and append into it.
-
-            ImGui::Text("This is some useful text.");               // Display some text (you can use a format strings too)
-            ImGui::Checkbox("Demo Window", &show_demo_window);      // Edit bools storing our window open/close state
-            ImGui::Checkbox("Another Window", &show_another_window);
-
-            ImGui::SliderFloat("float", &f, 0.0f, 1.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
-            ImGui::ColorEdit3("clear color", (float*)&clear_color); // Edit 3 floats representing a color
-
-            if (ImGui::Button("Button"))                            // Buttons return true when clicked (most widgets return true when edited/activated)
-                counter++;
-            ImGui::SameLine();
-            ImGui::Text("counter = %d", counter);
-
-            ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
-            ImGui::End();
-        }
-
-        // 3. Show another simple window.
-        if (show_another_window)
-        {
-            ImGui::Begin("Another Window", &show_another_window);   // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
-            ImGui::Text("Hello from another window!");
-            if (ImGui::Button("Close Me"))
-                show_another_window = false;
-            ImGui::End();
-        }
-
+        ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
         // Rendering
         ImGui::Render();
         glViewport(0, 0, g_Width, g_Height);
@@ -169,25 +208,28 @@ int main_win32(int argc, char* argv[])
 
         // Present
         ::SwapBuffers(g_MainWindow.hDC);
+
+        std::this_thread::sleep_for(std::chrono::microseconds(100000 / 60));
     }
+}
 
-    ImGui_ImplOpenGL3_Shutdown();
-    ImGui_ImplWin32_Shutdown();
-    ImGui::DestroyContext();
-
-    CleanupDeviceWGL(hwnd, &g_MainWindow);
-    wglDeleteContext(g_hRC);
-    ::DestroyWindow(hwnd);
-    ::UnregisterClassW(wc.lpszClassName, wc.hInstance);
+// Main code
+int main_win32(int argc, char *argv[])
+{
+    std::unique_ptr<UI_Controller> ui = std::make_unique<UI_Controller>();
+    if (int ret = ui->init(); ret != 0)
+        return ret;
+    ui->run();
+    ui.reset();
 
     return 0;
 }
 
 // Helper functions
-bool CreateDeviceWGL(HWND hWnd, WGL_WindowData* data)
+bool CreateDeviceWGL(HWND hWnd, WGL_WindowData *data)
 {
     HDC hDc = ::GetDC(hWnd);
-    PIXELFORMATDESCRIPTOR pfd = { 0 };
+    PIXELFORMATDESCRIPTOR pfd = {0};
     pfd.nSize = sizeof(pfd);
     pfd.nVersion = 1;
     pfd.dwFlags = PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER;
@@ -207,7 +249,7 @@ bool CreateDeviceWGL(HWND hWnd, WGL_WindowData* data)
     return true;
 }
 
-void CleanupDeviceWGL(HWND hWnd, WGL_WindowData* data)
+void CleanupDeviceWGL(HWND hWnd, WGL_WindowData *data)
 {
     wglMakeCurrent(nullptr, nullptr);
     ::ReleaseDC(hWnd, data->hDC);
