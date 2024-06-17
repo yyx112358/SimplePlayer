@@ -37,6 +37,7 @@
 		7A349A862AF4EC960008502F /* AudioOutputManager.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7A349A842AF4EC960008502F /* AudioOutputManager.cpp */; };
 		7A349A892AF4F5140008502F /* AudioSpeaker_Mac.mm in Sources */ = {isa = PBXBuildFile; fileRef = 7A349A872AF4F5140008502F /* AudioSpeaker_Mac.mm */; };
 		7A349A8C2AF4FA410008502F /* SPNSObjectHolder.mm in Sources */ = {isa = PBXBuildFile; fileRef = 7A349A8A2AF4FA410008502F /* SPNSObjectHolder.mm */; };
+		7A34B6912B971175002DEE88 /* SPUnitBase.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7A34B68F2B971175002DEE88 /* SPUnitBase.cpp */; };
 		7A416AC92B52364100DF3C67 /* SPGraphPreview.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7A416AC72B52364100DF3C67 /* SPGraphPreview.cpp */; };
 		7A416ACC2B52376600DF3C67 /* SPMediaModel.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7A416ACA2B52376600DF3C67 /* SPMediaModel.cpp */; };
 		7A56B2792A5DB09600094E41 /* AudioToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7A56B2782A5DB09600094E41 /* AudioToolbox.framework */; };
@@ -54,8 +55,9 @@
 		7A8669442A2F8C78006E8CC6 /* BasicVertex.glsl in Resources */ = {isa = PBXBuildFile; fileRef = 7A8669432A2F8C78006E8CC6 /* BasicVertex.glsl */; };
 		7AA2BC6B2A5EAD5A00BACC4F /* libpostproc.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 7A31B6A52A5D553D0057E592 /* libpostproc.a */; };
 		7AA2BC6E2A5EAFF300BACC4F /* Sync.mp4 in Resources */ = {isa = PBXBuildFile; fileRef = 7AA2BC6D2A5EAFF300BACC4F /* Sync.mp4 */; };
-		7AA2BC772A5EBDD400BACC4F /* DecoderManager.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7AA2BC752A5EBDD400BACC4F /* DecoderManager.cpp */; };
 		7AAAD7082AEBD1E200746DA1 /* SPParam.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7AAAD7062AEBD1E200746DA1 /* SPParam.cpp */; };
+		7AB9A2042BB0771D0005C1D8 /* ISPTaskQueue.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7AB9A2022BB0771D0005C1D8 /* ISPTaskQueue.cpp */; };
+		7AB9A2072BB07AFF0005C1D8 /* SPTaskQueueApple.mm in Sources */ = {isa = PBXBuildFile; fileRef = 7AB9A2052BB07AFF0005C1D8 /* SPTaskQueueApple.mm */; };
 		7ABEAC7B2B8C9B61003AB33F /* VideoTransform.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7ABEAC792B8C9B61003AB33F /* VideoTransform.cpp */; };
 		7ABEAC7E2B8CB448003AB33F /* Geometry.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7ABEAC7C2B8CB448003AB33F /* Geometry.cpp */; };
 		7ACD8FD22B6BCC6A000E6EA0 /* GLRendererMultiBlend.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7ACD8FD02B6BCC6A000E6EA0 /* GLRendererMultiBlend.cpp */; };
@@ -63,8 +65,10 @@
 		7AE0D6B72AC5593900972D44 /* VideoFrameBase.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7AE0D6B52AC5593900972D44 /* VideoFrameBase.cpp */; };
 		7AE0D6BA2AC559A300972D44 /* AudioFrameBase.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7AE0D6B82AC559A300972D44 /* AudioFrameBase.cpp */; };
 		7AE0D6BD2AC55A8100972D44 /* Pipeline.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7AE0D6BB2AC55A8100972D44 /* Pipeline.cpp */; };
+		7AE364A62B9F3068007A1C88 /* SPDecodeReaderUnit.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7AE364A42B9F3068007A1C88 /* SPDecodeReaderUnit.cpp */; };
 		7AF6C80F2A602057009EBFB8 /* HDR.MOV in Resources */ = {isa = PBXBuildFile; fileRef = 7AF6C80D2A602057009EBFB8 /* HDR.MOV */; };
 		7AF6C8112A6020B8009EBFB8 /* 1：1.MOV in Resources */ = {isa = PBXBuildFile; fileRef = 7AF6C8102A6020B8009EBFB8 /* 1：1.MOV */; };
+		7AF945D82BA32F5900E7FF46 /* SPDecodeReaderFF.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7AF945D72BA32F5900E7FF46 /* SPDecodeReaderFF.cpp */; };
 		7AFFAF772B46BAEE00310CC0 /* SPMsg.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7AFFAF752B46BAEE00310CC0 /* SPMsg.cpp */; };
 /* End PBXBuildFile section */
 
@@ -124,6 +128,8 @@
 		7A349A882AF4F5140008502F /* AudioSpeaker_Mac.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = AudioSpeaker_Mac.hpp; sourceTree = "<group>"; };
 		7A349A8A2AF4FA410008502F /* SPNSObjectHolder.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = SPNSObjectHolder.mm; sourceTree = "<group>"; };
 		7A349A8B2AF4FA410008502F /* SPNSObjectHolder.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = SPNSObjectHolder.hpp; sourceTree = "<group>"; };
+		7A34B68F2B971175002DEE88 /* SPUnitBase.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = SPUnitBase.cpp; sourceTree = "<group>"; };
+		7A34B6902B971175002DEE88 /* SPUnitBase.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = SPUnitBase.hpp; sourceTree = "<group>"; };
 		7A416AC52B522FC500DF3C67 /* ISPMediaControl.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = ISPMediaControl.hpp; sourceTree = "<group>"; };
 		7A416AC72B52364100DF3C67 /* SPGraphPreview.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = SPGraphPreview.cpp; sourceTree = "<group>"; };
 		7A416AC82B52364100DF3C67 /* SPGraphPreview.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = SPGraphPreview.hpp; sourceTree = "<group>"; };
@@ -147,11 +153,14 @@
 		7A6D8B4B2A3359DC00C40E5C /* GLRendererBase.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = GLRendererBase.hpp; sourceTree = "<group>"; };
 		7A8669432A2F8C78006E8CC6 /* BasicVertex.glsl */ = {isa = PBXFileReference; lastKnownFileType = text; path = BasicVertex.glsl; sourceTree = "<group>"; };
 		7AA2BC6D2A5EAFF300BACC4F /* Sync.mp4 */ = {isa = PBXFileReference; lastKnownFileType = file; name = Sync.mp4; path = ../../DevelopDiary/SimplePlayer/Videos/Sync.mp4; sourceTree = "<group>"; };
-		7AA2BC752A5EBDD400BACC4F /* DecoderManager.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = DecoderManager.cpp; sourceTree = "<group>"; };
-		7AA2BC762A5EBDD400BACC4F /* DecoderManager.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = DecoderManager.hpp; sourceTree = "<group>"; };
+		7AA2BC762A5EBDD400BACC4F /* SPDecodeReaderFF.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = SPDecodeReaderFF.hpp; sourceTree = "<group>"; };
 		7AAAD7042AEBD0E300746DA1 /* ISPUnit.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = ISPUnit.hpp; sourceTree = "<group>"; };
 		7AAAD7062AEBD1E200746DA1 /* SPParam.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = SPParam.cpp; sourceTree = "<group>"; };
 		7AAAD7072AEBD1E200746DA1 /* SPParam.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = SPParam.hpp; sourceTree = "<group>"; };
+		7AB9A2022BB0771D0005C1D8 /* ISPTaskQueue.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = ISPTaskQueue.cpp; sourceTree = "<group>"; };
+		7AB9A2032BB0771D0005C1D8 /* ISPTaskQueue.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = ISPTaskQueue.hpp; sourceTree = "<group>"; };
+		7AB9A2052BB07AFF0005C1D8 /* SPTaskQueueApple.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = SPTaskQueueApple.mm; sourceTree = "<group>"; };
+		7AB9A2062BB07AFF0005C1D8 /* SPTaskQueueApple.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = SPTaskQueueApple.hpp; sourceTree = "<group>"; };
 		7ABEAC792B8C9B61003AB33F /* VideoTransform.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = VideoTransform.cpp; sourceTree = "<group>"; };
 		7ABEAC7A2B8C9B61003AB33F /* VideoTransform.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = VideoTransform.hpp; sourceTree = "<group>"; };
 		7ABEAC7C2B8CB448003AB33F /* Geometry.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = Geometry.cpp; sourceTree = "<group>"; };
@@ -167,9 +176,12 @@
 		7AE0D6B92AC559A300972D44 /* AudioFrameBase.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = AudioFrameBase.hpp; sourceTree = "<group>"; };
 		7AE0D6BB2AC55A8100972D44 /* Pipeline.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = Pipeline.cpp; sourceTree = "<group>"; };
 		7AE0D6BC2AC55A8100972D44 /* Pipeline.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = Pipeline.hpp; sourceTree = "<group>"; };
+		7AE364A42B9F3068007A1C88 /* SPDecodeReaderUnit.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = SPDecodeReaderUnit.cpp; sourceTree = "<group>"; };
+		7AE364A52B9F3068007A1C88 /* SPDecodeReaderUnit.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = SPDecodeReaderUnit.hpp; sourceTree = "<group>"; };
 		7AE896A72AF3D28E0099A279 /* SPSemaphore.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = SPSemaphore.hpp; sourceTree = "<group>"; };
 		7AF6C80D2A602057009EBFB8 /* HDR.MOV */ = {isa = PBXFileReference; lastKnownFileType = video.quicktime; name = HDR.MOV; path = ../../DevelopDiary/SimplePlayer/Videos/HDR.MOV; sourceTree = "<group>"; };
 		7AF6C8102A6020B8009EBFB8 /* 1：1.MOV */ = {isa = PBXFileReference; lastKnownFileType = video.quicktime; name = "1：1.MOV"; path = "../../DevelopDiary/SimplePlayer/Videos/1：1.MOV"; sourceTree = "<group>"; };
+		7AF945D72BA32F5900E7FF46 /* SPDecodeReaderFF.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = SPDecodeReaderFF.cpp; sourceTree = "<group>"; };
 		7AFFAF732B46B92400310CC0 /* ISPGraphContext.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = ISPGraphContext.hpp; sourceTree = "<group>"; };
 		7AFFAF752B46BAEE00310CC0 /* SPMsg.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = SPMsg.cpp; sourceTree = "<group>"; };
 		7AFFAF762B46BAEE00310CC0 /* SPMsg.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = SPMsg.hpp; sourceTree = "<group>"; };
@@ -214,10 +226,10 @@
 		7A191B412A5AE5D20016692E /* Base */ = {
 			isa = PBXGroup;
 			children = (
+				7AB9A2002BB071C70005C1D8 /* Engine */,
 				7AE896A62AF3D1000099A279 /* PureCpp */,
 				7A052CE72B47E3A00017C0CE /* Tools */,
 				7A349A8D2AF4FB720008502F /* Bridge */,
-				7A45740F2AE51DED002CF4C0 /* Engine */,
 				7AE0D6B42AC5590C00972D44 /* Model */,
 			);
 			path = Base;
@@ -264,6 +276,7 @@
 			isa = PBXGroup;
 			children = (
 				7A191B412A5AE5D20016692E /* Base */,
+				7A45740F2AE51DED002CF4C0 /* Engine */,
 				7AA2BC742A5EBDA600BACC4F /* Decoder */,
 				7AE896A82AF4A3AC0099A279 /* Renderer */,
 				7A2699B82A2B81E9009C722B /* Preview */,
@@ -335,6 +348,7 @@
 		7A45740F2AE51DED002CF4C0 /* Engine */ = {
 			isa = PBXGroup;
 			children = (
+				7AB9A2012BB071EF0005C1D8 /* Unit */,
 				7A416ACE2B5513D600DF3C67 /* ISPModelControl.hpp */,
 				7A416AC52B522FC500DF3C67 /* ISPMediaControl.hpp */,
 				7AAAD7042AEBD0E300746DA1 /* ISPUnit.hpp */,
@@ -344,8 +358,13 @@
 				7AFFAF762B46BAEE00310CC0 /* SPMsg.hpp */,
 				7A416AC72B52364100DF3C67 /* SPGraphPreview.cpp */,
 				7A416AC82B52364100DF3C67 /* SPGraphPreview.hpp */,
+				7AB9A2022BB0771D0005C1D8 /* ISPTaskQueue.cpp */,
+				7AB9A2032BB0771D0005C1D8 /* ISPTaskQueue.hpp */,
+				7AB9A2052BB07AFF0005C1D8 /* SPTaskQueueApple.mm */,
+				7AB9A2062BB07AFF0005C1D8 /* SPTaskQueueApple.hpp */,
 			);
-			path = Engine;
+			name = Engine;
+			path = Base/Engine;
 			sourceTree = "<group>";
 		};
 		7A658A072A35CF8000955DB9 /* Reader */ = {
@@ -395,10 +414,29 @@
 		7AA2BC742A5EBDA600BACC4F /* Decoder */ = {
 			isa = PBXGroup;
 			children = (
-				7AA2BC752A5EBDD400BACC4F /* DecoderManager.cpp */,
-				7AA2BC762A5EBDD400BACC4F /* DecoderManager.hpp */,
+				7AF945D72BA32F5900E7FF46 /* SPDecodeReaderFF.cpp */,
+				7AA2BC762A5EBDD400BACC4F /* SPDecodeReaderFF.hpp */,
 			);
 			path = Decoder;
+			sourceTree = "<group>";
+		};
+		7AB9A2002BB071C70005C1D8 /* Engine */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Engine;
+			path = ../Engine;
+			sourceTree = "<group>";
+		};
+		7AB9A2012BB071EF0005C1D8 /* Unit */ = {
+			isa = PBXGroup;
+			children = (
+				7A34B68F2B971175002DEE88 /* SPUnitBase.cpp */,
+				7A34B6902B971175002DEE88 /* SPUnitBase.hpp */,
+				7AE364A42B9F3068007A1C88 /* SPDecodeReaderUnit.cpp */,
+				7AE364A52B9F3068007A1C88 /* SPDecodeReaderUnit.hpp */,
+			);
+			path = Unit;
 			sourceTree = "<group>";
 		};
 		7AE0CC062A5AE39300F91B29 /* OpenGL */ = {
@@ -540,6 +578,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				7A34B6912B971175002DEE88 /* SPUnitBase.cpp in Sources */,
 				7A23A4142A4D367C005FDEB8 /* ImageWriterBmp.cpp in Sources */,
 				7ABEAC7E2B8CB448003AB33F /* Geometry.cpp in Sources */,
 				7A416ACC2B52376600DF3C67 /* SPMediaModel.cpp in Sources */,
@@ -554,19 +593,22 @@
 				7A416AC92B52364100DF3C67 /* SPGraphPreview.cpp in Sources */,
 				7A191B532A5AEFCF0016692E /* GLFrameBuffer.cpp in Sources */,
 				7A6D8B4C2A3359DC00C40E5C /* GLRendererBase.cpp in Sources */,
+				7AF945D82BA32F5900E7FF46 /* SPDecodeReaderFF.cpp in Sources */,
 				7ABEAC7B2B8C9B61003AB33F /* VideoTransform.cpp in Sources */,
-				7AA2BC772A5EBDD400BACC4F /* DecoderManager.cpp in Sources */,
 				7A191B4D2A5AEFB40016692E /* GLRenderBuffer.cpp in Sources */,
 				7A349A862AF4EC960008502F /* AudioOutputManager.cpp in Sources */,
 				7A6D8B492A33582600C40E5C /* IGLContext.cpp in Sources */,
 				7AE0D6B72AC5593900972D44 /* VideoFrameBase.cpp in Sources */,
 				7A1C65792AF4D0C000E8E6F8 /* VideoRendererManager.cpp in Sources */,
 				7A2699AD2A2B7E01009C722B /* main.m in Sources */,
+				7AB9A2042BB0771D0005C1D8 /* ISPTaskQueue.cpp in Sources */,
 				7ACD8FD22B6BCC6A000E6EA0 /* GLRendererMultiBlend.cpp in Sources */,
 				7A2699A02A2B7E00009C722B /* AppDelegate.m in Sources */,
+				7AB9A2072BB07AFF0005C1D8 /* SPTaskQueueApple.mm in Sources */,
 				7A191B4A2A5AEFA10016692E /* GLTexture.cpp in Sources */,
 				7A2699BC2A2B81E9009C722B /* PreviewManager_Mac.mm in Sources */,
 				7A191B402A5AE4460016692E /* GLProgram.cpp in Sources */,
+				7AE364A62B9F3068007A1C88 /* SPDecodeReaderUnit.cpp in Sources */,
 				7A191B582A5AF9200016692E /* GLContextMac.mm in Sources */,
 				7AFFAF772B46BAEE00310CC0 /* SPMsg.cpp in Sources */,
 				7AE0D6BD2AC55A8100972D44 /* Pipeline.cpp in Sources */,
@@ -726,7 +768,7 @@
 					"@executable_path/../Frameworks",
 				);
 				LIBRARY_SEARCH_PATHS = ../thirdParty/build/FFMpeg/lib;
-				MACOSX_DEPLOYMENT_TARGET = "$(RECOMMENDED_MACOSX_DEPLOYMENT_TARGET)";
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.yyx.SimplePlayer;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -761,7 +803,7 @@
 					"@executable_path/../Frameworks",
 				);
 				LIBRARY_SEARCH_PATHS = ../thirdParty/build/FFMpeg/lib;
-				MACOSX_DEPLOYMENT_TARGET = "$(RECOMMENDED_MACOSX_DEPLOYMENT_TARGET)";
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.yyx.SimplePlayer;
 				PRODUCT_NAME = "$(TARGET_NAME)";

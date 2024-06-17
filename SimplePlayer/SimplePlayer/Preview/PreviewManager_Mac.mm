@@ -15,6 +15,7 @@
 #include <queue>
 #include <mutex>
 #include <any>
+#include <numeric>
 
 
 #define GL_SILENCE_DEPRECATION
@@ -241,11 +242,11 @@ std::optional<sp::VideoFrame> LoadBufferFromImage(NSImage *image) {
         allDuration.push_back(duration);
         double mean = std::reduce(allDuration.cbegin(), allDuration.cend(), 0);
         mean /= allDuration.size();
-        NSLog(@"耗时：%.2fms, %.2f ms", mean, duration);
+        NSLog(@"渲染耗时：%.2fms, %.2f ms", mean, duration);
     } else {
         double mean = std::reduce(allDuration.cbegin(), allDuration.cend(), 0);
         mean /= allDuration.size();
-        NSLog(@"======耗时：%.2fms, %.2f ms", mean, duration);
+        NSLog(@"======渲染耗时：%.2fms, %.2f ms", mean, duration);
     }
 }
 

@@ -36,8 +36,8 @@ class VideoTransform2D : public IVideoTransform {
 public:
     virtual IVideoTransform *clone() const override;
     
-    virtual bool fromTransform(const IVideoTransform &other) {return false;}
-    virtual glm::mat4 toMatrix() const;
+    virtual bool fromTransform(const IVideoTransform &other) override {return false;}
+    virtual glm::mat4 toMatrix() const override;
 
 public:
     /// 缩放，与fillmode组合起来看。例如，fillmode = Fit, scale = 0.5代表首先缩放到正好可以以Fit模式显示在outSize下，随后再缩放到原来的0.5倍

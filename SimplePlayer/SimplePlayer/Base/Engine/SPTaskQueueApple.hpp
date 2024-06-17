@@ -26,6 +26,7 @@ public:
     
 protected:
     void _run();
+    void _dispatchSync(dispatch_block_t blk);
     
 protected:
     dispatch_queue_t _queue;

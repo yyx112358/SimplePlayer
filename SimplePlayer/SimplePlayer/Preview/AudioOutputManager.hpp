@@ -11,12 +11,14 @@
 #include <thread>
 
 #include "Pipeline.hpp"
+#include "ISPMediaControl.hpp"
+#include "ISPGraphContext.hpp"
 
 namespace sp {
 
 class AudioSpeaker_Mac;
 
-class AudioOutputManager {
+class AudioOutputManager : public ISPGraphContextListener, public std::enable_shared_from_this<AudioOutputManager> {
 public:
     enum class Status {
         UNINITAILIZED,
@@ -26,7 +28,7 @@ public:
     };
     
 public:
-    AudioOutputManager();
+    AudioOutputManager(std::shared_ptr<ISPGraphContext> context);
     ~AudioOutputManager();
     
     AudioOutputManager(const AudioOutputManager &) = delete;
@@ -48,10 +50,16 @@ public:
 public:
     bool setInputQueue(std::shared_ptr<sp::SPPipelineQueue> inputQueue) { _inputQueue = inputQueue; return true; }
     
-protected:
-    void _loop();
+public:
+    virtual void processMessage(SPMsg msg) {}
     
 protected:
+    void _loop();
+    void _postAudioClock();
+    
+protected:
+    
+    std::weak_ptr<ISPGraphContext> _context;
     
     Status _status = Status::UNINITAILIZED;
     

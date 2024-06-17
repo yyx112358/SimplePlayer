@@ -71,6 +71,7 @@ using namespace sp;
         if (status != 0) {
             SPLOGE("AudioQueueNewOutput Failed: %d", status);
         }
+//        AudioQueueAddPropertyListener(_audioQueue, kAudioQueueProperty_IsRunning, <#AudioQueuePropertyListenerProc  _Nonnull inProc#>, <#void * _Nullable inUserData#>)
         
     }
     return self;
@@ -91,13 +92,13 @@ using namespace sp;
 }
 
 /// 当前音频时间戳
-- (double)currentPts {
+- (std::optional<double>)currentPts {
     AudioTimeStamp outTimeStamp;
     Boolean outTimelineDiscontinuity;
-    if (OSStatus status = AudioQueueGetCurrentTime(_audioQueue, nil, &outTimeStamp, &outTimelineDiscontinuity); status == 0) {
+    if (OSStatus status = AudioQueueGetCurrentTime(_audioQueue, nil, &outTimeStamp, &outTimelineDiscontinuity); status == 0)
         return outTimeStamp.mSampleTime;
-    } else
-        return -1;
+    else
+        return std::nullopt;;
 }
 
 - (AudioStreamBasicDescription)getAudioFormat {

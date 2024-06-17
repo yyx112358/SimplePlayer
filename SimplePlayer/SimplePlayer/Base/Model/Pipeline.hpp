@@ -40,7 +40,9 @@ public:
 public:
     std::shared_ptr<VideoFrame> videoFrame;
     std::shared_ptr<AudioFrame> audioFrame;
+public:
     EStatus status = EStatus::UNINITILIZED;
+    int id = -1;
 };
 
 

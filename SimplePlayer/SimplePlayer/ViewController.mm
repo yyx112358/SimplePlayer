@@ -108,7 +108,6 @@
 
 - (IBAction)seekChanged:(NSSlider *)sender {
     NSLog(@"");
-    
 }
 
 - (void)exit {

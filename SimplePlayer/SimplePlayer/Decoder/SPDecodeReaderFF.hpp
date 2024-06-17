@@ -16,7 +16,7 @@
 #include <future>
 
 #include "Pipeline.hpp"
-#include "RingQueue.hpp"
+#include "SPUnitBase.hpp"
 
 struct AVFormatContext;
 struct AVCodecContext;
@@ -39,7 +39,7 @@ struct DecodeCommand {
     std::promise<bool> result;
 };
 
-class DecoderManager {
+class SPDecodeReaderFF {
 public:
     /// 同AVMediaType
     enum class MediaType {
@@ -60,7 +60,7 @@ public:
     };
     
 public:
-    ~DecoderManager();
+    ~SPDecodeReaderFF();
     
     bool init(const std::string &path);
     bool unInit();

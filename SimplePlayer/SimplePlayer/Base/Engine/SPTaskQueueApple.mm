@@ -41,6 +41,7 @@ using namespace sp;
 SPTaskQueueApple::SPTaskQueueApple(std::string name) : ISPTaskQueue(name)
 {
     _queue = dispatch_queue_create(_name.c_str(), DISPATCH_QUEUE_SERIAL);
+    dispatch_queue_set_specific(_queue, this, this, NULL);
 }
 
 SPTaskQueueApple::~SPTaskQueueApple()
@@ -81,7 +82,7 @@ std::future<SPParam> SPTaskQueueApple::runAsync(SPTask task)
 void SPTaskQueueApple::_run()
 {
     _isRunning = true;
-    dispatch_sync(_queue, ^{
+    _dispatchSync(^{
         SPTask task;
         {
             std::lock_guard g(_mtx);
@@ -98,13 +99,23 @@ void SPTaskQueueApple::_run()
             _run();
         };
         if (task.isAsync) {
-            dispatch_sync(_queue, blk);
-        } else {
             dispatch_async(_queue, blk);
+        } else {
+            _dispatchSync(blk);
         }
     });
     
 
+}
+
+void SPTaskQueueApple::_dispatchSync(dispatch_block_t blk) {
+    // 在当前线程执行dispatch_sync将导致死锁，此时需要直接执行blk()
+    // https://stackoverflow.com/questions/10984732/why-cant-we-use-a-dispatch-sync-on-the-current-queue
+    void * key = dispatch_get_specific(this);
+    if (key)
+        blk();
+    else
+        dispatch_sync(_queue, blk);
 }
 
 #endif // __APPLE__

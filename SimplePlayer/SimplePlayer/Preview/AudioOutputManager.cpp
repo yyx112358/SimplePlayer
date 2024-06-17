@@ -11,7 +11,9 @@
 
 using namespace sp;
 
-AudioOutputManager::AudioOutputManager() {}
+AudioOutputManager::AudioOutputManager(std::shared_ptr<ISPGraphContext> context) : _context(context) {
+    
+}
 
 AudioOutputManager::~AudioOutputManager() 
 {
@@ -20,6 +22,10 @@ AudioOutputManager::~AudioOutputManager()
 
 bool AudioOutputManager::init() 
 {
+    uninit();
+    if (auto ctx = _context.lock()) {
+        ctx->addListener(SPMsgID::INFO_AUDIO_CLOCK, shared_from_this());
+    }
     
     return true;
 }
@@ -145,12 +151,26 @@ void AudioOutputManager::_loop() {
             _speaker->init(audioFormat);
             _speaker->enqueue(pipeline->audioFrame);
             _speaker->start(false);
+            _postAudioClock();
             continue;
         }
+        
         
         if (_speaker && pipeline->audioFrame) {
             _speaker->enqueue(pipeline->audioFrame);
         }
+        _postAudioClock();
     }
     SPLOGD("Audio output thread end");
+}
+
+void AudioOutputManager::_postAudioClock() 
+{
+    if (auto ctx = _context.lock()) {
+        if (auto clk = _speaker->getAudioClock()) {
+            SPMsg msg {.id = SPMsgID::INFO_AUDIO_CLOCK, .params = {*clk}};
+            
+            ctx->postMessage(std::move(msg), 0);
+        }
+    }
 }

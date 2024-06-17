@@ -5,7 +5,7 @@
 //  Created by YangYixuan on 2023/7/12.
 //
 
-#include "DecoderManager.hpp"
+#include "SPDecodeReaderFF.hpp"
 #include "SPLog.h"
 #include "ImageWriterUIImage.h"
 
@@ -36,13 +36,13 @@ public:
 };
 
 
-DecoderManager::~DecoderManager()
+SPDecodeReaderFF::~SPDecodeReaderFF()
 {
     unInit();
 }
 
 #define RUN_INIT(expr) RUN(expr, return false)
-bool DecoderManager::init(const std::string &path)
+bool SPDecodeReaderFF::init(const std::string &path)
 {
     SPLOGV("%s", avformat_configuration()) ;
     unInit();
@@ -52,6 +52,7 @@ bool DecoderManager::init(const std::string &path)
 //    av_log_set_level(AV_LOG_DEBUG);
 //    av_log_set_callback(my_log_callback);
     _fmtCtx = nullptr;
+    auto s = av_err2str(ENOMEM);
     RUN_INIT(avformat_open_input(&_fmtCtx, cpath, nullptr, nullptr));
     SPLOGI("Open %s Successed!", cpath);
     
@@ -119,7 +120,7 @@ bool DecoderManager::init(const std::string &path)
 }
 #undef RUN_INIT
 
-bool DecoderManager::unInit()
+bool SPDecodeReaderFF::unInit()
 {
     // 停止处理线程
     if (_processThread.joinable()) {
@@ -157,7 +158,7 @@ bool DecoderManager::unInit()
     return true;
 }
 
-std::future<bool> DecoderManager::start(bool isSync)
+std::future<bool> SPDecodeReaderFF::start(bool isSync)
 {
     DecodeCommand cmd {.type = DecodeCommand::Type::start};
     cmd.type = DecodeCommand::Type::start;
@@ -178,7 +179,7 @@ std::future<bool> DecoderManager::start(bool isSync)
 }
 
 
-std::future<bool> DecoderManager::stop(bool isSync) 
+std::future<bool> SPDecodeReaderFF::stop(bool isSync) 
 {
     DecodeCommand cmd {.type = DecodeCommand::Type::start};
     cmd.type = DecodeCommand::Type::stop;
@@ -213,7 +214,7 @@ std::future<bool> DecoderManager::stop(bool isSync)
 }
 
 //std::future<bool> DecoderManager::startseek(bool isSync);
-std::future<bool> DecoderManager::pause(bool isSync) {
+std::future<bool> SPDecodeReaderFF::pause(bool isSync) {
     DecodeCommand cmd {.type = DecodeCommand::Type::start};
     cmd.type = DecodeCommand::Type::pause;
     std::future<bool> f = cmd.result.get_future();
@@ -233,7 +234,7 @@ std::future<bool> DecoderManager::pause(bool isSync) {
 }
 //std::future<bool> DecoderManager::startflush(bool isSync);
 
-void DecoderManager::_loop()
+void SPDecodeReaderFF::_loop()
 {
     SPLOGD("Decode thread start");
     DecodeCommand::Type lastCmdType = DecodeCommand::Type::start;
@@ -277,6 +278,8 @@ void DecoderManager::_loop()
         
         // 读取一帧
         std::shared_ptr<Pipeline> pipeline = std::make_shared<Pipeline>();
+        static int cnt = 0; // TODO: id改为
+        pipeline->id = cnt++;
         
         // TODO: getNextFrame应能进行重试以确保输出一帧
         int ret = av_read_frame(_fmtCtx, _avPacket);
@@ -327,7 +330,7 @@ void DecoderManager::_loop()
 }
 
 
-bool DecoderManager::_pushNextCommand(DecodeCommand cmd)
+bool SPDecodeReaderFF::_pushNextCommand(DecodeCommand cmd)
 {
     // TODO: 优化，例如stop会清空_cmdQueue，seek会调整到最近的seek时间点
     std::unique_lock<std::shared_mutex> lock(_cmdLock);
@@ -346,7 +349,7 @@ bool DecoderManager::_pushNextCommand(DecodeCommand cmd)
     return true;
 }
 
-std::optional<DecodeCommand> DecoderManager::_popNextCommand()
+std::optional<DecodeCommand> SPDecodeReaderFF::_popNextCommand()
 {
     std::unique_lock<std::shared_mutex> lock(_cmdLock);
 
@@ -359,7 +362,7 @@ std::optional<DecodeCommand> DecoderManager::_popNextCommand()
     }
 }
 
-void DecoderManager::_finishCommand(std::optional<DecodeCommand> &cmd)
+void SPDecodeReaderFF::_finishCommand(std::optional<DecodeCommand> &cmd)
 {
     if (cmd.has_value() == false)
         return;
@@ -384,7 +387,7 @@ void DecoderManager::_finishCommand(std::optional<DecodeCommand> &cmd)
     cmd->result.set_value(true);
 }
 
-void DecoderManager::_enqueueStopPipeline() {
+void SPDecodeReaderFF::_enqueueStopPipeline() {
     // 压入结束帧，通知后续节点结束运行
     if (_videoQueue) {
         _videoQueue->clear();
@@ -396,19 +399,19 @@ void DecoderManager::_enqueueStopPipeline() {
     }
 }
 
-sp::DecoderManager::Status DecoderManager::_getStatus() const 
+sp::SPDecodeReaderFF::Status SPDecodeReaderFF::_getStatus() const 
 {
     std::shared_lock<std::shared_mutex> lock(_cmdLock);
     return _status;
 }
 
-void DecoderManager::_setStatus(Status newStatus)
+void SPDecodeReaderFF::_setStatus(Status newStatus)
 {
     std::unique_lock<std::shared_mutex> lock(_cmdLock);
     _status = newStatus;
 }
 
-bool DecoderManager::_decodePacket(std::shared_ptr<Pipeline> &pipeline, AVCodecContext * const codecCtx, AVPacket * const packet, AVFrame * const avFrame) const
+bool SPDecodeReaderFF::_decodePacket(std::shared_ptr<Pipeline> &pipeline, AVCodecContext * const codecCtx, AVPacket * const packet, AVFrame * const avFrame) const
 {
     if (codecCtx == nullptr || packet == nullptr)
         return false;
@@ -427,7 +430,7 @@ bool DecoderManager::_decodePacket(std::shared_ptr<Pipeline> &pipeline, AVCodecC
         }
         pipeline->status = Pipeline::EStatus::READY;
         
-        SPLOGD("pts:%d", avFrame->pts);
+//        SPLOGD("pts:%d", avFrame->pts);
 
         if (auto videoFrame = pipeline->videoFrame) {
 
@@ -503,7 +506,7 @@ bool DecoderManager::_decodePacket(std::shared_ptr<Pipeline> &pipeline, AVCodecC
 }
 
 
-AVCodecContext * DecoderManager::_getCodecCtx(MediaType mediaType) const 
+AVCodecContext * SPDecodeReaderFF::_getCodecCtx(MediaType mediaType) const 
 {
     switch (mediaType) {
         case MediaType::VIDEO:          return _codecCtx[0];
@@ -513,7 +516,7 @@ AVCodecContext * DecoderManager::_getCodecCtx(MediaType mediaType) const
     }
 }
 
-AVStream * DecoderManager::_getStream(MediaType mediaType) const 
+AVStream * SPDecodeReaderFF::_getStream(MediaType mediaType) const 
 {
     switch (mediaType) {
         case MediaType::VIDEO:          return _stream[0];
@@ -523,7 +526,7 @@ AVStream * DecoderManager::_getStream(MediaType mediaType) const
     }
 }
 
-Pipeline::EStatus DecoderManager::_checkAVError(int code, const char *msg /*= nullptr*/) 
+Pipeline::EStatus SPDecodeReaderFF::_checkAVError(int code, const char *msg /*= nullptr*/) 
 {
     if (code == 0) { // 其它
         return Pipeline::EStatus::READY;

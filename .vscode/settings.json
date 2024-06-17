@@ -1,5 +1,6 @@
 {
     "pasteImage.filePathConfirmInputBoxMode": "onlyName",
     "pasteImage.path": "${projectRoot}/DevelopDiary/SimplePlayer/Images",
-    "pasteImage.showFilePathConfirmInputBox": true
+    "pasteImage.showFilePathConfirmInputBox": true,
+    "cmake.configureOnOpen": false
 }
