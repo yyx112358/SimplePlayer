@@ -1,0 +1,21 @@
+# Uncomment the next line to define a global platform for your project
+platform :osx, '13.0'
+
+PATH_REPO_ROOT = '../../'
+PATH_PROJECT_ROOT = './'
+PATH_THIRDPARTY_ROOT = PATH_REPO_ROOT + 'thirdParty/'
+
+
+target 'SimplePlayer' do
+  # Comment the next line if you don't want to use dynamic frameworks
+  use_frameworks!
+
+  pre_install do |installer|
+    # spdlog
+    system('cmake', '-S', PATH_THIRDPARTY_ROOT + 'spdlog/', '-B', PATH_THIRDPARTY_ROOT + 'build/spdlog/')
+    system('cmake', '--build', PATH_THIRDPARTY_ROOT + 'build/spdlog/')
+  end
+  
+  pod 'spdlog', :path => PATH_THIRDPARTY_ROOT + 'spdlog'
+
+end

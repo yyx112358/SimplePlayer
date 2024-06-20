@@ -37,3 +37,4 @@ thirdParty/build
 .DS_Store
 build
 SimplePlayer/SimplePlayer.xcodeproj/project.xcworkspace/xcuserdata/yangyixuan.xcuserdatad/xcdebugger/Expressions.xcexplist
+proj/mac/Pods

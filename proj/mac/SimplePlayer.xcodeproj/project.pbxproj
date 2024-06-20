@@ -1,0 +1,501 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		7A2699A02A2B7E00009C722B /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 7A26999F2A2B7E00009C722B /* AppDelegate.m */; };
+		7A2699A32A2B7E00009C722B /* ViewController.mm in Sources */ = {isa = PBXBuildFile; fileRef = 7A2699A22A2B7E00009C722B /* ViewController.mm */; };
+		7A2699A62A2B7E00009C722B /* SimplePlayer.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = 7A2699A42A2B7E00009C722B /* SimplePlayer.xcdatamodeld */; };
+		7A2699A82A2B7E01009C722B /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 7A2699A72A2B7E01009C722B /* Assets.xcassets */; };
+		7A2699AB2A2B7E01009C722B /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 7A2699A92A2B7E01009C722B /* Main.storyboard */; };
+		7A2699AD2A2B7E01009C722B /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 7A2699AC2A2B7E01009C722B /* main.m */; };
+		7A269A2A2A2C9CFD009C722B /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7A269A292A2C9CFD009C722B /* OpenGL.framework */; };
+		7A56B2792A5DB09600094E41 /* AudioToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7A56B2782A5DB09600094E41 /* AudioToolbox.framework */; };
+		7A56B27B2A5DB09D00094E41 /* CoreAudio.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7A56B27A2A5DB09D00094E41 /* CoreAudio.framework */; };
+		7A56B27D2A5DB0A500094E41 /* VideoToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7A56B27C2A5DB0A500094E41 /* VideoToolbox.framework */; };
+		7A56B27F2A5DB0BF00094E41 /* CoreMedia.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7A56B27E2A5DB0BF00094E41 /* CoreMedia.framework */; };
+		7A56B2812A5DB0D100094E41 /* libbz2.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 7A56B2802A5DB0D100094E41 /* libbz2.tbd */; };
+		7A56B2832A5DB0E100094E41 /* libz.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 7A56B2822A5DB0E100094E41 /* libz.tbd */; };
+		7A56B2852A5DB0ED00094E41 /* libiconv.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 7A56B2842A5DB0ED00094E41 /* libiconv.tbd */; };
+		7A658A062A35CAFF00955DB9 /* charTexture.bmp in Resources */ = {isa = PBXBuildFile; fileRef = 7A658A052A35CAFF00955DB9 /* charTexture.bmp */; };
+		7A658A0A2A35D4DA00955DB9 /* texture.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 7A658A092A35D4D900955DB9 /* texture.jpg */; };
+		7A7123DF2C204089002F8ED8 /* 1：1.MOV in Resources */ = {isa = PBXBuildFile; fileRef = 7A7123DC2C204089002F8ED8 /* 1：1.MOV */; };
+		7A7123E02C204089002F8ED8 /* HDR.MOV in Resources */ = {isa = PBXBuildFile; fileRef = 7A7123DD2C204089002F8ED8 /* HDR.MOV */; };
+		7A7123E12C204089002F8ED8 /* Sync.mp4 in Resources */ = {isa = PBXBuildFile; fileRef = 7A7123DE2C204089002F8ED8 /* Sync.mp4 */; };
+		8F2C36FF24342A486B2BC6B9 /* Pods_SimplePlayer.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 921A4F7E72278D9DDFFAA99F /* Pods_SimplePlayer.framework */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		7A0D48A12C22C8CD00105B89 /* spdlog.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; path = spdlog.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		7A0D48A52C22C90300105B89 /* libspdlog.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libspdlog.a; path = ../../thirdParty/spdlog/libspdlog.a; sourceTree = "<group>"; };
+		7A26999B2A2B7E00009C722B /* SimplePlayer.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SimplePlayer.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		7A26999E2A2B7E00009C722B /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
+		7A26999F2A2B7E00009C722B /* AppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AppDelegate.m; sourceTree = "<group>"; };
+		7A2699A12A2B7E00009C722B /* ViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ViewController.h; sourceTree = "<group>"; };
+		7A2699A22A2B7E00009C722B /* ViewController.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = ViewController.mm; sourceTree = "<group>"; };
+		7A2699A52A2B7E00009C722B /* SimplePlayer.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = SimplePlayer.xcdatamodel; sourceTree = "<group>"; };
+		7A2699A72A2B7E01009C722B /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		7A2699AA2A2B7E01009C722B /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
+		7A2699AC2A2B7E01009C722B /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
+		7A2699AE2A2B7E01009C722B /* SimplePlayer.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = SimplePlayer.entitlements; sourceTree = "<group>"; };
+		7A269A292A2C9CFD009C722B /* OpenGL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGL.framework; path = System/Library/Frameworks/OpenGL.framework; sourceTree = SDKROOT; };
+		7A31B69E2A5D553C0057E592 /* libswresample.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libswresample.a; path = ../thirdParty/build/FFMpeg/lib/libswresample.a; sourceTree = "<group>"; };
+		7A31B69F2A5D553C0057E592 /* libswscale.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libswscale.a; path = ../thirdParty/build/FFMpeg/lib/libswscale.a; sourceTree = "<group>"; };
+		7A31B6A02A5D553D0057E592 /* libavdevice.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libavdevice.a; path = ../thirdParty/build/FFMpeg/lib/libavdevice.a; sourceTree = "<group>"; };
+		7A31B6A12A5D553D0057E592 /* libavcodec.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libavcodec.a; path = ../thirdParty/build/FFMpeg/lib/libavcodec.a; sourceTree = "<group>"; };
+		7A31B6A22A5D553D0057E592 /* libavutil.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libavutil.a; path = ../thirdParty/build/FFMpeg/lib/libavutil.a; sourceTree = "<group>"; };
+		7A31B6A32A5D553D0057E592 /* libavfilter.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libavfilter.a; path = ../thirdParty/build/FFMpeg/lib/libavfilter.a; sourceTree = "<group>"; };
+		7A31B6A42A5D553D0057E592 /* libavformat.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libavformat.a; path = ../thirdParty/build/FFMpeg/lib/libavformat.a; sourceTree = "<group>"; };
+		7A31B6A52A5D553D0057E592 /* libpostproc.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libpostproc.a; path = ../thirdParty/build/FFMpeg/lib/libpostproc.a; sourceTree = "<group>"; };
+		7A56B2782A5DB09600094E41 /* AudioToolbox.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AudioToolbox.framework; path = System/Library/Frameworks/AudioToolbox.framework; sourceTree = SDKROOT; };
+		7A56B27A2A5DB09D00094E41 /* CoreAudio.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreAudio.framework; path = System/Library/Frameworks/CoreAudio.framework; sourceTree = SDKROOT; };
+		7A56B27C2A5DB0A500094E41 /* VideoToolbox.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = VideoToolbox.framework; path = System/Library/Frameworks/VideoToolbox.framework; sourceTree = SDKROOT; };
+		7A56B27E2A5DB0BF00094E41 /* CoreMedia.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreMedia.framework; path = System/Library/Frameworks/CoreMedia.framework; sourceTree = SDKROOT; };
+		7A56B2802A5DB0D100094E41 /* libbz2.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libbz2.tbd; path = usr/lib/libbz2.tbd; sourceTree = SDKROOT; };
+		7A56B2822A5DB0E100094E41 /* libz.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libz.tbd; path = usr/lib/libz.tbd; sourceTree = SDKROOT; };
+		7A56B2842A5DB0ED00094E41 /* libiconv.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libiconv.tbd; path = usr/lib/libiconv.tbd; sourceTree = SDKROOT; };
+		7A658A052A35CAFF00955DB9 /* charTexture.bmp */ = {isa = PBXFileReference; lastKnownFileType = image.bmp; path = charTexture.bmp; sourceTree = "<group>"; };
+		7A658A092A35D4D900955DB9 /* texture.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = texture.jpg; sourceTree = "<group>"; };
+		7A7123DC2C204089002F8ED8 /* 1：1.MOV */ = {isa = PBXFileReference; lastKnownFileType = video.quicktime; name = "1：1.MOV"; path = "../../../DevelopDiary/SimplePlayer/Videos/1：1.MOV"; sourceTree = "<group>"; };
+		7A7123DD2C204089002F8ED8 /* HDR.MOV */ = {isa = PBXFileReference; lastKnownFileType = video.quicktime; name = HDR.MOV; path = ../../../DevelopDiary/SimplePlayer/Videos/HDR.MOV; sourceTree = "<group>"; };
+		7A7123DE2C204089002F8ED8 /* Sync.mp4 */ = {isa = PBXFileReference; lastKnownFileType = file; name = Sync.mp4; path = ../../../DevelopDiary/SimplePlayer/Videos/Sync.mp4; sourceTree = "<group>"; };
+		921A4F7E72278D9DDFFAA99F /* Pods_SimplePlayer.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_SimplePlayer.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		A429A30CE052ABABE22AE8E7 /* Pods-SimplePlayer.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-SimplePlayer.debug.xcconfig"; path = "Target Support Files/Pods-SimplePlayer/Pods-SimplePlayer.debug.xcconfig"; sourceTree = "<group>"; };
+		FBEE58BACACBFBC3CBCD3D74 /* Pods-SimplePlayer.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-SimplePlayer.release.xcconfig"; path = "Target Support Files/Pods-SimplePlayer/Pods-SimplePlayer.release.xcconfig"; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		7A2699982A2B7E00009C722B /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				7A56B27F2A5DB0BF00094E41 /* CoreMedia.framework in Frameworks */,
+				7A56B27D2A5DB0A500094E41 /* VideoToolbox.framework in Frameworks */,
+				7A56B27B2A5DB09D00094E41 /* CoreAudio.framework in Frameworks */,
+				7A56B2792A5DB09600094E41 /* AudioToolbox.framework in Frameworks */,
+				7A269A2A2A2C9CFD009C722B /* OpenGL.framework in Frameworks */,
+				7A56B2812A5DB0D100094E41 /* libbz2.tbd in Frameworks */,
+				7A56B2852A5DB0ED00094E41 /* libiconv.tbd in Frameworks */,
+				7A56B2832A5DB0E100094E41 /* libz.tbd in Frameworks */,
+				8F2C36FF24342A486B2BC6B9 /* Pods_SimplePlayer.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		7A2699922A2B7E00009C722B = {
+			isa = PBXGroup;
+			children = (
+				7A26999D2A2B7E00009C722B /* SimplePlayer */,
+				7A26999C2A2B7E00009C722B /* Products */,
+				7A269A282A2C9CFD009C722B /* Frameworks */,
+				D540C1947C6DA33BB513CB7F /* Pods */,
+			);
+			sourceTree = "<group>";
+		};
+		7A26999C2A2B7E00009C722B /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				7A26999B2A2B7E00009C722B /* SimplePlayer.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		7A26999D2A2B7E00009C722B /* SimplePlayer */ = {
+			isa = PBXGroup;
+			children = (
+				7A26999E2A2B7E00009C722B /* AppDelegate.h */,
+				7A26999F2A2B7E00009C722B /* AppDelegate.m */,
+				7A2699A12A2B7E00009C722B /* ViewController.h */,
+				7A2699A22A2B7E00009C722B /* ViewController.mm */,
+				7A658A052A35CAFF00955DB9 /* charTexture.bmp */,
+				7A658A092A35D4D900955DB9 /* texture.jpg */,
+				7A2699A72A2B7E01009C722B /* Assets.xcassets */,
+				7A7123DC2C204089002F8ED8 /* 1：1.MOV */,
+				7A7123DD2C204089002F8ED8 /* HDR.MOV */,
+				7A7123DE2C204089002F8ED8 /* Sync.mp4 */,
+				7A2699A92A2B7E01009C722B /* Main.storyboard */,
+				7A2699AC2A2B7E01009C722B /* main.m */,
+				7A2699AE2A2B7E01009C722B /* SimplePlayer.entitlements */,
+				7A2699A42A2B7E00009C722B /* SimplePlayer.xcdatamodeld */,
+			);
+			path = SimplePlayer;
+			sourceTree = "<group>";
+		};
+		7A269A282A2C9CFD009C722B /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				7A0D48A52C22C90300105B89 /* libspdlog.a */,
+				7A0D48A12C22C8CD00105B89 /* spdlog.framework */,
+				7A56B2842A5DB0ED00094E41 /* libiconv.tbd */,
+				7A56B2822A5DB0E100094E41 /* libz.tbd */,
+				7A56B2802A5DB0D100094E41 /* libbz2.tbd */,
+				7A56B27E2A5DB0BF00094E41 /* CoreMedia.framework */,
+				7A56B27C2A5DB0A500094E41 /* VideoToolbox.framework */,
+				7A56B27A2A5DB09D00094E41 /* CoreAudio.framework */,
+				7A56B2782A5DB09600094E41 /* AudioToolbox.framework */,
+				7A31B6A12A5D553D0057E592 /* libavcodec.a */,
+				7A31B6A02A5D553D0057E592 /* libavdevice.a */,
+				7A31B6A32A5D553D0057E592 /* libavfilter.a */,
+				7A31B6A42A5D553D0057E592 /* libavformat.a */,
+				7A31B6A22A5D553D0057E592 /* libavutil.a */,
+				7A31B6A52A5D553D0057E592 /* libpostproc.a */,
+				7A31B69E2A5D553C0057E592 /* libswresample.a */,
+				7A31B69F2A5D553C0057E592 /* libswscale.a */,
+				7A269A292A2C9CFD009C722B /* OpenGL.framework */,
+				921A4F7E72278D9DDFFAA99F /* Pods_SimplePlayer.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		D540C1947C6DA33BB513CB7F /* Pods */ = {
+			isa = PBXGroup;
+			children = (
+				A429A30CE052ABABE22AE8E7 /* Pods-SimplePlayer.debug.xcconfig */,
+				FBEE58BACACBFBC3CBCD3D74 /* Pods-SimplePlayer.release.xcconfig */,
+			);
+			path = Pods;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		7A26999A2A2B7E00009C722B /* SimplePlayer */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 7A2699B12A2B7E01009C722B /* Build configuration list for PBXNativeTarget "SimplePlayer" */;
+			buildPhases = (
+				35294A0B5EE2765C7571F470 /* [CP] Check Pods Manifest.lock */,
+				7A2699972A2B7E00009C722B /* Sources */,
+				7A2699982A2B7E00009C722B /* Frameworks */,
+				7A2699992A2B7E00009C722B /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = SimplePlayer;
+			productName = SimplePlayer;
+			productReference = 7A26999B2A2B7E00009C722B /* SimplePlayer.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		7A2699932A2B7E00009C722B /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastUpgradeCheck = 1410;
+				TargetAttributes = {
+					7A26999A2A2B7E00009C722B = {
+						CreatedOnToolsVersion = 14.1;
+					};
+				};
+			};
+			buildConfigurationList = 7A2699962A2B7E00009C722B /* Build configuration list for PBXProject "SimplePlayer" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 7A2699922A2B7E00009C722B;
+			productRefGroup = 7A26999C2A2B7E00009C722B /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				7A26999A2A2B7E00009C722B /* SimplePlayer */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		7A2699992A2B7E00009C722B /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				7A7123DF2C204089002F8ED8 /* 1：1.MOV in Resources */,
+				7A658A0A2A35D4DA00955DB9 /* texture.jpg in Resources */,
+				7A2699A82A2B7E01009C722B /* Assets.xcassets in Resources */,
+				7A7123E12C204089002F8ED8 /* Sync.mp4 in Resources */,
+				7A7123E02C204089002F8ED8 /* HDR.MOV in Resources */,
+				7A658A062A35CAFF00955DB9 /* charTexture.bmp in Resources */,
+				7A2699AB2A2B7E01009C722B /* Main.storyboard in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		35294A0B5EE2765C7571F470 /* [CP] Check Pods Manifest.lock */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"${PODS_PODFILE_DIR_PATH}/Podfile.lock",
+				"${PODS_ROOT}/Manifest.lock",
+			);
+			name = "[CP] Check Pods Manifest.lock";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(DERIVED_FILE_DIR)/Pods-SimplePlayer-checkManifestLockResult.txt",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
+			showEnvVarsInLog = 0;
+		};
+/* End PBXShellScriptBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		7A2699972A2B7E00009C722B /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				7A2699A62A2B7E00009C722B /* SimplePlayer.xcdatamodeld in Sources */,
+				7A2699A32A2B7E00009C722B /* ViewController.mm in Sources */,
+				7A2699AD2A2B7E01009C722B /* main.m in Sources */,
+				7A2699A02A2B7E00009C722B /* AppDelegate.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXVariantGroup section */
+		7A2699A92A2B7E01009C722B /* Main.storyboard */ = {
+			isa = PBXVariantGroup;
+			children = (
+				7A2699AA2A2B7E01009C722B /* Base */,
+			);
+			name = Main.storyboard;
+			sourceTree = "<group>";
+		};
+/* End PBXVariantGroup section */
+
+/* Begin XCBuildConfiguration section */
+		7A2699AF2A2B7E01009C722B /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
+			};
+			name = Debug;
+		};
+		7A2699B02A2B7E01009C722B /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
+			};
+			name = Release;
+		};
+		7A2699B22A2B7E01009C722B /* Debug */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = A429A30CE052ABABE22AE8E7 /* Pods-SimplePlayer.debug.xcconfig */;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CODE_SIGN_ENTITLEMENTS = SimplePlayer/SimplePlayer.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = LK67A9XFJ9;
+				ENABLE_HARDENED_RUNTIME = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				HEADER_SEARCH_PATHS = "$(inherited)";
+				INFOPLIST_FILE = SimplePlayer/Info.plist;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				INFOPLIST_KEY_NSMainStoryboardFile = Main;
+				INFOPLIST_KEY_NSPrincipalClass = NSApplication;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				LIBRARY_SEARCH_PATHS = "$(inherited)";
+				MACOSX_DEPLOYMENT_TARGET = "$(RECOMMENDED_MACOSX_DEPLOYMENT_TARGET)";
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.yyx.SimplePlayer;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+			};
+			name = Debug;
+		};
+		7A2699B32A2B7E01009C722B /* Release */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = FBEE58BACACBFBC3CBCD3D74 /* Pods-SimplePlayer.release.xcconfig */;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CODE_SIGN_ENTITLEMENTS = SimplePlayer/SimplePlayer.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = LK67A9XFJ9;
+				ENABLE_HARDENED_RUNTIME = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				HEADER_SEARCH_PATHS = "$(inherited)";
+				INFOPLIST_FILE = SimplePlayer/Info.plist;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				INFOPLIST_KEY_NSMainStoryboardFile = Main;
+				INFOPLIST_KEY_NSPrincipalClass = NSApplication;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				LIBRARY_SEARCH_PATHS = "$(inherited)";
+				MACOSX_DEPLOYMENT_TARGET = "$(RECOMMENDED_MACOSX_DEPLOYMENT_TARGET)";
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.yyx.SimplePlayer;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		7A2699962A2B7E00009C722B /* Build configuration list for PBXProject "SimplePlayer" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				7A2699AF2A2B7E01009C722B /* Debug */,
+				7A2699B02A2B7E01009C722B /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		7A2699B12A2B7E01009C722B /* Build configuration list for PBXNativeTarget "SimplePlayer" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				7A2699B22A2B7E01009C722B /* Debug */,
+				7A2699B32A2B7E01009C722B /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCVersionGroup section */
+		7A2699A42A2B7E00009C722B /* SimplePlayer.xcdatamodeld */ = {
+			isa = XCVersionGroup;
+			children = (
+				7A2699A52A2B7E00009C722B /* SimplePlayer.xcdatamodel */,
+			);
+			currentVersion = 7A2699A52A2B7E00009C722B /* SimplePlayer.xcdatamodel */;
+			path = SimplePlayer.xcdatamodeld;
+			sourceTree = "<group>";
+			versionGroupType = wrapper.xcdatamodel;
+		};
+/* End XCVersionGroup section */
+	};
+	rootObject = 7A2699932A2B7E00009C722B /* Project object */;
+}
