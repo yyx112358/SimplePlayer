@@ -33,7 +33,10 @@
 
 - (void)viewDidLoad {
     [super viewDidLoad];
-    
+    spdlog::info("Welcome to spdlog!");
+    spdlog::set_level(spdlog::level::debug);
+    spdlog::set_pattern("%2H:%2M:%2S.%3e %!:%# [SimplePlayer] %v");
+    SPDLOG_INFO("中文测试");
 //    _model = std::make_shared<sp::SPMediaModel>();
 //    NSString *video = [[NSBundle mainBundle] pathForResource:@"Sync" ofType:@"mp4"];
 //    _model->videoTracks.push_back({std::string(video.UTF8String)});

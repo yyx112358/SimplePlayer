@@ -1,9 +1,13 @@
 # Uncomment the next line to define a global platform for your project
 platform :osx, '13.0'
 
-PATH_REPO_ROOT = '../../'
-PATH_PROJECT_ROOT = './'
-PATH_THIRDPARTY_ROOT = PATH_REPO_ROOT + 'thirdParty/'
+USE_EXTERNAL_SPDLOG = 0
+
+
+REPO_ROOT_PATH = '../../'
+PROJECT_ROOT_PATH = './'
+THIRDPARTY_ROOT_PATH = REPO_ROOT_PATH + 'thirdParty/'
+BUILD_PATH = REPO_ROOT_PATH + 'build/'
 
 
 target 'SimplePlayer' do
@@ -12,10 +16,21 @@ target 'SimplePlayer' do
 
   pre_install do |installer|
     # spdlog
-    system('cmake', '-S', PATH_THIRDPARTY_ROOT + 'spdlog/', '-B', PATH_THIRDPARTY_ROOT + 'build/spdlog/')
-    system('cmake', '--build', PATH_THIRDPARTY_ROOT + 'build/spdlog/')
+    system('cmake', '-S', THIRDPARTY_ROOT_PATH + 'spdlog/', '-B', BUILD_PATH + 'thirdParty/spdlog/')
+    system('cmake', '--build', BUILD_PATH + 'thirdParty/spdlog/')
+
+    # FFMpeg
+    # system('sh', THIRDPARTY_ROOT_PATH + 'build_script/build_FFMpeg.sh')
   end
   
-  pod 'spdlog', :path => PATH_THIRDPARTY_ROOT + 'spdlog'
+  # if USE_EXTERNAL_SPDLOG
+  #   pod 'spdlog'
+  # else
+  #   pod 'spdlog', :path => THIRDPARTY_ROOT_PATH + 'spdlog'
+  # end
 
+  pod 'SimplePlayer', :path => '../../', :subspec => ['spdlog']
+
+
+  
 end

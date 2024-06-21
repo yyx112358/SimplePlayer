@@ -38,3 +38,4 @@ thirdParty/build
 build
 SimplePlayer/SimplePlayer.xcodeproj/project.xcworkspace/xcuserdata/yangyixuan.xcuserdatad/xcdebugger/Expressions.xcexplist
 proj/mac/Pods
+proj/mac/Podfile.lock
