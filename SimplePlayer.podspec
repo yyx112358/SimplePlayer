@@ -6,7 +6,7 @@
 #  To see working Podspecs in the CocoaPods repo see https://github.com/CocoaPods/Specs/
 #
 
-PROJECT_ROOT_PATH = 'proj/mac/'
+PROJECT_ROOT_PATH = 'proj/mac'
 THIRDPARTY_ROOT_PATH = 'thirdParty'
 BUILD_ROOT_PATH = 'build'
 
@@ -49,8 +49,13 @@ Pod::Spec.new do |spec|
     }
   end
 
-  # spec.subspec 'FFMpeg' do |s|
+  spec.subspec 'FFMpeg' do |s|
+    PATH_FFMPEG_ROOT = 'build/thirdParty/FFMpeg'
+    s.source_files = "#{PATH_FFMPEG_ROOT}/include/**/*.h"
+    s.header_mappings_dir = "#{PATH_FFMPEG_ROOT}/include" 
 
-  # end
+    s.vendored_libraries = "#{PATH_FFMPEG_ROOT}/lib/*.a"
+    s.frameworks = 'AVFoundation'
+  end
 
 end

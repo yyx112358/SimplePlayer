@@ -4,11 +4,15 @@ platform :osx, '13.0'
 USE_EXTERNAL_SPDLOG = 0
 
 
-REPO_ROOT_PATH = '../../'
-PROJECT_ROOT_PATH = './'
-THIRDPARTY_ROOT_PATH = REPO_ROOT_PATH + 'thirdParty/'
-BUILD_PATH = REPO_ROOT_PATH + 'build/'
+REPO_ROOT_PATH = File.expand_path('../../')
+PROJECT_ROOT_PATH = File.expand_path('.')
+THIRDPARTY_ROOT_PATH = REPO_ROOT_PATH + '/thirdParty'
+THIRDPARTY_BUILD_PATH = REPO_ROOT_PATH + '/build'
 
+puts REPO_ROOT_PATH
+puts PROJECT_ROOT_PATH
+puts THIRDPARTY_BUILD_PATH
+puts THIRDPARTY_ROOT_PATH
 
 target 'SimplePlayer' do
   # Comment the next line if you don't want to use dynamic frameworks
@@ -16,11 +20,21 @@ target 'SimplePlayer' do
 
   pre_install do |installer|
     # spdlog
-    system('cmake', '-S', THIRDPARTY_ROOT_PATH + 'spdlog/', '-B', BUILD_PATH + 'thirdParty/spdlog/')
-    system('cmake', '--build', BUILD_PATH + 'thirdParty/spdlog/')
+    system('cmake', '-S', THIRDPARTY_ROOT_PATH + '/spdlog/', '-B', THIRDPARTY_BUILD_PATH + '/thirdParty/spdlog/')
+    system('cmake', '--build', THIRDPARTY_BUILD_PATH + '/thirdParty/spdlog/')
 
     # FFMpeg
-    # system('sh', THIRDPARTY_ROOT_PATH + 'build_script/build_FFMpeg.sh')
+    if Dir.exist?(THIRDPARTY_BUILD_PATH + '/thirdParty/FFMpeg')
+      puts THIRDPARTY_BUILD_PATH + '/thirdParty/FFMpeg' + '已存在'
+    else
+      puts THIRDPARTY_BUILD_PATH + '/thirdParty/FFMpeg' + '编译。。。'
+      ENV['FF_SOURCE_DIR'] = THIRDPARTY_ROOT_PATH + '/FFMpeg'
+      ENV['FF_BUILD_DIR'] = THIRDPARTY_BUILD_PATH + '/thirdParty/FFMpeg'
+      
+      system('sh', THIRDPARTY_ROOT_PATH + '/build_script/build_FFMpeg.sh')
+    end
+
+
   end
   
   # if USE_EXTERNAL_SPDLOG
@@ -29,7 +43,7 @@ target 'SimplePlayer' do
   #   pod 'spdlog', :path => THIRDPARTY_ROOT_PATH + 'spdlog'
   # end
 
-  pod 'SimplePlayer', :path => '../../', :subspec => ['spdlog']
+  pod 'SimplePlayer', :path => '../../', :subspec => ['spdlog', 'FFMpeg']
 
 
   
