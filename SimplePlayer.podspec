@@ -33,6 +33,7 @@ Pod::Spec.new do |spec|
   spec.subspec 'spdlog' do |s|
     PATH_SPDLOG_ROOT = 'thirdParty/spdlog'
 
+    # script_phase 是用在编译阶段执行的，可以执行任意脚本。但不是用在pod install时候的。
     # s.script_phase = {:name => 'make spdlog', :script => "cmake -S #{PATH_SPDLOG_ROOT} -B #{BUILD_ROOT_PATH}/spdlog 
     #                                                      && cmake --build #{BUILD_ROOT_PATH}/spdlog"}
 
@@ -51,11 +52,21 @@ Pod::Spec.new do |spec|
 
   spec.subspec 'FFMpeg' do |s|
     PATH_FFMPEG_ROOT = 'build/thirdParty/FFMpeg'
+
     s.source_files = "#{PATH_FFMPEG_ROOT}/include/**/*.h"
     s.header_mappings_dir = "#{PATH_FFMPEG_ROOT}/include" 
 
     s.vendored_libraries = "#{PATH_FFMPEG_ROOT}/lib/*.a"
     s.frameworks = 'AVFoundation'
+  end
+
+  spec.subspec 'glm' do |s|
+    PATH_GLM_ROOT = 'thirdParty/glm'
+
+    s.source_files = "#{PATH_GLM_ROOT}/**/*.hpp"
+    s.header_mappings_dir = "#{PATH_GLM_ROOT}"
+    # s.exclude_files = ["#{PATH_GLM_ROOT}/test","#{PATH_GLM_ROOT}/util","#{PATH_GLM_ROOT}/doc",]
+
   end
 
 end

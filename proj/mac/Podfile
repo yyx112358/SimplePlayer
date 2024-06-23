@@ -20,6 +20,7 @@ target 'SimplePlayer' do
 
   pre_install do |installer|
     # spdlog
+    # spdlog可以是header only导入，但如果提前编译，可以大大加快项目编译速度
     system('cmake', '-S', THIRDPARTY_ROOT_PATH + '/spdlog/', '-B', THIRDPARTY_BUILD_PATH + '/thirdParty/spdlog/')
     system('cmake', '--build', THIRDPARTY_BUILD_PATH + '/thirdParty/spdlog/')
 
@@ -34,6 +35,10 @@ target 'SimplePlayer' do
       system('sh', THIRDPARTY_ROOT_PATH + '/build_script/build_FFMpeg.sh')
     end
 
+    # glm
+    # glm是header only引入，无需编译
+    # system('cmake', '-S', THIRDPARTY_ROOT_PATH + '/glm/', '-B', THIRDPARTY_BUILD_PATH + '/thirdParty/glm/')
+    # system('cmake', '--build', THIRDPARTY_BUILD_PATH + '/thirdParty/glm/')
 
   end
   
