@@ -25,10 +25,36 @@ Pod::Spec.new do |spec|
 
   spec.source       = { :git => "https://github.com/yyx112358/SimplePlayer", :branch => "mac" }
 
-  # spec.subspec 'Base' do |s|
+  spec.pod_target_xcconfig = {
+    'CLANG_CXX_LANGUAGE_STANDARD' => 'c++17'
+  }
 
-    
-  # end
+  ################################# Base ############################################
+  spec.subspec 'Base' do |s|
+    s.dependency 'SimplePlayer/FFMpeg'
+    s.source_files = "src/Base/**/*.{hpp,h,cpp,c,m,mm}"
+  end
+  
+  ################################# Ability ############################################
+  spec.subspec 'Ability' do |s|
+    s.dependency 'SimplePlayer/Base'
+    s.source_files = "src/Ability/**/*.{hpp,h,cpp,c,m,mm}"
+  end
+  
+  ################################# Engine ############################################
+  spec.subspec 'Engine' do |s|
+    s.dependency 'SimplePlayer/Ability'
+    s.source_files = "src/Engine/**/*.{hpp,h,cpp,c,m,mm}"
+  end
+  
+  ################################# Interface ############################################
+  spec.subspec 'Interface' do |s|
+    s.dependency 'SimplePlayer/Engine'
+    s.source_files = "inc/**/*.{h,hpp}"
+  end
+
+
+  ################################# Third Party ############################################
 
   spec.subspec 'spdlog' do |s|
     PATH_SPDLOG_ROOT = 'thirdParty/spdlog'
@@ -40,13 +66,13 @@ Pod::Spec.new do |spec|
     s.source_files = "#{PATH_SPDLOG_ROOT}/include/**/*.{hpp,h,cpp}"
     s.public_header_files = "#{PATH_SPDLOG_ROOT}/include/**/*.h"
 
-    s.vendored_libraries = "#{BUILD_ROOT_PATH}/thirdParty/spdlog/libspdlog.a" # 指定静态库，关键代码
+    s.vendored_libraries = "build/thirdParty/spdlog/libspdlog.a" # 指定静态库，关键代码
     s.header_mappings_dir = "#{PATH_SPDLOG_ROOT}/include"    # 表示include文件的目录结构会保留，不指定的话所有header都会复制到同一个目录下
     
     s.pod_target_xcconfig = { 
       "USE_HEADERMAP": "NO",
       'GCC_PREPROCESSOR_DEFINITIONS' => 'SPDLOG_COMPILED_LIB',
-      "HEADER_SEARCH_PATHS": '"${PODS_TARGET_SRCROOT}/include"'
+      # "HEADER_SEARCH_PATHS": '"${PODS_TARGET_SRCROOT}/include"'
     }
   end
 
@@ -58,14 +84,19 @@ Pod::Spec.new do |spec|
 
     s.vendored_libraries = "#{PATH_FFMPEG_ROOT}/lib/*.a"
     s.frameworks = 'AVFoundation'
+
+    # s.pod_target_xcconfig = { 
+    #   "USE_HEADERMAP": "NO",
+    #   # 'GCC_PREPROCESSOR_DEFINITIONS' => 'SPDLOG_COMPILED_LIB',
+    #   "HEADER_SEARCH_PATHS": '"${PODS_TARGET_SRCROOT}/build/thirdParty/FFMpeg/include"'
+    # }
   end
 
   spec.subspec 'glm' do |s|
     PATH_GLM_ROOT = 'thirdParty/glm'
 
-    s.source_files = "#{PATH_GLM_ROOT}/**/*.hpp"
+    s.source_files = "#{PATH_GLM_ROOT}/**/*.{hpp,h,inl}"
     s.header_mappings_dir = "#{PATH_GLM_ROOT}"
-    # s.exclude_files = ["#{PATH_GLM_ROOT}/test","#{PATH_GLM_ROOT}/util","#{PATH_GLM_ROOT}/doc",]
 
   end
 

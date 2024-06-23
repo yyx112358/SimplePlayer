@@ -7,17 +7,17 @@
 
 #import "ViewController.h"
 
-//#include "SPLog.h"
-//#include "SPGraphPreview.hpp"
+#include "SPLog.h"
+#include "SPGraphPreview.hpp"
 #include <spdlog/spdlog.h>
 extern "C" {
 #include <libavformat/avformat.h>
 }
-//#include "spdlog.h"
+
 
 @interface ViewController () {
-//    std::shared_ptr<sp::SPMediaModel> _model;
-//    std::shared_ptr<sp::SPGraphPreview> _previewGraph;
+    std::shared_ptr<sp::SPMediaModel> _model;
+    std::shared_ptr<sp::SPGraphPreview> _previewGraph;
 }
 
 @property (weak) IBOutlet NSView *playerView;
@@ -42,22 +42,23 @@ extern "C" {
     spdlog::set_pattern("%2H:%2M:%2S.%3e %!:%# [SimplePlayer] %v");
     SPDLOG_INFO("中文测试{}");
     
-//    _model = std::make_shared<sp::SPMediaModel>();
-//    NSString *video = [[NSBundle mainBundle] pathForResource:@"Sync" ofType:@"mp4"];
-//    _model->videoTracks.push_back({std::string(video.UTF8String)});
-//    
-//    _previewGraph = std::make_shared<sp::SPGraphPreview>();
-//    if (auto f = _previewGraph->updateModel(*_model, true);f.get() == false)
-//        SPASSERT_NOT_IMPL;
-//    _previewGraph->_parentPlayerView = (__bridge_retained void *)self.playerView;
-//    
-//    if (auto f = _previewGraph->init(true);f.get() == false)
-//        SPASSERT_NOT_IMPL;
-//
-//    if (auto f = _previewGraph->start(true);f.get() == false)
-//        SPASSERT_NOT_IMPL;
-//    NSString *video = [[NSBundle mainBundle] pathForResource:@"1：1" ofType:@"MOV"];
+    _model = std::make_shared<sp::SPMediaModel>();
+    NSString *video = [[NSBundle mainBundle] pathForResource:@"Sync" ofType:@"mp4"];
+    _model->videoTracks.push_back({std::string(video.UTF8String)});
     
+    _previewGraph = std::make_shared<sp::SPGraphPreview>();
+    if (auto f = _previewGraph->updateModel(*_model, true);f.get() == false)
+        SPASSERT_NOT_IMPL;
+    _previewGraph->_parentPlayerView = (__bridge_retained void *)self.playerView;
+    
+    if (auto f = _previewGraph->init(true);f.get() == false)
+        SPASSERT_NOT_IMPL;
+
+    if (auto f = _previewGraph->start(true);f.get() == false)
+        SPASSERT_NOT_IMPL;
+    
+//    NSString *video = [[NSBundle mainBundle] pathForResource:@"1：1" ofType:@"MOV"];
+//
 //    decoder = std::make_shared<sp::DecoderManager>();
 //    decoder->init(video.UTF8String);
 //    

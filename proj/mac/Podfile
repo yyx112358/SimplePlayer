@@ -16,7 +16,7 @@ puts THIRDPARTY_ROOT_PATH
 
 target 'SimplePlayer' do
   # Comment the next line if you don't want to use dynamic frameworks
-  use_frameworks!
+  # use_frameworks!
 
   pre_install do |installer|
     # spdlog
@@ -48,7 +48,7 @@ target 'SimplePlayer' do
   #   pod 'spdlog', :path => THIRDPARTY_ROOT_PATH + 'spdlog'
   # end
 
-  pod 'SimplePlayer', :path => '../../', :subspec => ['spdlog', 'FFMpeg']
+  pod 'SimplePlayer', :path => '../../', :subspec => ['Base', 'Ability', 'Engine', 'Interface','spdlog', 'FFMpeg', 'glm']
 
 
   
