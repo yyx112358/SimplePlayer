@@ -27,6 +27,11 @@ ESPLogLevel GetLogLevel();
 
 void SPLog(const ESPLogLevel level, const char *fuction, int line, const char *fmt, ...);
 
+#ifdef SPDLOG_VERSION // 使用spdlog库
+#include <spdlog/spdlog.h>
+#else
+
+#endif
 
 #ifndef SPLOGV
 #define SPLOGV(format, ...)  SPLog(SP_LOG_VERBOSE, __FUNCTION__, __LINE__, format, ##__VA_ARGS__)

@@ -1,12 +1,18 @@
 [submodule "thirdParty/glm"]
 	path = thirdParty/glm
-	url = https://github.com/g-truc/glm.git
+	url = git@github.com:g-truc/glm.git
 [submodule "thirdParty/glfw"]
 	path = thirdParty/glfw
-	url = https://github.com/glfw/glfw.git
+	url = git@github.com:glfw/glfw.git
 [submodule "thirdParty/FFmpeg"]
 	path = thirdParty/FFmpeg
-	url = https://github.com/FFmpeg/FFmpeg.git
+	url = git@github.com:FFmpeg/FFmpeg.git
 [submodule "DevelopDiary"]
 	path = DevelopDiary
-	url = https://github.com/yyx112358/DevelopDiary.git
+	url = git@github.com:yyx112358/DevelopDiary.git
+[submodule "thirdParty/spdlog"]
+	path = thirdParty/spdlog
+	url = git@github.com:gabime/spdlog.git
+[submodule "thirdParty/imgui"]
+	path = thirdParty/imgui
+	url = git@github.com:ocornut/imgui.git
