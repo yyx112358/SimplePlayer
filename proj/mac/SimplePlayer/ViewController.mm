@@ -97,11 +97,11 @@ extern "C" {
 
 - (IBAction)playClicked:(NSButtonCell *)sender {
     if ([sender.title isEqualToString:@"▶️"]) {
-//        _previewGraph->pause(true);
-//        [sender setTitle:@"⏸"];
+        _previewGraph->pause(true);
+        [sender setTitle:@"⏸"];
     } else {
-//        _previewGraph->start(true);
-//        [sender setTitle:@"▶️"];
+        _previewGraph->start(true);
+        [sender setTitle:@"▶️"];
     }
 }
 
@@ -129,16 +129,16 @@ extern "C" {
 //    audioOutput = nullptr;
 //
 //    preview = nullptr;
-//    _previewGraph->uninit(true);
-//    _previewGraph = nullptr;
-//    _model = nullptr;
-//
-//    [self.view.window.windowController close];
-//    __weak ViewController* wself = self;
-//    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 500 * NSEC_PER_MSEC), dispatch_get_main_queue(), ^{
-//        __strong ViewController *sself = wself;
-//        [NSApp terminate:sself];
-//    });
+    _previewGraph->uninit(true);
+    _previewGraph = nullptr;
+    _model = nullptr;
+
+    [self.view.window.windowController close];
+    __weak ViewController* wself = self;
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 500 * NSEC_PER_MSEC), dispatch_get_main_queue(), ^{
+        __strong ViewController *sself = wself;
+        [NSApp terminate:sself];
+    });
 }
 
 @end

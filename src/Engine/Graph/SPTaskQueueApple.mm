@@ -52,6 +52,7 @@ SPTaskQueueApple::~SPTaskQueueApple()
 std::future<SPParam> SPTaskQueueApple::runSync(SPTask task)
 {
     task.isAsync = false;
+    std::future<SPParam> f = task.msg.result.get_future();
     {
         _mtx.lock();
         _tasks.push_back(std::move(task));
@@ -61,12 +62,13 @@ std::future<SPParam> SPTaskQueueApple::runSync(SPTask task)
     if (_isRunning == false)
         _run();
     
-    return task.msg.result.get_future();
+    return f;
 }
 
 std::future<SPParam> SPTaskQueueApple::runAsync(SPTask task)
 {
     task.isAsync = true;
+    std::future<SPParam> f = task.msg.result.get_future();
     {
         _mtx.lock();
         _tasks.push_back(std::move(task));
@@ -76,7 +78,7 @@ std::future<SPParam> SPTaskQueueApple::runAsync(SPTask task)
     if (_isRunning == false)
         _run();
     
-    return task.msg.result.get_future();
+    return f;
 }
 
 void SPTaskQueueApple::_run()

@@ -32,6 +32,8 @@ Pod::Spec.new do |spec|
   ################################# Base ############################################
   spec.subspec 'Base' do |s|
     s.dependency 'SimplePlayer/FFMpeg'
+    s.dependency 'SimplePlayer/spdlog'
+    s.dependency 'SimplePlayer/glm'
     s.source_files = "src/Base/**/*.{hpp,h,cpp,c,m,mm}"
   end
   

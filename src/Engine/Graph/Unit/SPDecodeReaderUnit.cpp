@@ -48,5 +48,7 @@ void SPDecodeReaderUnit::__SetVideoPath__(const std::string &path) {
         
         return true;
     };
-    _processThread->runSync(std::move(task));
+    auto f = _processThread->runAsync(std::move(task));
+    auto p = f.get();
+    SPLOGI("%d", std::get<bool>(p));
 }
