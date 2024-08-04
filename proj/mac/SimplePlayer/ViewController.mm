@@ -8,18 +8,14 @@
 #import "ViewController.h"
 
 #include "SPLog.h"
-//#include "DecoderManager.hpp"
-//#include "AudioRendererManager.hpp"
-//#include "AudioOutputManager.hpp"
-//#import "IPreviewManager.hpp"
 #include "SPGraphPreview.hpp"
+#include <spdlog/spdlog.h>
+extern "C" {
+#include <libavformat/avformat.h>
+}
 
 
 @interface ViewController () {
-//    std::shared_ptr<IPreviewManager> preview;
-//    std::shared_ptr<sp::AudioRendererManager> audioRenderer;
-//    std::shared_ptr<sp::AudioOutputManager> audioOutput;
-//    std::shared_ptr<sp::DecoderManager> decoder;
     std::shared_ptr<sp::SPMediaModel> _model;
     std::shared_ptr<sp::SPGraphPreview> _previewGraph;
 }
@@ -40,6 +36,12 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
     
+    int v = avformat_version();
+    spdlog::info("Welcome to spdlog! {}", avformat_version());
+    spdlog::set_level(spdlog::level::debug);
+    spdlog::set_pattern("%2H:%2M:%2S.%3e %!:%# [SimplePlayer] %v");
+    SPDLOG_INFO("中文测试{}");
+    
     _model = std::make_shared<sp::SPMediaModel>();
     NSString *video = [[NSBundle mainBundle] pathForResource:@"Sync" ofType:@"mp4"];
     _model->videoTracks.push_back({std::string(video.UTF8String)});
@@ -54,8 +56,9 @@
 
     if (auto f = _previewGraph->start(true);f.get() == false)
         SPASSERT_NOT_IMPL;
-//    NSString *video = [[NSBundle mainBundle] pathForResource:@"1：1" ofType:@"MOV"];
     
+//    NSString *video = [[NSBundle mainBundle] pathForResource:@"1：1" ofType:@"MOV"];
+//
 //    decoder = std::make_shared<sp::DecoderManager>();
 //    decoder->init(video.UTF8String);
 //    
@@ -94,11 +97,11 @@
 
 - (IBAction)playClicked:(NSButtonCell *)sender {
     if ([sender.title isEqualToString:@"▶️"]) {
-        _previewGraph->pause(true);
-        [sender setTitle:@"⏸"];
+//        _previewGraph->pause(true);
+//        [sender setTitle:@"⏸"];
     } else {
-        _previewGraph->start(true);
-        [sender setTitle:@"▶️"];
+//        _previewGraph->start(true);
+//        [sender setTitle:@"▶️"];
     }
 }
 
@@ -127,16 +130,16 @@
 //    audioOutput = nullptr;
 //
 //    preview = nullptr;
-    _previewGraph->uninit(true);
-    _previewGraph = nullptr;
-    _model = nullptr;
-
-    [self.view.window.windowController close];
-    __weak ViewController* wself = self;
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 500 * NSEC_PER_MSEC), dispatch_get_main_queue(), ^{
-        __strong ViewController *sself = wself;
-        [NSApp terminate:sself];
-    });
+//    _previewGraph->uninit(true);
+//    _previewGraph = nullptr;
+//    _model = nullptr;
+//
+//    [self.view.window.windowController close];
+//    __weak ViewController* wself = self;
+//    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 500 * NSEC_PER_MSEC), dispatch_get_main_queue(), ^{
+//        __strong ViewController *sself = wself;
+//        [NSApp terminate:sself];
+//    });
 }
 
 @end
