@@ -24,16 +24,34 @@ else()
 endif()
 
 # 2. 添加依赖库 
-# spdlog日志库
+# 2.1 spdlog日志库
 add_subdirectory(thirdParty/spdlog)
 
-# glm矩阵计算
+# 2.2 glm矩阵计算
 add_subdirectory(thirdParty/glm)
+
+# 2.3 FFMpeg
+if(WIN32)
+    # 查找是否有VCPKG编译的FFMPEG
+    set(VCPKG_FFMPEG_INSTALL_DIR "${PROJECT_SOURCE_DIR}/build/vcpkg/packages/ffmpeg_x64-windows-static")
+    list(APPEND CMAKE_MODULE_PATH "${VCPKG_FFMPEG_INSTALL_DIR}/share/ffmpeg")
+    find_package(FFMPEG)
+    # 找不到，则调用build_FFMpeg.ps1编译ffmpeg，再查找一次
+    if (NOT FFMPEG_FOUND)
+        message("找不到${VCPKG_FFMPEG_INSTALL_DIR}，执行build_FFMpeg.ps1脚本...")
+        execute_process(COMMAND powershell -File "${PROJECT_SOURCE_DIR}/thirdParty/build_script/build_FFMpeg.ps1")
+        find_package(FFMPEG REQUIRED) # 再找一次
+    endif()
+    message("-- FFMpeg: include:${FFMPEG_INCLUDE_DIRS} lib:${FFMPEG_LIBRARY_DIRS}")
+else()
+
+endif()
 
 
 # 3. 添加源文件
-
 include_directories(${PROJECT_SOURCE_DIR}/proj/win/GUI/imgui)
+include_directories(${PROJECT_SOURCE_DIR}/thirdParty/)    
+include_directories(${FFMPEG_INCLUDE_DIRS})
 
 # 收集当前目录下的所有cpp文件
 file(GLOB_RECURSE DEMO_FILES 
@@ -49,4 +67,5 @@ add_executable(${PROJECT_NAME} ${DEMO_FILES})
 # 4. 链接
 target_link_libraries(${PROJECT_NAME} 
     spdlog 
-    OpenGL32.lib)
+    OpenGL32.lib
+    ${FFMPEG_LIBRARIES})

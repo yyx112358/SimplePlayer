@@ -52,8 +52,14 @@ public:
     void destroy();
     void run();
 
+
     void RenderUI()
     {
+        // Start the Dear ImGui frame
+        ImGui_ImplOpenGL3_NewFrame();
+        ImGui_ImplWin32_NewFrame();
+        ImGui::NewFrame();
+
         if (show_demo_window)
             ImGui::ShowDemoWindow(&show_demo_window);
 
@@ -72,17 +78,22 @@ public:
             const char *stopBtnText = "停止"; //"\u23f9";
             if (ImGui::Button(stopBtnText))
             {
+                
             }
             ImGui::EndTable();
         }
 
-        if (ImGui::SliderFloat("1", &currentTime, 0, 66.66))
+        if (ImGui::SliderFloat("1", &currentTime, 0, totalTime))
         {
         }
 
         ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
         ImGui::End();
+
+        // CPU准备数据。这里不涉及GPU
+        ImGui::Render();
     }
+    void MyRender();
 
 private:
     WNDCLASSEXW _wc;
@@ -191,16 +202,9 @@ void UI_Controller::run() {
         if (done)
             break;
 
-        // Start the Dear ImGui frame
-        ImGui_ImplOpenGL3_NewFrame();
-        ImGui_ImplWin32_NewFrame();
-        ImGui::NewFrame();
-
         RenderUI();
 
         ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
-        // Rendering
-        ImGui::Render();
         glViewport(0, 0, g_Width, g_Height);
         glClearColor(clear_color.x, clear_color.y, clear_color.z, clear_color.w);
         glClear(GL_COLOR_BUFFER_BIT);
