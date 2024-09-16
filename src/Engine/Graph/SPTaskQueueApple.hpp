@@ -21,6 +21,7 @@ public:
     virtual ~SPTaskQueueApple();
     
 public:
+    std::future<SPParam> run(SPTask task) override;
     std::future<SPParam> runSync(SPTask task) override;
     std::future<SPParam> runAsync(SPTask task) override;
     

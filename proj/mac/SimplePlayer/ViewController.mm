@@ -51,10 +51,10 @@ extern "C" {
         SPASSERT_NOT_IMPL;
     _previewGraph->_parentPlayerView = (__bridge_retained void *)self.playerView;
     
-    if (auto f = _previewGraph->init(true);f.get() == false)
+    if (auto f = _previewGraph->init(true); std::get<bool>(f.get()) == false)
         SPASSERT_NOT_IMPL;
 
-    if (auto f = _previewGraph->start(true);f.get() == false)
+    if (auto f = _previewGraph->start(true); std::get<bool>(f.get()) == false)
         SPASSERT_NOT_IMPL;
     
 //    NSString *video = [[NSBundle mainBundle] pathForResource:@"1：1" ofType:@"MOV"];

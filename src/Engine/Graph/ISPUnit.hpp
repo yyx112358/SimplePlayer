@@ -10,11 +10,12 @@
 #include <memory>
 #include <future>
 
-#include "Pipeline.hpp"
 #include "ISPMediaControl.hpp"
 #include "ISPGraphContext.hpp"
 
 namespace sp {
+
+class Pipeline;
 
 struct SPUnitInitParam {
     

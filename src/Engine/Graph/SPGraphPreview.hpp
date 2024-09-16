@@ -18,8 +18,8 @@ namespace sp {
 class SPGraphPreview : public ISPGraph {
 public:
     SPGraphPreview() = default;
-    virtual std::future<bool> init(bool isSync) override;
-    virtual std::future<bool> uninit(bool isSync) override;
+    virtual std::future<SPParam> init(bool isSync) override;
+    virtual std::future<SPParam> uninit(bool isSync) override;
     
     virtual bool isInited() const override {return false;}
     
@@ -29,12 +29,12 @@ public:
     
 // ISPMediaControl
 public:
-    virtual std::future<bool> start(bool isSync) override;
-    virtual std::future<bool> stop(bool isSync) override;
-    virtual std::future<bool> seek(std::chrono::time_point<std::chrono::steady_clock>pts, bool isSync, SeekFlag flag) override;
-    virtual std::future<bool> pause(bool isSync) override;
-//    virtual std::future<bool> flush(bool isSync) override;
-//    virtual std::future<bool> reset(bool isSync) override;
+    virtual std::future<SPParam> start(bool isSync) override;
+    virtual std::future<SPParam> stop(bool isSync) override;
+    virtual std::future<SPParam> seek(std::chrono::time_point<std::chrono::steady_clock>pts, bool isSync, SeekFlag flag) override;
+    virtual std::future<SPParam> pause(bool isSync) override;
+//    virtual std::future<SPParam> flush(bool isSync) override;
+//    virtual std::future<SPParam> reset(bool isSync) override;
     
 // ISPGraphContext
 public:

@@ -15,7 +15,7 @@ using namespace sp;
 
 @interface TaskObj : NSObject
 {
-    SPTask task;
+    SPTask *task;
 }
 - (instancetype)init:(SPTask &&)task;
 - (SPTask &)getTask;
@@ -26,13 +26,22 @@ using namespace sp;
 
 - (instancetype)init:(SPTask &&)task {
     if (self = [super init]) {
-        self->task = std::move(task);
+        self->task = new SPTask(std::move(task));
     }
     return self;
 }
 
+- (void)dealloc {
+    try {
+        delete task;
+        task = nullptr;
+    } catch(std::future_error &e) {
+        NSLog(@"%s", e.what());
+    }
+}
+
 - (SPTask &)getTask {
-    return task;
+    return *task;
 }
 
 @end
@@ -49,10 +58,8 @@ SPTaskQueueApple::~SPTaskQueueApple()
     
 }
 
-std::future<SPParam> SPTaskQueueApple::runSync(SPTask task)
-{
-    task.isAsync = false;
-    std::future<SPParam> f = task.msg.result.get_future();
+std::future<SPParam> SPTaskQueueApple::run(SPTask task) {
+    std::future<SPParam> f = task.getFuture();
     {
         _mtx.lock();
         _tasks.push_back(std::move(task));
@@ -65,20 +72,16 @@ std::future<SPParam> SPTaskQueueApple::runSync(SPTask task)
     return f;
 }
 
+std::future<SPParam> SPTaskQueueApple::runSync(SPTask task)
+{
+    task.isAsync = false;
+    return run(std::move(task));
+}
+
 std::future<SPParam> SPTaskQueueApple::runAsync(SPTask task)
 {
     task.isAsync = true;
-    std::future<SPParam> f = task.msg.result.get_future();
-    {
-        _mtx.lock();
-        _tasks.push_back(std::move(task));
-        _mtx.unlock();
-    }
-    
-    if (_isRunning == false)
-        _run();
-    
-    return f;
+    return run(std::move(task));
 }
 
 void SPTaskQueueApple::_run()
@@ -97,7 +100,8 @@ void SPTaskQueueApple::_run()
         }
         TaskObj *taskObj = [[TaskObj alloc] init:std::move(task)];
         dispatch_block_t blk = ^{
-            taskObj.getTask.msg.result.set_value(taskObj.getTask.msg.callback());
+            SPTask &task = taskObj.getTask;
+            task.setResult(task.work(task));
             _run();
         };
         if (task.isAsync) {

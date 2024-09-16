@@ -35,6 +35,6 @@ public:
     SPMsgID id;
     std::vector<SPParam> params;
     std::promise<SPParam> result;
-    std::function<SPParam()> callback;
+    std::function<SPParam(std::vector<SPParam> &)> callback;
 };
 }
