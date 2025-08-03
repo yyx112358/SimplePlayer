@@ -7,7 +7,6 @@
 
 #include "SPUnitBase.hpp"
 #include "SPLog.h"
-#include "ISPTaskQueue.hpp"
 
 using namespace sp;
 
@@ -22,67 +21,43 @@ SPUnitBase::~SPUnitBase()
 
 
 #pragma mark - ISPMediaControl
-std::future<SPParam> __DefaultFuture()
+std::future<bool> __DefaultFuture()
 {
-    std::promise<SPParam> result;
+    std::promise<bool> result;
     result.set_value(true);
     return result.get_future();
 }
 
-std::future<SPParam> SPUnitBase::_runTask(bool isSync, std::function<SPParam(SPUnitBase * const sthis)>callback) {
-    
-    SPASSERT0(isSync || _processThread);
-    
-    // 没有_processThread，则直接执行
-    if (_processThread == nullptr) {
-        std::promise<SPParam> result;
-        result.set_value(callback(this));
-        return result.get_future();
-    }
-    
-    // 否则在_processThread执行
-    SPTask task;
-    task.isAsync = !isSync;
-    task.work = [wthis = weak_from_this(), call = std::move(callback)] (SPTask &) mutable -> SPParam {
-        auto sthis = std::static_pointer_cast<SPUnitBase>(wthis.lock());
-        if (sthis == nullptr)
-            return SPParam();
-        
-        return call(sthis.get());
-    };
-    return _processThread->run(std::move(task));
-}
-
-std::future<SPParam> SPUnitBase::init(bool isSync)
+std::future<bool> SPUnitBase::init(bool isSync) 
 {
     _isInited = true;
     SPLOGV("Unit [%s] init done", UNIT_NAME());
     return __DefaultFuture();
 }
 
-std::future<SPParam> SPUnitBase::uninit(bool isSync)
+std::future<bool> SPUnitBase::uninit(bool isSync) 
 {
     _isInited = false;
 //    SPLOGV("Unit [%s] uninit done", UNIT_NAME());
     return __DefaultFuture();
 }
 
-std::future<SPParam> SPUnitBase::start(bool isSync)
+std::future<bool> SPUnitBase::start(bool isSync) 
 {
     return __DefaultFuture();
 }
 
-std::future<SPParam> SPUnitBase::stop(bool isSync)
+std::future<bool> SPUnitBase::stop(bool isSync) 
 {
     return __DefaultFuture();
 }
 
-std::future<SPParam> SPUnitBase::seek(std::chrono::time_point<std::chrono::steady_clock> pts, bool isSync, SeekFlag flag)
+std::future<bool> SPUnitBase::seek(std::chrono::time_point<std::chrono::steady_clock> pts, bool isSync, SeekFlag flag) 
 {
     return __DefaultFuture();
 }
 
-std::future<SPParam> SPUnitBase::pause(bool isSync)
+std::future<bool> SPUnitBase::pause(bool isSync) 
 {
     return __DefaultFuture();
 }

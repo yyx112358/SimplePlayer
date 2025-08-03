@@ -12,7 +12,9 @@
 #include "SPDecodeReaderFF.hpp"
 #include "ISPTaskQueue.hpp"
 
-using namespace std;
+using namespace sp;
+
+
 using namespace sp;
 
 SPDecodeReaderUnit::SPDecodeReaderUnit(std::shared_ptr<ISPGraphContext>context)
@@ -25,51 +27,28 @@ SPDecodeReaderUnit::~SPDecodeReaderUnit()
 {
 }
 
-std::future<SPParam> SPDecodeReaderUnit::init(bool isSync) 
+std::future<bool> SPDecodeReaderUnit::init(bool isSync) 
 {
-    return _runTask(isSync, [path = _videoPath] (SPUnitBase * const sthis) -> SPParam 
-    {
-        auto self = static_cast<SPDecodeReaderUnit * const>(sthis);
-        
-        unique_ptr<SPDecodeReaderFF> decoder = std::make_unique<SPDecodeReaderFF>();
-//        decoder->_processThread = self->_processThread;
-        if (decoder->init(path)) {
-            self->_decoders[0] = std::move(decoder);
-            return true;
-        } else {
-            return false;
-        }
-    });
+    
+    return SPUnitBase::init(isSync);
 }
 
-std::future<SPParam> SPDecodeReaderUnit::uninit(bool isSync)
-{
-    return _runTask(isSync, [] (SPUnitBase * const sthis) -> SPParam
-    {
-        auto self = static_cast<SPDecodeReaderUnit * const>(sthis);
-
-        bool result = true;
-        for (auto &decoder : self->_decoders)
-            result &= decoder.second->unInit();
-        return result;
-    });
-}
-
-std::future<SPParam> SPDecodeReaderUnit::start(bool isSync)
-{
+void SPDecodeReaderUnit::__SetVideoPath__(const std::string &path) {
     SPTask task;
-    SPASSERT0(isSync || _processThread);
-    task.isAsync = isSync == false && _processThread != nullptr;
-    task.work = [wthis = weak_from_this(), path = _videoPath] (SPTask &) -> SPParam {
+    task.msg.params.push_back(path);
+    task.isAsync = false;
+    task.msg.callback = [wthis = weak_from_this(), path]() -> SPParam {
         auto sthis = dynamic_pointer_cast<SPDecodeReaderUnit>(wthis.lock());
         if (sthis == nullptr)
             return false;
-
-        for (auto it = sthis->_decoders.begin(); it != sthis->_decoders.end(); ++it) {
-            it->second->start(true);
-        }
-
+        
+        std::unique_ptr<SPDecodeReaderFF> decoder = std::make_unique<SPDecodeReaderFF>();
+        decoder->init(path);
+        sthis->_decoders[0] = std::move(decoder);
+        
         return true;
     };
-    return _processThread->run(std::move(task));
+    auto f = _processThread->runAsync(std::move(task));
+    auto p = f.get();
+    SPLOGI("%d", std::get<bool>(p));
 }

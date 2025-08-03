@@ -24,25 +24,12 @@ public:
     
     SPTask &operator=(const SPTask &) = delete;
 
-    void setResult(SPParam &&result) {
-        _promise.set_value(result);
-    }
-    
-    std::future<SPParam> getFuture() {
-        return _promise.get_future();
-    }
-    
 public:
-    std::function<SPParam(SPTask&)> work;
+    SPMsg msg;
     bool isAsync = false;
     bool forceExecute = false;
     int timeout = -1;
     int priority = 0;
-    
-    std::vector<SPParam> params;
-    
-protected:
-    std::promise<SPParam> _promise;
 };
 
 
@@ -54,7 +41,6 @@ public:
     ISPTaskQueue &operator=(const ISPTaskQueue &) = delete;
     virtual ~ISPTaskQueue() {}
     
-    virtual std::future<SPParam> run(SPTask task) = 0;
     virtual std::future<SPParam> runSync(SPTask task) = 0;
     virtual std::future<SPParam> runAsync(SPTask task) = 0;
     
