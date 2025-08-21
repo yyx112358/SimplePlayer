@@ -1,6 +1,5 @@
 #include "SPResultChain.h"
-#include <mutex>
-#include <condition_variable>
+#include <future>
 #include <vector>
 #include <spdlog/spdlog.h>
 #include <chrono>
@@ -11,14 +10,13 @@ using namespace std::chrono_literals;
 
 // 实现Impl结构体
 struct SPResultChainImpl {
+public:
     SPResultChainImpl() = default;
     ~SPResultChainImpl()
     {
         std::lock_guard<std::mutex> lock(mtx);
-        if (!finished) {
-            result = SPResultChain::RESULT_CODE::OK;
-            finished = true;
-            cv.notify_all();
+        if (!result) {
+            set(SPResultChain::RESULT_CODE::OK);
 #ifdef DEBUG
             if (prev_chains.size()) {
                 SPDLOG_DEBUG("SPResultChain destroyed before finish, auto-finishing with OK");
@@ -29,11 +27,41 @@ struct SPResultChainImpl {
     SPResultChainImpl(const SPResultChainImpl &) = delete;
     SPResultChainImpl& operator = (const SPResultChainImpl &) = delete;
 
+    SPResultChain::RESULT_CODE get()
+    {
+        if (!result)
+            result = std::make_unique<std::promise<SPResultChain::RESULT_CODE>>();
+        return result->get_future().get();
+    }
+    
+    void set(SPResultChain::RESULT_CODE code)
+    {
+        if (!result)
+            result = std::make_unique<std::promise<SPResultChain::RESULT_CODE>>();
+        result->set_value(code);
+    }
+    
+    std::future_status wait_for(int64_t timeout = -1) {
+        if (!result)
+            result = std::make_unique<std::promise<SPResultChain::RESULT_CODE>>();
+        auto fu = result->get_future();
+        std::future_status status = std::future_status::ready;
+        if (timeout > 0) {
+//            status = prev._impl->cv.wait_until(prevLock, timeout_time);
+            for (int i = 0; i < timeout / 1000; i++) {
+                status = fu.wait_for(1ms);
+                if (status == std::future_status::timeout)
+                    break;
+            }
+        } else
+            fu.wait();
+        return status;
+    }
+    
+public:
     std::vector<SPResultChain> prev_chains;
-    SPResultChain::RESULT_CODE result = SPResultChain::RESULT_CODE::FAIL;
-    std::atomic_bool finished;
-    std::mutex mtx; // 保护所有成员变量的访问
-    std::condition_variable cv; // 用于等待任务完成
+    std::unique_ptr<std::promise<SPResultChain::RESULT_CODE>> result;
+    std::mutex mtx;
     
 #ifdef DEBUG
     // 调试用工具
@@ -47,7 +75,8 @@ struct SPResultChainImpl {
 #endif
 };
 
-const char * to_string(SPResultChain::RESULT_CODE code) {
+const char * to_string(SPResultChain::RESULT_CODE code)
+{
     switch (code) {
         case SPResultChain::RESULT_CODE::OK:
             return "OK";
@@ -71,6 +100,7 @@ SPResultChain::SPResultChain(const char* create_func, int create_line)
 // after方法实现
 void SPResultChain::after(const SPResultChain& prev) {
     std::lock_guard<std::mutex> lock(_impl->mtx);
+    _impl->result.reset();
 #ifdef DEBUG
     if (_impl->create_func) {
         SPDLOG_DEBUG("[{0}:{1}] Add dependency from {2}:{3}",
@@ -83,6 +113,7 @@ void SPResultChain::after(const SPResultChain& prev) {
 
 void SPResultChain::after(SPResultChain&& prev) {
     std::lock_guard<std::mutex> lock(_impl->mtx);
+    _impl->result.reset();
 #ifdef DEBUG
     if (_impl->create_func) {
         SPDLOG_DEBUG("[{0}:{1}] Add dependency from {2}:{3}",
@@ -95,6 +126,7 @@ void SPResultChain::after(SPResultChain&& prev) {
 
 void SPResultChain::after(const std::vector<SPResultChain>& prev) {
     std::lock_guard<std::mutex> lock(_impl->mtx);
+    _impl->result.reset();
     for (const auto& p : prev) {
 #ifdef DEBUG
         if (_impl->create_func) {
@@ -109,6 +141,7 @@ void SPResultChain::after(const std::vector<SPResultChain>& prev) {
 
 void SPResultChain::after(std::vector<SPResultChain>&& prev) {
     std::lock_guard<std::mutex> lock(_impl->mtx);
+    _impl->result.reset();
     for (auto& p : prev) {
 #ifdef DEBUG
         if (_impl->create_func) {
@@ -132,17 +165,6 @@ SPResultChain::RESULT_CODE SPResultChain::wait(int64_t timeout) {
     }
 #endif
     
-    // 如果已经完成，直接返回结果
-    if (_impl->finished) {
-#ifdef DEBUG
-        if (_impl->create_func) {
-            SPDLOG_DEBUG("[{0}:{1}] Already finished with result {2}",
-                         _impl->create_func, _impl->create_line, to_string(_impl->result));
-        }
-#endif
-        return _impl->result;
-    }
-    
     // 计算超时时间点(仅对有限超时有效)
     auto timeout_time = std::chrono::steady_clock::now();
     if (timeout >= 0) {
@@ -150,6 +172,7 @@ SPResultChain::RESULT_CODE SPResultChain::wait(int64_t timeout) {
     }
     
     // 等待所有前序任务完成
+    RESULT_CODE finalResult = RESULT_CODE::OK;
     for (auto& prev : _impl->prev_chains) {
         auto prevImpl = prev._impl;
         
@@ -159,41 +182,22 @@ SPResultChain::RESULT_CODE SPResultChain::wait(int64_t timeout) {
             auto now = std::chrono::steady_clock::now();
             if (now >= timeout_time) {
                 // 已超时
-                _impl->result = RESULT_CODE::TIMEOUT;
-                _impl->finished = true;
-                _impl->cv.notify_all();
-                return _impl->result;
+                _impl->set(RESULT_CODE::TIMEOUT);
+                return RESULT_CODE::TIMEOUT;
             }
             remaining_timeout = std::max<int64_t>(std::chrono::duration_cast<std::chrono::microseconds>(timeout_time - now).count(), 0);
         }
         
         // 等待前序任务完成
-        std::unique_lock<std::mutex> prevLock(prevImpl->mtx);
-        std::cv_status status = std::cv_status::no_timeout;
-        if (timeout > 0) {
-//            status = prev._impl->cv.wait_until(prevLock, timeout_time);
-            for (int i = 0; i < timeout / 1000; i++) {
-                status = prevImpl->cv.wait_for(prevLock, 1ms, [prevImpl]() -> bool {return prevImpl->finished;}) ? std::cv_status::no_timeout : std::cv_status::timeout;
-                if (status == std::cv_status::no_timeout)
-                    break;
-            }
-        } else
-            prev._impl->cv.wait(prevLock, [prevImpl]() -> bool {return prevImpl->finished;});
+        std::future_status status = prevImpl->wait_for(timeout);
         
-        if (status == std::cv_status::timeout) {
-            _impl->result = RESULT_CODE::TIMEOUT;
-            _impl->finished = true;
-            _impl->cv.notify_all();
-            return _impl->result;
+        // 仅有超时退出，否则也需要等待所有上游任务完成
+        if (status == std::future_status::timeout) {
+            _impl->set(RESULT_CODE::TIMEOUT);
+            return RESULT_CODE::TIMEOUT;
         }
-        if (prev._impl->result == RESULT_CODE::FAIL) {
-            _impl->result = prev._impl->result;
-            _impl->finished = true;
-            _impl->cv.notify_all();
-            return _impl->result;
-        }
-        if (prev._impl->result == RESULT_CODE::TIMEOUT) {
-            _impl->result = prev._impl->result;
+        if (prevImpl->get() != RESULT_CODE::OK) {
+            finalResult = RESULT_CODE::FAIL;
         }
     }
     
@@ -203,30 +207,20 @@ SPResultChain::RESULT_CODE SPResultChain::wait(int64_t timeout) {
                      _impl->create_func, _impl->create_line);
     }
 #endif
-    return RESULT_CODE::OK;
+//    _impl->set(finalResult);
+    return finalResult;
 }
 
 // finish方法实现
 void SPResultChain::finish(RESULT_CODE result) {
     std::lock_guard<std::mutex> lock(_impl->mtx);
-    if (_impl->finished) {
-#ifdef DEBUG
-        if (_impl->create_func) {
-            spdlog::warn("[{0}:{1}] Double finish call ignored",
-                         _impl->create_func, _impl->create_line);
-        }
-#endif
-        return; // 避免重复调用
-    }
-    _impl->result = result;
-    _impl->finished = true;
+    _impl->set(result);
 #ifdef DEBUG
     if (_impl->create_func) {
         SPDLOG_DEBUG("[{0}:{1}] Finished with result {2}",
                      _impl->create_func, _impl->create_line, to_string(result));
     }
 #endif
-    _impl->cv.notify_all(); // 通知所有等待的线程
 }
 
 // retry方法实现
@@ -235,7 +229,9 @@ bool SPResultChain::retry(int index, SPResultChain chain) {
     if (index < 0 || static_cast<size_t>(index) >= _impl->prev_chains.size()) {
         return false;
     }
+    _impl->result.reset();
     _impl->prev_chains[index] = std::move(chain);
+    _impl->result = std::make_unique<std::promise<SPResultChain::RESULT_CODE>>();
     return true;
 }
 
@@ -243,7 +239,7 @@ bool SPResultChain::retry(int index, SPResultChain chain) {
 SPResultChain::RESULT_CODE SPResultChain::getResult(int index) const {
     std::lock_guard<std::mutex> lock(_impl->mtx);
     if (index < 0 || static_cast<size_t>(index) >= _impl->prev_chains.size()) {
-        return _impl->result;
+        return _impl->get();
     }
     return _impl->prev_chains[index].getResult(-1);
 }
@@ -256,7 +252,7 @@ std::vector<SPResultChain::RESULT_CODE> SPResultChain::getResults() const {
         auto prev_results = prev.getResults();
         results.insert(results.end(), prev_results.begin(), prev_results.end());
     }
-    results.push_back(_impl->result);
+    results.push_back(_impl->get());
     return results;
 }
 

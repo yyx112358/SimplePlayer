@@ -8,61 +8,21 @@
 #include "SPParam.hpp"
 
 #include <thread>
+#include <mutex>
+#include <condition_variable>
+#include <memory>
+#include <spdlog/spdlog.h>
 
-/**
- *  @brief SPResultChain类可以相互串联构成一个有向无环图，其中每一个节点都需要上游所有节点执行完毕后才能继续执行。
- *  
- */
-class SPResultChain {
-public:
-    enum class RESULT_CODE : int {
-        OK, // 成功执行
-        FAIL, // 失败
-        TIMEOUT, // 超时
-    };
-    
-    /// @brief 如果还没有调用finish就析构，将调用finish(RESULT_CODE::OK)，并在Debug模式下打印日志
-    ~SPResultChain();
-    
-    /// @brief 新增前序任务，允许在wait()结束之后再次新增前序任务
-    void after(const SPResultChain &prev);
-    void after(SPResultChain &&prev);
-    void after(const std::vector<SPResultChain> &prev);
-    void after(std::vector<SPResultChain> &&prev);
-    
-    /// 阻塞等待前序任务完成，并获得前序任务的返回值
-    /// 如果前序任务都已完成了，将立刻返回
-    /// @param timeout 最长等待timeout微秒，如果超时将调用finish(TIMEOUT)。当timeout < 0时，将无限等待下去
-    /// @return 所有前序任务和当前任务的执行结果，仅有全部执行成功时，返回OK，否则返回FAIL。如果本任务超时，返回TIMEOUT
-    RESULT_CODE wait(int64_t timeout);
-
-    /// 标记当前任务以及所有的前序任务执行完毕
-    /// 当一个任务所有前序任务都已经完成并调用finish，此任务将解除阻塞
-    /// @param result 当前任务的执行结果，默认值为OK
-    void finish(RESULT_CODE result = RESULT_CODE::OK);
-
-    /// @brief 重试前序任务
-    /// @param index 前序任务的索引
-    /// @param chain 重试后的前序任务
-    /// @return 如果索引合法，返回true，否则返回false
-    bool retry(int index, SPResultChain chain);
-    
-    /// @brief 获取所有前序任务以及当前任务的执行结果
-    /// @return 所有前序任务以及当前任务的执行结果
-    RESULT_CODE getResult(int index) const;
-    std::vector<RESULT_CODE> getResults() const;
-
-    /// @brief 获取所有前序任务
-    /// @return 所有前序任务
-    std::vector<SPResultChain> getPrevChains() const;
-};
+#include "SPResultChain.h"
+#include <thread>
+#include <iostream>
 
 using namespace std;
 
 SPResultChain test1() {
-    SPResultChain fc;
+    SPResultChain fc = SP_RESULT_CHAIN();
     
-    thread t([fc] {
+    thread t([fc]() mutable {
         for (int i = 0; i < 1000; i++) // 执行耗时任务
             this_thread::sleep_for(1ms);
         if (rand() % 2)
@@ -75,14 +35,14 @@ SPResultChain test1() {
 }
 
 SPResultChain test2() {
-    SPResultChain fc;
+    SPResultChain fc = SP_RESULT_CHAIN();
     fc.after(test1());
     
-    thread t([fc, last] {
+    thread t([fc]() mutable {
         for (int i = 0; i < 500; i++) // 执行耗时任务
             this_thread::sleep_for(1ms);
         
-        if (fc.wait(500ms) == SPResultChain::RESULT_CODE::FAIL
+        if (fc.wait(500) == SPResultChain::RESULT_CODE::FAIL
             && fc.getResult(0) == SPResultChain::RESULT_CODE::FAIL) {
             fc.retry(0, test1());
             fc.wait();
@@ -95,10 +55,10 @@ SPResultChain test2() {
 }
 
 SPResultChain test3() {
-    SPResultChain fc;
+    SPResultChain fc = SP_RESULT_CHAIN();
     fc.after({test1(), test2()});
     
-    thread t([fc] {
+    thread t([fc]() mutable {
         for (int i = 0; i < 500; i++) // 执行耗时任务
             this_thread::sleep_for(1ms);
         
@@ -111,7 +71,9 @@ SPResultChain test3() {
 
 
 void _my_main() {
+    srand(time(nullptr));
+    
     SPResultChain fc = test3();
     
-    cout << fc.wait() << endl;
+    cout << static_cast<int>(fc.wait()) << endl;
 }
