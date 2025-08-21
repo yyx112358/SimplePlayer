@@ -69,7 +69,7 @@ private:
 
 // 创建宏定义
 #ifdef DEBUG
-#define SP_RESULT_CHAIN() SPResultChain(__FUNCTION__, __LINE__)
+#define SP_RESULT_CHAIN() SPResultChain(__PRETTY_FUNCTION__, __LINE__)
 #else
 #define SP_RESULT_CHAIN() SPResultChain()
 #endif

@@ -4,6 +4,7 @@
 #include <vector>
 #include <spdlog/spdlog.h>
 #include <chrono>
+using namespace std::chrono_literals;
 
 #undef SPDLOG_DEBUG
 #define SPDLOG_DEBUG SPDLOG_INFO
@@ -30,7 +31,7 @@ struct SPResultChainImpl {
 
     std::vector<SPResultChain> prev_chains;
     SPResultChain::RESULT_CODE result = SPResultChain::RESULT_CODE::FAIL;
-    bool finished = false;
+    std::atomic_bool finished;
     std::mutex mtx; // 保护所有成员变量的访问
     std::condition_variable cv; // 用于等待任务完成
     
@@ -39,12 +40,25 @@ struct SPResultChainImpl {
     SPResultChainImpl(const char* create_func, int create_line)
         : create_func(create_func), create_line(create_line)
     {
-        SPDLOG_DEBUG("SPDLOG_INFO[{0}:{1}] Instance created", create_func, create_line);
+        SPDLOG_DEBUG("Start result chain [{0}:{1}]", create_func, create_line);
     }
     const char* const create_func = nullptr; // 创建位置函数名
     const int create_line = 0; // 创建位置行号
 #endif
 };
+
+const char * to_string(SPResultChain::RESULT_CODE code) {
+    switch (code) {
+        case SPResultChain::RESULT_CODE::OK:
+            return "OK";
+        case SPResultChain::RESULT_CODE::FAIL:
+            return "FAIL";
+        case SPResultChain::RESULT_CODE::TIMEOUT:
+            return "TIMEOUT";
+        default:
+            return "Unknown";
+    }
+}
 
 SPResultChain::SPResultChain() : _impl(std::make_shared<SPResultChainImpl>()) {}
 
@@ -59,7 +73,7 @@ void SPResultChain::after(const SPResultChain& prev) {
     std::lock_guard<std::mutex> lock(_impl->mtx);
 #ifdef DEBUG
     if (_impl->create_func) {
-        SPDLOG_DEBUG("SPDLOG_INFO[{0}:{1}] Add dependency from {2}:{3}",
+        SPDLOG_DEBUG("[{0}:{1}] Add dependency from {2}:{3}",
                      _impl->create_func, _impl->create_line,
                      prev._impl->create_func, prev._impl->create_line);
     }
@@ -71,7 +85,7 @@ void SPResultChain::after(SPResultChain&& prev) {
     std::lock_guard<std::mutex> lock(_impl->mtx);
 #ifdef DEBUG
     if (_impl->create_func) {
-        SPDLOG_DEBUG("SPDLOG_INFO[{0}:{1}] Add dependency from {2}:{3}",
+        SPDLOG_DEBUG("[{0}:{1}] Add dependency from {2}:{3}",
                      _impl->create_func, _impl->create_line,
                      prev._impl->create_func, prev._impl->create_line);
     }
@@ -84,7 +98,7 @@ void SPResultChain::after(const std::vector<SPResultChain>& prev) {
     for (const auto& p : prev) {
 #ifdef DEBUG
         if (_impl->create_func) {
-            SPDLOG_DEBUG("SPDLOG_INFO[{0}:{1}] Add dependency from {2}:{3}",
+            SPDLOG_DEBUG("[{0}:{1}] Add dependency from {2}:{3}",
                          _impl->create_func, _impl->create_line,
                          p._impl->create_func, p._impl->create_line);
         }
@@ -98,7 +112,7 @@ void SPResultChain::after(std::vector<SPResultChain>&& prev) {
     for (auto& p : prev) {
 #ifdef DEBUG
         if (_impl->create_func) {
-            SPDLOG_DEBUG("SPDLOG_INFO[{0}:{1}] Add dependency from {2}:{3}",
+            SPDLOG_DEBUG("[{0}:{1}] Add dependency from {2}:{3}",
                          _impl->create_func, _impl->create_line,
                          p._impl->create_func, p._impl->create_line);
         }
@@ -113,7 +127,7 @@ SPResultChain::RESULT_CODE SPResultChain::wait(int64_t timeout) {
     
 #ifdef DEBUG
     if (_impl->create_func) {
-        SPDLOG_DEBUG("SPDLOG_INFO[{0}:{1}] Start waiting, timeout={2}us",
+        SPDLOG_DEBUG("[{0}:{1}] Start waiting, timeout={2}us",
                      _impl->create_func, _impl->create_line, timeout);
     }
 #endif
@@ -122,8 +136,8 @@ SPResultChain::RESULT_CODE SPResultChain::wait(int64_t timeout) {
     if (_impl->finished) {
 #ifdef DEBUG
         if (_impl->create_func) {
-            SPDLOG_DEBUG("SPDLOG_INFO[{0}:{1}] Already finished with result {2}",
-                         _impl->create_func, _impl->create_line, static_cast<int>(_impl->result));
+            SPDLOG_DEBUG("[{0}:{1}] Already finished with result {2}",
+                         _impl->create_func, _impl->create_line, to_string(_impl->result));
         }
 #endif
         return _impl->result;
@@ -137,6 +151,8 @@ SPResultChain::RESULT_CODE SPResultChain::wait(int64_t timeout) {
     
     // 等待所有前序任务完成
     for (auto& prev : _impl->prev_chains) {
+        auto prevImpl = prev._impl;
+        
         // 计算剩余超时时间
         int64_t remaining_timeout = -1;
         if (timeout >= 0) {
@@ -148,22 +164,42 @@ SPResultChain::RESULT_CODE SPResultChain::wait(int64_t timeout) {
                 _impl->cv.notify_all();
                 return _impl->result;
             }
-            remaining_timeout = std::chrono::duration_cast<std::chrono::microseconds>(timeout_time - now).count();
+            remaining_timeout = std::max<int64_t>(std::chrono::duration_cast<std::chrono::microseconds>(timeout_time - now).count(), 0);
         }
         
         // 等待前序任务完成
-        SPResultChain::RESULT_CODE prev_result = prev.wait(remaining_timeout);
-        if (prev_result != RESULT_CODE::OK) {
-            _impl->result = prev_result;
+        std::unique_lock<std::mutex> prevLock(prevImpl->mtx);
+        std::cv_status status = std::cv_status::no_timeout;
+        if (timeout > 0) {
+//            status = prev._impl->cv.wait_until(prevLock, timeout_time);
+            for (int i = 0; i < timeout / 1000; i++) {
+                status = prevImpl->cv.wait_for(prevLock, 1ms, [prevImpl]() -> bool {return prevImpl->finished;}) ? std::cv_status::no_timeout : std::cv_status::timeout;
+                if (status == std::cv_status::no_timeout)
+                    break;
+            }
+        } else
+            prev._impl->cv.wait(prevLock, [prevImpl]() -> bool {return prevImpl->finished;});
+        
+        if (status == std::cv_status::timeout) {
+            _impl->result = RESULT_CODE::TIMEOUT;
             _impl->finished = true;
             _impl->cv.notify_all();
             return _impl->result;
+        }
+        if (prev._impl->result == RESULT_CODE::FAIL) {
+            _impl->result = prev._impl->result;
+            _impl->finished = true;
+            _impl->cv.notify_all();
+            return _impl->result;
+        }
+        if (prev._impl->result == RESULT_CODE::TIMEOUT) {
+            _impl->result = prev._impl->result;
         }
     }
     
 #ifdef DEBUG
     if (_impl->create_func) {
-        SPDLOG_DEBUG("SPDLOG_INFO[{0}:{1}] All dependencies completed",
+        SPDLOG_DEBUG("[{0}:{1}] All dependencies completed",
                      _impl->create_func, _impl->create_line);
     }
 #endif
@@ -176,7 +212,7 @@ void SPResultChain::finish(RESULT_CODE result) {
     if (_impl->finished) {
 #ifdef DEBUG
         if (_impl->create_func) {
-            spdlog::warn("SPDLOG_INFO[{0}:{1}] Double finish call ignored",
+            spdlog::warn("[{0}:{1}] Double finish call ignored",
                          _impl->create_func, _impl->create_line);
         }
 #endif
@@ -186,8 +222,8 @@ void SPResultChain::finish(RESULT_CODE result) {
     _impl->finished = true;
 #ifdef DEBUG
     if (_impl->create_func) {
-        SPDLOG_DEBUG("SPDLOG_INFO[{0}:{1}] Finished with result {2}",
-                     _impl->create_func, _impl->create_line, static_cast<int>(result));
+        SPDLOG_DEBUG("[{0}:{1}] Finished with result {2}",
+                     _impl->create_func, _impl->create_line, to_string(result));
     }
 #endif
     _impl->cv.notify_all(); // 通知所有等待的线程
