@@ -1,17 +1,12 @@
-//
-//  SPParam.cpp
-//  SimplePlayer
-//
-//  Created by YangYixuan on 2023/10/27.
-//
+#pragma once
+#include <memory>
 
-#include "SPParam.hpp"
-
-#include <thread>
+// 前向声明
+struct SPResultChainImpl;
 
 /**
  *  @brief SPResultChain类可以相互串联构成一个有向无环图，其中每一个节点都需要上游所有节点执行完毕后才能继续执行。
- *  
+ *  使用pimpl模式封装内部状态，支持安全复制和多线程操作
  */
 class SPResultChain {
 public:
@@ -21,26 +16,38 @@ public:
         TIMEOUT, // 超时
     };
     
+    /// @brief 默认构造函数
+    SPResultChain();
+
+#ifdef DEBUG
+    /**
+     * @brief 调试模式构造函数
+     * @param create_func 创建所在函数名
+     * @param create_line 创建所在行号
+     */
+    SPResultChain(const char* create_func, int create_line);
+#endif
+    
     /// @brief 如果还没有调用finish就析构，将调用finish(RESULT_CODE::OK)，并在Debug模式下打印日志
-    ~SPResultChain();
+    ~SPResultChain() = default;
     
     /// @brief 新增前序任务，允许在wait()结束之后再次新增前序任务
-    void after(const SPResultChain &prev);
-    void after(SPResultChain &&prev);
-    void after(const std::vector<SPResultChain> &prev);
-    void after(std::vector<SPResultChain> &&prev);
+    void after(const SPResultChain& prev);
+    void after(SPResultChain&& prev);
+    void after(const std::vector<SPResultChain>& prev);
+    void after(std::vector<SPResultChain>&& prev);
     
     /// 阻塞等待前序任务完成，并获得前序任务的返回值
     /// 如果前序任务都已完成了，将立刻返回
     /// @param timeout 最长等待timeout微秒，如果超时将调用finish(TIMEOUT)。当timeout < 0时，将无限等待下去
     /// @return 所有前序任务和当前任务的执行结果，仅有全部执行成功时，返回OK，否则返回FAIL。如果本任务超时，返回TIMEOUT
-    RESULT_CODE wait(int64_t timeout);
-
+    RESULT_CODE wait(int64_t timeout = -1);
+    
     /// 标记当前任务以及所有的前序任务执行完毕
     /// 当一个任务所有前序任务都已经完成并调用finish，此任务将解除阻塞
     /// @param result 当前任务的执行结果，默认值为OK
     void finish(RESULT_CODE result = RESULT_CODE::OK);
-
+    
     /// @brief 重试前序任务
     /// @param index 前序任务的索引
     /// @param chain 重试后的前序任务
@@ -51,67 +58,18 @@ public:
     /// @return 所有前序任务以及当前任务的执行结果
     RESULT_CODE getResult(int index) const;
     std::vector<RESULT_CODE> getResults() const;
-
+    
     /// @brief 获取所有前序任务
     /// @return 所有前序任务
     std::vector<SPResultChain> getPrevChains() const;
+
+private:
+    std::shared_ptr<SPResultChainImpl> _impl; // 使用前向声明的Impl结构体
 };
 
-using namespace std;
-
-SPResultChain test1() {
-    SPResultChain fc;
-    
-    thread t([fc] {
-        for (int i = 0; i < 1000; i++) // 执行耗时任务
-            this_thread::sleep_for(1ms);
-        if (rand() % 2)
-            fc.finish(); // 标记执行成功
-        else
-            fc.finish(SPResultChain::RESULT_CODE::FAIL); // 标记执行失败
-    });
-    t.detach();
-    return fc;
-}
-
-SPResultChain test2() {
-    SPResultChain fc;
-    fc.after(test1());
-    
-    thread t([fc, last] {
-        for (int i = 0; i < 500; i++) // 执行耗时任务
-            this_thread::sleep_for(1ms);
-        
-        if (fc.wait(500ms) == SPResultChain::RESULT_CODE::FAIL
-            && fc.getResult(0) == SPResultChain::RESULT_CODE::FAIL) {
-            fc.retry(0, test1());
-            fc.wait();
-        }
-            
-        fc.finish();
-    });
-    t.detach();
-    return fc;
-}
-
-SPResultChain test3() {
-    SPResultChain fc;
-    fc.after({test1(), test2()});
-    
-    thread t([fc] {
-        for (int i = 0; i < 500; i++) // 执行耗时任务
-            this_thread::sleep_for(1ms);
-        
-        fc.wait();
-        fc.finish();
-    });
-    t.detach();
-    return fc;
-}
-
-
-void _my_main() {
-    SPResultChain fc = test3();
-    
-    cout << fc.wait() << endl;
-}
+// 创建宏定义
+#ifdef DEBUG
+#define SP_RESULT_CHAIN() SPResultChain(__FUNCTION__, __LINE__)
+#else
+#define SP_RESULT_CHAIN() SPResultChain()
+#endif
