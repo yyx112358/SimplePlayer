@@ -36,6 +36,8 @@ extern "C" {
 - (void)viewDidLoad {
     [super viewDidLoad];
     
+    _test_SPResultChain();
+    
     int v = avformat_version();
     spdlog::info("Welcome to spdlog! {}", avformat_version());
     spdlog::set_level(spdlog::level::debug);
@@ -47,14 +49,14 @@ extern "C" {
     _model->videoTracks.push_back({std::string(video.UTF8String)});
     
     _previewGraph = std::make_shared<sp::SPGraphPreview>();
-    if (auto f = _previewGraph->updateModel(*_model, true);f.get() == false)
+    if (auto rc = _previewGraph->updateModel(*_model, true); rc.waitAll() != SPResultChain::RESULT_CODE::OK)
         SPASSERT_NOT_IMPL;
     _previewGraph->_parentPlayerView = (__bridge_retained void *)self.playerView;
     
-    if (auto f = _previewGraph->init(true);f.get() == false)
+    if (auto rc = _previewGraph->init(false); rc.waitAll() != SPResultChain::RESULT_CODE::OK)
         SPASSERT_NOT_IMPL;
 
-    if (auto f = _previewGraph->start(true);f.get() == false)
+    if (auto rc = _previewGraph->start(false); rc.waitAll() != SPResultChain::RESULT_CODE::OK)
         SPASSERT_NOT_IMPL;
     
 //    NSString *video = [[NSBundle mainBundle] pathForResource:@"1：1" ofType:@"MOV"];

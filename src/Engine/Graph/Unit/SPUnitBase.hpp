@@ -21,15 +21,15 @@ public:
     
 // ISPMediaControl
 public:
-    virtual std::future<bool> init(bool isSync) override;
-    virtual std::future<bool> uninit(bool isSync) override;
+    virtual SPResultChain init(bool isSync) override;
+    virtual SPResultChain uninit(bool isSync) override;
     
     virtual bool isInited() const override { return _isInited; }
     
-    virtual std::future<bool> start(bool isSync) override;
-    virtual std::future<bool> stop(bool isSync) override;
-    virtual std::future<bool> seek(std::chrono::time_point<std::chrono::steady_clock> pts, bool isSync, SeekFlag flag) override;
-    virtual std::future<bool> pause(bool isSync) override;
+    virtual SPResultChain start(bool isSync) override;
+    virtual SPResultChain stop(bool isSync) override;
+    virtual SPResultChain seek(std::chrono::time_point<std::chrono::steady_clock> pts, bool isSync, SeekFlag flag) override;
+    virtual SPResultChain pause(bool isSync) override;
     
 // ISPGraphListener
 public:

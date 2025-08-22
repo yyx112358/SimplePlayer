@@ -24,7 +24,7 @@ public:
     SPDecodeReaderUnit(std::shared_ptr<ISPGraphContext>context);
     virtual ~SPDecodeReaderUnit();
     
-    virtual std::future<bool> init(bool isSync) override;
+    virtual SPResultChain init(bool isSync) override;
 //    virtual std::future<bool> uninit(bool isSync) override;
     
 //    virtual std::future<bool> start(bool isSync) override;
@@ -37,6 +37,7 @@ public:
     const char *UNIT_NAME() const override { return "SPDecodeReaderUnit"; }
     
     void __SetVideoPath__(const std::string &path); // TODO: 使用Timeline
+    std::string _path;
     
 protected:
     std::map<int, std::unique_ptr<SPDecodeReaderFF>> _decoders;

@@ -17,13 +17,11 @@ using namespace sp;
 
 constexpr char SPUNIT_NAME_VIDEO_DECODE_READER[] = "video decode reader";
 
-std::future<bool> SPGraphPreview::init(bool isSync) {
-    std::promise<bool> result;
-    if (isSync == false)
-        SPASSERT_NOT_IMPL;
+SPResultChain SPGraphPreview::init(bool isSync) {
+    auto result = SP_RESULT_CHAIN();
     if (_model == nullptr) {
-        result.set_value(false);
-        return result.get_future();
+        result.finish(SPResultChain::RESULT_CODE::FAIL);
+        return result;
     }
     
     std::shared_ptr<ISPTaskQueue> _decodeThread = ISPTaskQueue::Create();
@@ -33,6 +31,7 @@ std::future<bool> SPGraphPreview::init(bool isSync) {
         unit->__SetVideoPath__(_model->videoTracks.front().front());
         _units.emplace(SPUNIT_NAME_VIDEO_DECODE_READER, unit);
         _sourceVideoUnit = unit;
+        result.after(unit->init(isSync));
     }
     
 //    decoder = std::make_shared<sp::SPDecodeReaderFF>();
@@ -55,26 +54,29 @@ std::future<bool> SPGraphPreview::init(bool isSync) {
 //    audioOutput->start(false);
 //    preview->start(false);
     
-    result.set_value(true);
-    return result.get_future();
+    if (auto code = result.wait(); code != SPResultChain::RESULT_CODE::OK) {
+        result.finish(code);
+    } else {
+        result.finish(SPResultChain::RESULT_CODE::OK);
+    }
+
+    return result;
 }
 
-std::future<bool> SPGraphPreview::uninit(bool isSync) {
-    std::promise<bool> result;
-    if (isSync == false)
-        SPASSERT_NOT_IMPL;
+SPResultChain SPGraphPreview::uninit(bool isSync) {
+    auto result = SP_RESULT_CHAIN();
     if (_model == nullptr) {
-        result.set_value(false);
-        return result.get_future();
+        result.finish(SPResultChain::RESULT_CODE::FAIL);
+        return result;
     }
     
-    std::future<bool> futureDecoder = decoder->stop(false);
+    if (auto unit = _sourceVideoUnit.lock()) {
+        result.after(unit->stop(isSync));
+    }
+
     audioRenderer->stop(false);
     audioOutput->stop(false);
 
-    // futureDecoder.wait();
-    decoder->unInit();
-    decoder = nullptr;
 
     audioRenderer->uninit();
     audioRenderer = nullptr;
@@ -84,78 +86,72 @@ std::future<bool> SPGraphPreview::uninit(bool isSync) {
 
     preview = nullptr;
     
-    result.set_value(true);
-    return result.get_future();
+    if (auto code = result.wait(); code != SPResultChain::RESULT_CODE::OK) {
+        result.finish(code);
+    } else {
+        result.finish(SPResultChain::RESULT_CODE::OK);
+    }
+
+    return result;
 }
 
-std::future<bool> SPGraphPreview::updateModel(const SPMediaModel &model, bool isSync) {
-    std::promise<bool> result;
+SPResultChain SPGraphPreview::updateModel(const SPMediaModel &model, bool isSync) {
+    auto result = SP_RESULT_CHAIN();
     _model = std::make_unique<SPMediaModel>(model);
     
-    result.set_value(true);
-    return result.get_future();
-}
-
-
-std::future<bool> SPGraphPreview::start(bool isSync) {
-    std::promise<bool> result;
-    
-//    if (decoder != nullptr)
-//        decoder->start(false);
-//    if (audioOutput != nullptr)
-//        audioOutput->start(false);
-    std::vector<std::future<bool>> futures;
-    if (auto unit = _sourceVideoUnit.lock())
-        futures.emplace_back(unit->start(isSync));
-    
-    if (isSync)
-        result.set_value(true);
-    else {
-        auto block = [result = std::move(result), futures = std::move(futures)]() {
-//            bool flag = true;
-//            for (auto &f : futures) {
-//                flag &= f.get();
-//            }
-//            result = flag;
-        };
-        // TODO: 在线程队列里执行
-        block();
+    if (auto code = result.wait(); code != SPResultChain::RESULT_CODE::OK) {
+        result.finish(code);
+    } else {
+        result.finish(SPResultChain::RESULT_CODE::OK);
     }
-    return result.get_future();
+    
+    return result;
 }
 
-std::future<bool> SPGraphPreview::stop(bool isSync) {
-    std::promise<bool> result;
-    
-    result.set_value(true);
-    return result.get_future();
+
+SPResultChain SPGraphPreview::start(bool isSync) {
+    auto result = SP_RESULT_CHAIN();
+    std::vector<SPResultChain> futures;
+
+    if (auto code = result.wait(); code != SPResultChain::RESULT_CODE::OK) {
+        result.finish(code);
+    } else {
+        result.finish(SPResultChain::RESULT_CODE::OK);
+    }
+    return result;
 }
 
-std::future<bool> SPGraphPreview::seek(std::chrono::time_point<std::chrono::steady_clock>pts, bool isSync, SeekFlag flag) {
-    std::promise<bool> result;
-    
-//    if (decoder != nullptr)
-//        decoder->start(false);
-//    if (audioOutput != nullptr)
-//        audioOutput->start(false);    
-    
-    result.set_value(true);
-    return result.get_future();
+SPResultChain SPGraphPreview::stop(bool isSync) {
+    auto result = SP_RESULT_CHAIN();
+    if (auto code = result.wait(); code != SPResultChain::RESULT_CODE::OK) {
+        result.finish(code);
+    } else {
+        result.finish(SPResultChain::RESULT_CODE::OK);
+    }
+    return result;
 }
 
-std::future<bool> SPGraphPreview::pause(bool isSync) {
-    std::promise<bool> result;
-    
-    if (decoder != nullptr)
-        decoder->pause(false);
-    if (audioOutput != nullptr)
-        audioOutput->pause(false);
-    
-    
-    result.set_value(true);
-    return result.get_future();
+SPResultChain SPGraphPreview::seek(std::chrono::time_point<std::chrono::steady_clock>pts, bool isSync, SeekFlag flag) {
+    auto result = SP_RESULT_CHAIN();
+    if (auto code = result.wait(); code != SPResultChain::RESULT_CODE::OK) {
+        result.finish(code);
+    } else {
+        result.finish(SPResultChain::RESULT_CODE::OK);
+    }
+    return result;
 }
-//std::future<bool> SPGraphPreview::start(bool isSync) {
+
+SPResultChain SPGraphPreview::pause(bool isSync) {
+    auto result = SP_RESULT_CHAIN();
+    if (auto code = result.wait(); code != SPResultChain::RESULT_CODE::OK) {
+        result.finish(code);
+    } else {
+        result.finish(SPResultChain::RESULT_CODE::OK);
+    }
+    return result;
+}
+
+//SPResultChain SPGraphPreview::start(bool isSync) {
 //    std::promise<bool> result;
 //    
 //    if (decoder != nullptr)
@@ -167,7 +163,7 @@ std::future<bool> SPGraphPreview::pause(bool isSync) {
 //    result.set_value(true);
 //    return result.get_future();
 //}
-//std::future<bool> SPGraphPreview::start(bool isSync) {
+//SPResultChain SPGraphPreview::start(bool isSync) {
 //    std::promise<bool> result;
 //    
 //    if (decoder != nullptr)

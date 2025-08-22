@@ -20,7 +20,7 @@ public:
     ISPGraph& operator=(const ISPGraph&) = delete;
     
 public:
-    virtual std::future<bool> updateModel(const SPMediaModel &model, bool isSync) = 0;
+    virtual SPResultChain updateModel(const SPMediaModel &model, bool isSync) = 0;
 };
 
 }

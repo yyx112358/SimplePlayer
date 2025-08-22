@@ -11,6 +11,8 @@
 #include <bitset>
 #include <future>
 
+#include "SPResultChain.h"
+
 namespace sp {
 
 class ISPMediaControl
@@ -23,18 +25,18 @@ public:
     typedef std::bitset<8> SeekFlag;
     
 public:
-    virtual std::future<bool> init(bool isSync) = 0;
-    virtual std::future<bool> uninit(bool isSync) = 0;
+    virtual SPResultChain init(bool isSync) = 0;
+    virtual SPResultChain uninit(bool isSync) = 0;
     
     virtual bool isInited() const = 0;
     
 public:
-    virtual std::future<bool> start(bool isSync) = 0;
-    virtual std::future<bool> stop(bool isSync) = 0;
-    virtual std::future<bool> seek(std::chrono::time_point<std::chrono::steady_clock> pts, bool isSync, SeekFlag flag) = 0;
-    virtual std::future<bool> pause(bool isSync) = 0;
-//    virtual std::future<bool> flush(bool isSync) = 0;
-//    virtual std::future<bool> reset(bool isSync) = 0;
+    virtual SPResultChain start(bool isSync) = 0;
+    virtual SPResultChain stop(bool isSync) = 0;
+    virtual SPResultChain seek(std::chrono::time_point<std::chrono::steady_clock> pts, bool isSync, SeekFlag flag) = 0;
+    virtual SPResultChain pause(bool isSync) = 0;
+//    virtual SPResultChain flush(bool isSync) = 0;
+//    virtual SPResultChain reset(bool isSync) = 0;
 };
 
 }

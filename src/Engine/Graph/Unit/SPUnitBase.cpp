@@ -21,45 +21,60 @@ SPUnitBase::~SPUnitBase()
 
 
 #pragma mark - ISPMediaControl
-std::future<bool> __DefaultFuture()
-{
-    std::promise<bool> result;
-    result.set_value(true);
-    return result.get_future();
-}
 
-std::future<bool> SPUnitBase::init(bool isSync) 
+SPResultChain SPUnitBase::init(bool isSync)
 {
+    auto result = SP_RESULT_CHAIN();
     _isInited = true;
     SPLOGV("Unit [%s] init done", UNIT_NAME());
-    return __DefaultFuture();
+    
+    // TODO: 链式初始化渲染链上所有Unit
+    result.wait();
+    result.finish();
+    return result;
 }
 
-std::future<bool> SPUnitBase::uninit(bool isSync) 
+SPResultChain SPUnitBase::uninit(bool isSync)
 {
+    auto result = SP_RESULT_CHAIN();
     _isInited = false;
 //    SPLOGV("Unit [%s] uninit done", UNIT_NAME());
-    return __DefaultFuture();
+
+    result.wait();
+    result.finish();
+    return result;
 }
 
-std::future<bool> SPUnitBase::start(bool isSync) 
+SPResultChain SPUnitBase::start(bool isSync)
 {
-    return __DefaultFuture();
+    auto result = SP_RESULT_CHAIN();
+    result.wait();
+    result.finish();
+    return result;
 }
 
-std::future<bool> SPUnitBase::stop(bool isSync) 
+SPResultChain SPUnitBase::stop(bool isSync)
 {
-    return __DefaultFuture();
+    auto result = SP_RESULT_CHAIN();
+    result.wait();
+    result.finish();
+    return result;
 }
 
-std::future<bool> SPUnitBase::seek(std::chrono::time_point<std::chrono::steady_clock> pts, bool isSync, SeekFlag flag) 
+SPResultChain SPUnitBase::seek(std::chrono::time_point<std::chrono::steady_clock> pts, bool isSync, SeekFlag flag)
 {
-    return __DefaultFuture();
+    auto result = SP_RESULT_CHAIN();
+    result.wait();
+    result.finish();
+    return result;
 }
 
-std::future<bool> SPUnitBase::pause(bool isSync) 
+SPResultChain SPUnitBase::pause(bool isSync)
 {
-    return __DefaultFuture();
+    auto result = SP_RESULT_CHAIN();
+    result.wait();
+    result.finish();
+    return result;
 }
 
 #pragma mark - ISPGraphListener
