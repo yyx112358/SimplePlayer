@@ -1,5 +1,6 @@
 #pragma once
 #include <memory>
+#include <optional>
 
 // 前向声明
 struct SPResultChainImpl;
@@ -39,9 +40,12 @@ public:
     
     /// 阻塞等待前序任务完成，并获得前序任务的返回值
     /// 如果前序任务都已完成了，将立刻返回
-    /// @param timeout 最长等待timeout微秒，如果超时将调用finish(TIMEOUT)。当timeout < 0时，将无限等待下去
+    /// @param timeout 最长等待timeout毫秒，如果超时将调用finish(TIMEOUT)。当timeout < 0时，将无限等待下去
     /// @return 所有前序任务和当前任务的执行结果，仅有全部执行成功时，返回OK，否则返回FAIL。如果本任务超时，返回TIMEOUT
     RESULT_CODE wait(int64_t timeout = -1);
+
+    /// 阻塞等待其它线程将本任务设置为finish（本任务和其它任务均完成），并获得最终的返回值
+    RESULT_CODE waitAll(int64_t timeout = -1);
     
     /// 标记当前任务以及所有的前序任务执行完毕
     /// 当一个任务所有前序任务都已经完成并调用finish，此任务将解除阻塞
@@ -56,8 +60,8 @@ public:
     
     /// @brief 获取所有前序任务以及当前任务的执行结果
     /// @return 所有前序任务以及当前任务的执行结果
-    RESULT_CODE getResult(int index) const;
-    std::vector<RESULT_CODE> getResults() const;
+    std::optional<RESULT_CODE> getResult(int index) const;
+    std::vector<std::optional<RESULT_CODE>> getResults() const;
     
     /// @brief 获取所有前序任务
     /// @return 所有前序任务
@@ -70,6 +74,7 @@ private:
 // 创建宏定义
 #ifdef DEBUG
 #define SP_RESULT_CHAIN() SPResultChain(__PRETTY_FUNCTION__, __LINE__)
+extern void _test_SPResultChain();
 #else
 #define SP_RESULT_CHAIN() SPResultChain()
 #endif

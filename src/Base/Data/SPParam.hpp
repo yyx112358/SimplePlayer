@@ -22,5 +22,3 @@ SPParam;
 
 
 }
-
-extern void _my_main();
