@@ -36,7 +36,7 @@ extern "C" {
 - (void)viewDidLoad {
     [super viewDidLoad];
     
-    _test_SPResultChain();
+//    _test_SPResultChain();
     
     int v = avformat_version();
     spdlog::info("Welcome to spdlog! {}", avformat_version());

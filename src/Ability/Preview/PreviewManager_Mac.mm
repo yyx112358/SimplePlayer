@@ -313,23 +313,19 @@ bool PreviewManager_Mac::stop(bool isSync) {
 
 CVReturn PreviewManager_Mac::_displayLinkCallback(CVDisplayLinkRef displayLink, const CVTimeStamp *now, const CVTimeStamp *outputTime, CVOptionFlags flagsIn, CVOptionFlags *flagsOut, void *displayLinkContext) {
     PreviewManager_Mac *preview = static_cast<PreviewManager_Mac *>(displayLinkContext);
+    auto pipeline = preview->_pipeline;
     
-    if (preview->_videoQueue->size() > 0) {
-        auto pipeline = preview->_videoQueue->deque();
-        // TODO: 等待音频同步
-        // 感谢FFMpeg，都不用做啥等待操作就已经很同步很流畅了~~
-        if (pipeline->videoFrame != nullptr && pipeline->videoFrame->data != nullptr) {
-            for (Preview_Mac *preview in previews) {
-                [preview setBuffer:pipeline->videoFrame];
-            }
-            dispatch_async(dispatch_get_main_queue(), ^{
-                for (Preview_Mac *preview in previews) {
-                    [preview setFrame:preview.frame];
-                    [preview setNeedsDisplay:YES];
-                    [preview setNeedsLayout:YES];
-                }
-            });
+    if (pipeline->videoFrame != nullptr && pipeline->videoFrame->data != nullptr) {
+        for (Preview_Mac *preview in previews) {
+            [preview setBuffer:pipeline->videoFrame];
         }
+        dispatch_async(dispatch_get_main_queue(), ^{
+            for (Preview_Mac *preview in previews) {
+                [preview setFrame:preview.frame];
+                [preview setNeedsDisplay:YES];
+                [preview setNeedsLayout:YES];
+            }
+        });
     }
     
     return kCVReturnSuccess;

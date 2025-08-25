@@ -8,6 +8,7 @@
 #include "SPUnitBase.hpp"
 #include "SPLog.h"
 
+using namespace std;
 using namespace sp;
 
 SPUnitBase::SPUnitBase(std::shared_ptr<ISPGraphContext>context) : _context(context)
@@ -123,8 +124,14 @@ bool SPUnitBase::disconnectAll()
     return disconnect(nullptr);
 }
 
-bool SPUnitBase::_process(std::shared_ptr<sp::Pipeline>)
+bool SPUnitBase::_process(std::shared_ptr<sp::Pipeline> pipeline)
 {
-    const char * const *p = static_cast<const char* const*>(nullptr);
+    for (auto wunit : _outUnits) {
+        if (auto unit = dynamic_pointer_cast<SPUnitBase>(wunit.lock())) {
+            if (unit->_process(pipeline) == false)
+                return false;
+        }
+    }
+    
     return true;
 }

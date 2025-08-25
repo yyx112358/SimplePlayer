@@ -41,6 +41,7 @@ public:
     virtual bool disconnect(std::shared_ptr<ISPUnit> unit) override;
     virtual bool disconnectAll() override;
     
+protected:
     virtual bool _process(std::shared_ptr<sp::Pipeline> pipeline) override;
     
 protected:

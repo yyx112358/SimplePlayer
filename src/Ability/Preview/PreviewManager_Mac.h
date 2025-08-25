@@ -7,6 +7,8 @@
 
 #pragma once
 
+#include <CoreVideo/CoreVideo.h>
+
 #include "IPreviewManager.hpp"
 #include <thread>
 
@@ -20,8 +22,8 @@ public:
     bool start(bool isSync) override;
     bool stop(bool isSync) override;
     
-    bool setPipelineQueue(std::shared_ptr<sp::SPPipelineQueue> videoQueue) override {
-        _videoQueue = videoQueue;
+    bool setPipelineQueue(std::shared_ptr<sp::Pipeline> pipeline) override {
+        _pipeline = pipeline;
         return true;
     }
     
@@ -35,6 +37,6 @@ private:
     std::thread _videoRenderThread;
     CVDisplayLinkRef _videoDisplayLink = NULL;
     
-    std::shared_ptr<sp::SPPipelineQueue> _videoQueue;
+    std::shared_ptr<sp::Pipeline> _pipeline;
 };
 

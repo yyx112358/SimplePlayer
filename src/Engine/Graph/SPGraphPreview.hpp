@@ -11,7 +11,7 @@
 #include "SPDecodeReaderFF.hpp"
 #include "AudioRendererManager.hpp"
 #include "AudioOutputManager.hpp"
-#include "IPreviewManager.hpp"
+#include "SPPreviewUnitApple.hpp"
 
 namespace sp {
 
@@ -48,7 +48,7 @@ protected:
     std::unique_ptr<SPMediaModel> _model;
     std::unique_ptr<SPMediaModel> _modelShadow;
     
-    std::shared_ptr<IPreviewManager> preview;
+    std::shared_ptr<sp::SPPreviewUnitApple> preview;
     std::shared_ptr<sp::AudioRendererManager> audioRenderer;
     std::shared_ptr<sp::AudioOutputManager> audioOutput;
     

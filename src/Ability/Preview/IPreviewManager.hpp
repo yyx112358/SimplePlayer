@@ -24,7 +24,7 @@ public:
     virtual bool setParentViews(void *parents) = 0;
     virtual bool notifyParentViewsChanged() = 0;
     
-    virtual bool setPipelineQueue(std::shared_ptr<sp::SPPipelineQueue> videoQueue) = 0;
+    virtual bool setPipelineQueue(std::shared_ptr<sp::Pipeline> pipeline) = 0;
     
 protected:
     virtual bool _render() = 0;

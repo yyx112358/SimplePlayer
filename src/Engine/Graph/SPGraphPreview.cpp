@@ -44,9 +44,16 @@ SPResultChain SPGraphPreview::init(bool isSync) {
 //    audioOutput = std::make_shared<sp::AudioOutputManager>(shared_from_this());
 //    audioOutput->init();
 //    audioOutput->setInputQueue(audioRenderer->getOutputQueue());
-//    
-//    preview = IPreviewManager::createIPreviewManager();
-//    preview->setParentViews(_parentPlayerView);
+//
+    
+    std::shared_ptr<ISPTaskQueue> _previewThread = ISPTaskQueue::Create();
+    {
+        auto unit = std::make_shared<SPPreviewUnitApple>(shared_from_this());
+        unit->setParentViews(_parentPlayerView);
+        preview = unit;
+        _sourceVideoUnit.lock()->connect(preview);
+    }
+
 //    preview->setPipelineQueue(decoder->_videoQueue);
 //    
 //    decoder->start(false);
@@ -73,16 +80,6 @@ SPResultChain SPGraphPreview::uninit(bool isSync) {
     if (auto unit = _sourceVideoUnit.lock()) {
         result.after(unit->stop(isSync));
     }
-
-    audioRenderer->stop(false);
-    audioOutput->stop(false);
-
-
-    audioRenderer->uninit();
-    audioRenderer = nullptr;
-
-    audioOutput->uninit();
-    audioOutput = nullptr;
 
     preview = nullptr;
     
@@ -112,6 +109,11 @@ SPResultChain SPGraphPreview::updateModel(const SPMediaModel &model, bool isSync
 SPResultChain SPGraphPreview::start(bool isSync) {
     auto result = SP_RESULT_CHAIN();
     std::vector<SPResultChain> futures;
+    
+    if (auto unit = _sourceVideoUnit.lock())
+        result.after(unit->start(isSync));
+    if (auto unit = preview)
+        result.after(unit->start(isSync));
 
     if (auto code = result.wait(); code != SPResultChain::RESULT_CODE::OK) {
         result.finish(code);
