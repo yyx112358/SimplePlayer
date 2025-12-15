@@ -1,14 +1,18 @@
 echo "Build FFMpeg"
 
-echo ${FF_SOURCE_DIR:-"../FFMpeg"}
-echo ${FF_BUILD_DIR:-"FFMpeg"}
+# 任何步骤失败时，立即退出脚本并显示错误信息
+set -euo pipefail
+trap 'echo "FFMpeg build failed, aborting." >&2' ERR
 
-rm -rf $FF_BUILD_DIR
+echo ${FF_SOURCE_DIR:-"../FFMpeg"}   # 源码路径
+echo ${FF_BUILD_DIR:-"FFMpeg"}       # 产物输出路径
+
+rm -rf $FF_BUILD_DIR  # 重置输出目录
 
 # 编译FFMpeg
 cd $FF_SOURCE_DIR
-./configure --enable-debug --enable-ffplay --enable-nonfree --enable-gpl
-make -j
+./configure --enable-debug --enable-ffplay --enable-nonfree --enable-gpl  # 配置FFmpeg
+make -j"$(sysctl -n hw.ncpu)"  # 与本机CPU核心数匹配的并行编译
 
 # 复制header和lib
 libnames=("libavcodec" "libavdevice" "libavfilter" "libavformat" "libavutil" "libpostproc" "libswresample" "libswscale")

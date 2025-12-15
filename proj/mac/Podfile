@@ -19,20 +19,28 @@ target 'SimplePlayer' do
   # use_frameworks!
 
   pre_install do |installer|
+    # 用于执行命令的工具函数，如果命令失败，立即退出脚本并显示错误信息
+    run_or_abort = lambda do |args, err_msg|
+      system(*args) or abort(err_msg)
+    end
+
     # spdlog
     # spdlog可以是header only导入，但如果提前编译，可以大大加快项目编译速度
-    system('cmake', '-S', THIRDPARTY_ROOT_PATH + '/spdlog/', '-B', THIRDPARTY_BUILD_PATH + '/thirdParty/spdlog/')
-    system('cmake', '--build', THIRDPARTY_BUILD_PATH + '/thirdParty/spdlog/')
+    run_or_abort.call(['cmake', '-S', THIRDPARTY_ROOT_PATH + '/spdlog/', '-B', THIRDPARTY_BUILD_PATH + '/thirdParty/spdlog/'], 'cmake configure spdlog failed')
+    run_or_abort.call(['cmake', '--build', THIRDPARTY_BUILD_PATH + '/thirdParty/spdlog/'], 'cmake build spdlog failed')
 
     # FFMpeg
-    if Dir.exist?(THIRDPARTY_BUILD_PATH + '/thirdParty/FFMpeg')
-      puts THIRDPARTY_BUILD_PATH + '/thirdParty/FFMpeg' + '已存在'
+    ff_build_dir = THIRDPARTY_BUILD_PATH + '/thirdParty/FFMpeg'
+    ff_lib_path = File.join(ff_build_dir, 'lib', 'libavformat.a')
+
+    if File.exist?(ff_lib_path)
+      puts ff_lib_path + ' 已存在'
     else
-      puts THIRDPARTY_BUILD_PATH + '/thirdParty/FFMpeg' + '编译。。。'
+      puts ff_lib_path + ' 缺失，重新编译...'
       ENV['FF_SOURCE_DIR'] = THIRDPARTY_ROOT_PATH + '/FFMpeg'
-      ENV['FF_BUILD_DIR'] = THIRDPARTY_BUILD_PATH + '/thirdParty/FFMpeg'
-      
-      system('sh', THIRDPARTY_ROOT_PATH + '/build_script/build_FFMpeg.sh')
+      ENV['FF_BUILD_DIR'] = ff_build_dir
+
+      run_or_abort.call(['sh', THIRDPARTY_ROOT_PATH + '/build_script/build_FFMpeg.sh'], 'build_FFMpeg.sh failed')
     end
 
     # glm

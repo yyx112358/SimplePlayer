@@ -1,6 +1,7 @@
 #pragma once
 #include <memory>
 #include <optional>
+#include <vector>
 
 // 前向声明
 struct SPResultChainImpl;
